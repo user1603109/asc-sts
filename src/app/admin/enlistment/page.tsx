@@ -23,6 +23,7 @@ import {
   Layers,
   X,
   FileSpreadsheet,
+  Award,
 } from 'lucide-react';
 import { Event, Candidate, Course, Department, EventType, Organizer, EventPortion, ParticipantRegistry } from '@/lib/types';
 
@@ -76,6 +77,8 @@ function EnlistmentContent() {
   const [csvText, setCsvText] = useState('');
 
   const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'courses' | 'organizers' | null>(null);
+  const [metaName, setMetaName] = useState('');
+  const [metaExtra, setMetaExtra] = useState('');
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -261,6 +264,53 @@ function EnlistmentContent() {
       loadAllData();
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleAddMeta = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!metaName.trim() || !showMetaModal) return;
+    try {
+      if (showMetaModal === 'departments') {
+        await fetch('/api/departments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ department_name: metaName, department_code: metaExtra }),
+        });
+      } else if (showMetaModal === 'courses') {
+        await fetch('/api/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ course_name: metaName }),
+        });
+      } else if (showMetaModal === 'types') {
+        await fetch('/api/event-types', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type_name: metaName }),
+        });
+      } else if (showMetaModal === 'organizers') {
+        await fetch('/api/organizers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ organizer_name: metaName }),
+        });
+      }
+      setMetaName('');
+      setMetaExtra('');
+      loadAllData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteMeta = async (endpoint: string, id: number) => {
+    if (!confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await fetch(`/api/${endpoint}?id=${id}`, { method: 'DELETE' });
+      loadAllData();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -584,11 +634,49 @@ function EnlistmentContent() {
                                 </span>
                               </td>
                               <td className="py-3 px-4">
-                                <span className="font-bold text-slate-800">{candCount}</span>
-                                <span className="text-slate-400 text-[11px]"> contestants</span>
+                                <button
+                                  onClick={() => {
+                                    setCandidateTargetEventId(ev.id);
+                                    setEditingCandidate(null);
+                                    setCandidateForm({
+                                      name: '',
+                                      course_id: courses[0]?.id ? String(courses[0].id) : '',
+                                      year_level: '1st Year',
+                                      order_number: candCount + 1,
+                                      image_path: '',
+                                    });
+                                    setShowCandidateModal(true);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors text-slate-800 font-bold text-xs"
+                                  title="Manage Event Candidates"
+                                >
+                                  <Award className="w-3.5 h-3.5 text-yale-700" />
+                                  <span>{candCount}</span>
+                                  <span className="text-slate-400 font-normal text-[11px]">contestants</span>
+                                </button>
                               </td>
                               <td className="py-3 px-4 text-right">
                                 <div className="inline-flex items-center gap-1.5">
+                                  {/* Manage Candidates Button */}
+                                  <button
+                                    onClick={() => {
+                                      setCandidateTargetEventId(ev.id);
+                                      setEditingCandidate(null);
+                                      setCandidateForm({
+                                        name: '',
+                                        course_id: courses[0]?.id ? String(courses[0].id) : '',
+                                        year_level: '1st Year',
+                                        order_number: candCount + 1,
+                                        image_path: '',
+                                      });
+                                      setShowCandidateModal(true);
+                                    }}
+                                    className="p-1.5 rounded-md text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                    title="Manage Event Candidates & Contenders"
+                                  >
+                                    <Award className="w-3.5 h-3.5" />
+                                  </button>
+
                                   {/* Roster Sync Button */}
                                   <button
                                     onClick={() => handleOpenRosterSync(ev.id)}
@@ -1334,6 +1422,375 @@ function EnlistmentContent() {
                   Upload & Parse CSV
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* MODAL 7: EVENT CANDIDATES / CONTENDERS ROSTER */}
+        {/* ========================================================================= */}
+        {showCandidateModal && candidateTargetEventId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+              <button
+                onClick={() => {
+                  setShowCandidateModal(false);
+                  setEditingCandidate(null);
+                }}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="mb-4">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-yale-700 bg-yale-50 px-2 py-0.5 rounded border border-yale-200">
+                  Event Contestants Management
+                </span>
+                <h2 className="text-base font-bold text-slate-900 mt-1">
+                  {events.find((e) => Number(e.id) === Number(candidateTargetEventId))?.name || 'Event Candidates'}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Manage individual contenders, assign numbers, or add contestants directly to this event.
+                </p>
+              </div>
+
+              {/* Contestants List */}
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1 mb-4 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+                {candidates.filter((c) => Number(c.event_id) === Number(candidateTargetEventId)).length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    No candidates assigned to this event yet. Use the form below or sync from master registry!
+                  </div>
+                ) : (
+                  candidates
+                    .filter((c) => Number(c.event_id) === Number(candidateTargetEventId))
+                    .sort((a, b) => (Number(a.order_number) || 0) - (Number(b.order_number) || 0))
+                    .map((cand) => {
+                      const courseObj = courses.find((c) => Number(c.id) === Number(cand.course_id));
+                      return (
+                        <div
+                          key={cand.id}
+                          className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-xs gap-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="w-8 h-8 rounded-full bg-yale-50 border border-yale-200 text-yale-800 font-extrabold text-xs flex items-center justify-center shrink-0">
+                              #{cand.order_number || 1}
+                            </span>
+                            {cand.image_path ? (
+                              <img
+                                src={cand.image_path}
+                                alt={cand.name}
+                                className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">
+                                {cand.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <h4 className="font-bold text-xs text-slate-900">{cand.name}</h4>
+                              <p className="text-[11px] text-slate-500">
+                                {courseObj?.course_name || 'Unassigned Course'} • {cand.year_level || '1st Year'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingCandidate(cand);
+                                setCandidateForm({
+                                  name: cand.name,
+                                  course_id: cand.course_id ? String(cand.course_id) : (courses[0]?.id ? String(courses[0].id) : ''),
+                                  year_level: cand.year_level || '1st Year',
+                                  order_number: Number(cand.order_number) || 1,
+                                  image_path: cand.image_path || '',
+                                });
+                              }}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-yale-700 hover:bg-slate-100 transition-colors"
+                              title="Edit Candidate"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCandidate(cand.id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              title="Remove Candidate"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+
+              {/* Add / Edit Candidate Form */}
+              <form onSubmit={handleSaveCandidate} className="pt-3 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    {editingCandidate ? `Editing Contestant #${editingCandidate.order_number} (${editingCandidate.name})` : 'Add Contestant Directly'}
+                  </h3>
+                  {editingCandidate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCandidate(null);
+                        setCandidateForm({
+                          name: '',
+                          course_id: courses[0]?.id ? String(courses[0].id) : '',
+                          year_level: '1st Year',
+                          order_number: candidates.filter((c) => Number(c.event_id) === Number(candidateTargetEventId)).length + 1,
+                          image_path: '',
+                        });
+                      }}
+                      className="text-[11px] text-rose-600 hover:underline"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Candidate Full Name"
+                      value={candidateForm.name}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, name: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      placeholder="Order #"
+                      value={candidateForm.order_number}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, order_number: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <select
+                      value={candidateForm.year_level}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, year_level: e.target.value })}
+                      className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    >
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <select
+                      value={candidateForm.course_id}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, course_id: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    >
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>{c.course_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Photo URL (optional)"
+                      value={candidateForm.image_path}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, image_path: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCandidateModal(false);
+                      handleOpenRosterSync(candidateTargetEventId);
+                    }}
+                    className="text-xs font-semibold text-yale-700 hover:underline flex items-center gap-1"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Sync from Master Registry instead</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm"
+                  >
+                    {editingCandidate ? 'Update Contestant' : 'Save Contestant'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* MODAL 8: METADATA MANAGEMENT (DEPARTMENTS, COURSES, EVENT TYPES, ORGANIZERS) */}
+        {/* ========================================================================= */}
+        {showMetaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+              <button
+                onClick={() => {
+                  setShowMetaModal(null);
+                  setMetaName('');
+                  setMetaExtra('');
+                }}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h2 className="text-base font-bold text-slate-900 mb-1">
+                {showMetaModal === 'departments' && 'Manage Academic Departments'}
+                {showMetaModal === 'courses' && 'Manage Degree Programs & Courses'}
+                {showMetaModal === 'types' && 'Manage Competition Event Types'}
+                {showMetaModal === 'organizers' && 'Manage Sponsoring Organizers'}
+              </h2>
+              <p className="text-xs text-slate-500 mb-4">
+                Maintain official classifications used across events, candidates, and official reports.
+              </p>
+
+              {/* Items List */}
+              <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 mb-4 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+                {showMetaModal === 'departments' &&
+                  departments.map((d) => (
+                    <div
+                      key={d.id}
+                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                    >
+                      <div>
+                        <span className="font-bold text-slate-900">{d.department_name}</span>
+                        {d.department_code && (
+                          <span className="ml-2 font-mono text-[10px] text-yale-700 bg-yale-50 px-1.5 py-0.5 rounded border border-yale-200">
+                            {d.department_code}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteMeta('departments', d.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                        title="Delete Department"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                {showMetaModal === 'courses' &&
+                  courses.map((c) => (
+                    <div
+                      key={c.id}
+                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                    >
+                      <span className="font-bold text-slate-900">{c.course_name}</span>
+                      <button
+                        onClick={() => handleDeleteMeta('courses', c.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                        title="Delete Course"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                {showMetaModal === 'types' &&
+                  eventTypes.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                    >
+                      <span className="font-bold text-slate-900">{t.type_name}</span>
+                      <button
+                        onClick={() => handleDeleteMeta('event-types', t.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                        title="Delete Event Type"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                {showMetaModal === 'organizers' &&
+                  organizers.map((o) => (
+                    <div
+                      key={o.id}
+                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                    >
+                      <span className="font-bold text-slate-900">{o.organizer_name}</span>
+                      <button
+                        onClick={() => handleDeleteMeta('organizers', o.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                        title="Delete Organizer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Add Item Form */}
+              <form onSubmit={handleAddMeta} className="pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder={
+                      showMetaModal === 'departments'
+                        ? 'Department Name (e.g. College of Science)'
+                        : showMetaModal === 'courses'
+                        ? 'Course Name (e.g. BS Computer Science)'
+                        : showMetaModal === 'types'
+                        ? 'Type (e.g. Pageant, Sports, Debate)'
+                        : 'Organizer Name (e.g. Student Council)'
+                    }
+                    value={metaName}
+                    onChange={(e) => setMetaName(e.target.value)}
+                    className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                  />
+                  {showMetaModal === 'departments' && (
+                    <input
+                      type="text"
+                      placeholder="Code (e.g. CS)"
+                      value={metaExtra}
+                      onChange={(e) => setMetaExtra(e.target.value)}
+                      className="w-24 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white uppercase font-mono"
+                    />
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMetaModal(null);
+                      setMetaName('');
+                      setMetaExtra('');
+                    }}
+                    className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm"
+                  >
+                    Add Record
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/admin/events"
+              href="/admin/enlistment"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yale-50 text-yale-700 hover:bg-yale-100 border border-yale-200 text-xs font-semibold transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5 text-yale-700" />
@@ -218,7 +218,7 @@ export default function AdminDashboardPage() {
             {/* Footer Buttons */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
               <Link
-                href="/admin/events"
+                href="/admin/enlistment"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors"
               >
                 <Play className="w-3 h-3 fill-current" />
@@ -460,7 +460,7 @@ export default function AdminDashboardPage() {
               <Calendar className="w-4 h-4 text-yale-700" />
               <h3 className="font-bold text-xs text-slate-800">Recent Events Quick Action</h3>
             </div>
-            <Link href="/admin/events" className="text-xs font-semibold text-yale-700 hover:underline">
+            <Link href="/admin/enlistment" className="text-xs font-semibold text-yale-700 hover:underline">
               View All Events →
             </Link>
           </div>

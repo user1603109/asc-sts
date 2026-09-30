@@ -67,8 +67,7 @@ export default function AppLayout({
       group: 'STACK & WORKSPACE',
       items: [
         { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, badge: null },
-        { label: 'Events Studio', href: '/admin/events', icon: Calendar, badge: null },
-        { label: 'Enlistment / Contestants', href: '/admin/enlistment', icon: Users, badge: null },
+        { label: 'Enlistment Studio', href: '/admin/enlistment', icon: Calendar, badge: null },
       ],
     },
     {

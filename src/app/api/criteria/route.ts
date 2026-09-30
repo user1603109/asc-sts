@@ -69,3 +69,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message || 'Failed to create item' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const itemType = searchParams.get('itemType') || 'criteria';
+
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const table = itemType === 'portion' ? 'event_portions' : 'criteria';
+    const { deleteSheetRow } = await import('@/lib/googleSheets');
+    await deleteSheetRow(table, Number(id));
+
+    return NextResponse.json({ success: true, message: `${itemType} deleted successfully` });
+  } catch (error: any) {
+    console.error('Delete criteria error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete item' }, { status: 500 });
+  }
+}
+

@@ -7,8 +7,7 @@ import { LayoutDashboard, Calendar, Users, Sliders, UserCheck, Trophy, Printer, 
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { label: 'Events', href: '/admin/events', icon: Calendar },
-  { label: 'Contestants', href: '/admin/enlistment', icon: Users },
+  { label: 'Enlistment Studio', href: '/admin/enlistment', icon: Calendar },
   { label: 'Criteria', href: '/admin/criteria', icon: Sliders },
   { label: 'Judges', href: '/admin/judges', icon: UserCheck },
   { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy },

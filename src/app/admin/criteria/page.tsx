@@ -105,6 +105,26 @@ function CriteriaContent() {
     }
   };
 
+  const handleDeletePortion = async (portionId: number) => {
+    if (!confirm('Are you sure you want to delete this portion segment?')) return;
+    try {
+      await fetch(`/api/criteria?id=${portionId}&itemType=portion`, { method: 'DELETE' });
+      loadCriteria();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteCriteria = async (criteriaId: number) => {
+    if (!confirm('Are you sure you want to delete this criteria item?')) return;
+    try {
+      await fetch(`/api/criteria?id=${criteriaId}&itemType=criteria`, { method: 'DELETE' });
+      loadCriteria();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const totalPortionWeight = portions.reduce((acc, p) => acc + (Number(p.percentage) || 0), 0);
 
   return (
@@ -185,9 +205,20 @@ function CriteriaContent() {
                       <Layers className="w-4 h-4 text-yale-700" />
                       <h2 className="text-sm font-bold text-slate-900">{portion.portion_name}</h2>
                     </div>
-                    <span className="text-xs font-bold text-yale-700 bg-yale-50 px-2.5 py-0.5 rounded-full border border-yale-200">
-                      Segment Weight: {portion.percentage}%
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-yale-700 bg-yale-50 px-2.5 py-0.5 rounded-full border border-yale-200">
+                        Segment Weight: {portion.percentage}%
+                      </span>
+                      {portion.id > 0 && (
+                        <button
+                          onClick={() => handleDeletePortion(portion.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                          title="Delete Portion"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {portionCriteria.length === 0 ? (
@@ -195,8 +226,17 @@ function CriteriaContent() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {portionCriteria.map((crit) => (
-                        <div key={crit.id} className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1.5 shadow-subtle">
-                          <h3 className="font-bold text-slate-900 text-xs">{crit.name}</h3>
+                        <div key={crit.id} className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1.5 shadow-subtle relative group">
+                          <div className="flex items-start justify-between gap-1">
+                            <h3 className="font-bold text-slate-900 text-xs">{crit.name}</h3>
+                            <button
+                              onClick={() => handleDeleteCriteria(crit.id)}
+                              className="text-slate-300 hover:text-rose-600 transition-colors p-0.5"
+                              title="Delete criteria"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                           <div className="flex justify-between text-slate-500 text-[11px] pt-1 border-t border-slate-200/60">
                             <span>Max: <strong className="text-slate-800">{crit.max_score} pts</strong></span>
                             <span>Weight: <strong className="text-yale-700">{crit.percentage}%</strong></span>
