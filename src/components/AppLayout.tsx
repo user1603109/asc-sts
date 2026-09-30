@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -13,7 +13,7 @@ import {
   Settings,
   Database,
   Search,
-  BookOpen,
+  User,
   Menu,
   X,
   LogOut,
@@ -47,6 +47,18 @@ export default function AppLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -91,18 +103,19 @@ export default function AppLayout({
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col font-sans">
       {/* TOP DESKTOP & MOBILE HEADER */}
-      <header className="no-print sticky top-0 z-40 bg-white border-b border-slate-200/90 h-14 flex items-center justify-between px-4 lg:px-6 shadow-sm">
+      <header className="no-print sticky top-0 z-40 bg-gradient-to-r from-[#060D17] via-[#0A192F] to-[#0F4C81] border-b border-white/10 text-white h-14 flex items-center justify-between px-4 lg:px-6 shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Toggle navigation"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {sidebarOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
           </button>
 
-          {/* Logo & Brand */}
+          {/* Logo & System Name */}
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-navy-900 p-1 flex items-center justify-center shadow-sm group-hover:bg-yale-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-white/10 p-1 flex items-center justify-center border border-white/20 shadow-sm group-hover:bg-white/20 transition-all">
               <img
                 src="/api/logo"
                 alt="ASC Logo"
@@ -112,77 +125,94 @@ export default function AppLayout({
                 }}
               />
             </div>
-            <div className="hidden sm:block">
+            <div>
               <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-extrabold text-sm tracking-tight text-navy-900">
-                  ASC<span className="text-yale-700">-STS</span>
+                <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-400 transition-colors">
+                  ASC<span className="text-amber-400">-STS</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-gold-100 text-gold-700 border border-gold-300/40">
+                <span className="hidden sm:inline-block text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
                   PRO STUDIO
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium">Apayao State College</p>
+              <p className="text-[10px] text-slate-300/80 font-medium hidden sm:block">
+                Automated Scoring &amp; Tabulation System • Apayao State College
+              </p>
             </div>
           </Link>
         </div>
 
-        {/* Global Search Bar (like PortBox Ctrl + /) */}
+        {/* Universal Functional Search Bar */}
         <div className="hidden md:flex items-center flex-1 max-w-md mx-6">
           <div className="relative w-full">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search events, contestants, criteria, or settings (Ctrl + /)"
+              placeholder="Search events, contestants, scores, criteria... (Ctrl + /)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && searchQuery.trim()) {
-                  router.push(`/admin/enlistment?tab=events&q=${encodeURIComponent(searchQuery.trim())}`);
+                  const q = searchQuery.trim().toLowerCase();
+                  if (q === 'scores' || q === 'score') router.push('/admin/scores');
+                  else if (q === 'rankings' || q === 'ranking') router.push('/admin/rankings');
+                  else if (q === 'tabulation' || q === 'live') router.push('/admin/tabulation');
+                  else if (q === 'criteria') router.push('/admin/criteria');
+                  else if (q === 'judges' || q === 'judge') router.push('/admin/judges');
+                  else if (q === 'reports' || q === 'report') router.push('/admin/reports');
+                  else if (q === 'logs' || q === 'log') router.push('/admin/logs');
+                  else if (q === 'settings') router.push('/admin/settings');
+                  else if (q === 'backups' || q === 'backup') router.push('/admin/backups');
+                  else {
+                    router.push(`/admin/enlistment?tab=events&q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
                 }
               }}
-              className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-yale-600 rounded-lg pl-9 pr-14 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-yale-600 transition-all"
+              className="w-full bg-[#061224]/60 hover:bg-[#061224]/80 focus:bg-[#061224] text-white border border-white/20 focus:border-amber-400 rounded-xl pl-9 pr-16 py-1.5 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition-all shadow-inner"
             />
-            <span className="absolute right-2.5 top-2 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-200/70 rounded border border-slate-300/60 pointer-events-none">
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-12 top-2 p-0.5 text-slate-400 hover:text-white rounded"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <kbd className="absolute right-2.5 top-2 px-1.5 py-0.5 text-[10px] font-mono text-slate-300 bg-white/10 rounded border border-white/15 pointer-events-none">
               Ctrl + /
-            </span>
+            </kbd>
           </div>
         </div>
 
-        {/* Top Right Controls & Indicators */}
-        <div className="flex items-center gap-3">
-          {/* DB Status Pill */}
-          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-            googleConfigured ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
-          }`}>
-            <Database className={`w-3.5 h-3.5 ${googleConfigured ? 'text-emerald-600' : 'text-slate-500'}`} />
-            <span>{googleConfigured ? 'Google Sheets DB' : 'Database Active'}</span>
-            <span className={`w-1.5 h-1.5 rounded-full ${googleConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-500'}`} />
-          </div>
-
+        {/* Profile Icon Button & Logout Icon Button Beside Each Other */}
+        <div className="flex items-center gap-2">
+          {/* Profile Icon Button */}
           <Link
-            href="/admin/reports"
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-yale-700 hover:bg-slate-100 border border-slate-200 transition-colors"
+            href="/admin/settings"
+            className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all group"
+            title={`Profile: ${user?.fullName || 'Administrator'} (${user?.role || 'admin'})`}
           >
-            <BookOpen className="w-3.5 h-3.5 text-yale-700" />
-            <span>Audit & Guide</span>
+            <div className="w-6 h-6 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center border border-amber-400/30 group-hover:scale-105 transition-transform">
+              <User className="w-3.5 h-3.5" />
+            </div>
+            <span className="hidden sm:inline-block text-xs font-semibold text-slate-200 group-hover:text-white">
+              {user?.fullName?.split(' ')[0] || 'Profile'}
+            </span>
           </Link>
 
-          {/* User profile dropdown button */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <div
-              className="w-7 h-7 rounded-full bg-yale-700 text-white font-bold text-xs flex items-center justify-center uppercase"
-              title={user?.fullName || 'Administrator'}
-            >
-              {user?.fullName?.charAt(0) || 'A'}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Logout Icon Button */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 border border-white/15 hover:border-rose-400/40 transition-all group"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4 text-slate-300 group-hover:text-rose-300 transition-colors" />
+            <span className="hidden sm:inline-block text-xs font-semibold group-hover:text-rose-300 transition-colors">
+              Logout
+            </span>
+          </button>
         </div>
       </header>
 
