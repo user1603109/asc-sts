@@ -17,7 +17,16 @@ import {
   Sliders,
   Award,
 } from 'lucide-react';
-import { Event, Candidate, ParticipantRegistry } from '@/lib/types';
+import {
+  Event,
+  Candidate,
+  ParticipantRegistry,
+  Course,
+  Department,
+  EventType,
+  Organizer,
+  EventPortion,
+} from '@/lib/types';
 
 function EnlistmentContent() {
   const searchParams = useSearchParams();

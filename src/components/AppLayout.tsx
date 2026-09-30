@@ -294,7 +294,7 @@ export default function AppLayout({
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-slate-800 leading-tight">ASC System v2.0</p>
-                  <p className="text-[10px] text-slate-400 font-medium">Sheets Synced</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{googleConfigured ? 'Sheets Synced' : 'Database Active'}</p>
                 </div>
               </div>
               <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
