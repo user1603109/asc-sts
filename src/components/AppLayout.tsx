@@ -130,9 +130,6 @@ export default function AppLayout({
                 <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-400 transition-colors">
                   ASC<span className="text-amber-400">-STS</span>
                 </span>
-                <span className="hidden sm:inline-block text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                  PRO STUDIO
-                </span>
               </div>
               <p className="text-[10px] text-slate-300/80 font-medium hidden sm:block">
                 Automated Scoring &amp; Tabulation System • Apayao State College

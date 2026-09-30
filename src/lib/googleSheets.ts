@@ -256,6 +256,61 @@ export async function deleteSheetRow(sheetName: string, id: number): Promise<boo
 }
 
 /**
+ * Overwrite all data rows in a sheet tab (keeping headers intact)
+ */
+export async function setSheetRows<T extends Record<string, any>>(
+  sheetName: string,
+  rows: T[]
+): Promise<boolean> {
+  const schema = SHEET_SCHEMAS[sheetName] || (rows.length > 0 ? Object.keys(rows[0]) : []);
+  const sheets = getSheetsClient();
+  if (!sheets || !SPREADSHEET_ID) {
+    const store = getMemoryStore();
+    store[sheetName] = rows.map((r, i) => ({
+      ...r,
+      id: r.id !== undefined && r.id !== null ? Number(r.id) : i + 1,
+    }));
+    return true;
+  }
+
+  try {
+    // 1. Clear old data from row 2 downwards
+    await sheets.spreadsheets.values.clear({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetName}!A2:Z`,
+    });
+
+    // 2. Format values according to schema
+    const formattedRows = rows.map((row, index) => {
+      const rowId = row.id !== undefined && row.id !== null ? Number(row.id) : index + 1;
+      return schema.map((col) => {
+        if (col === 'id') return String(rowId);
+        const val = row[col];
+        return val === undefined || val === null ? '' : String(val);
+      });
+    });
+
+    if (formattedRows.length > 0) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${sheetName}!A2:Z`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: formattedRows,
+        },
+      });
+    }
+    return true;
+  } catch (e) {
+    console.error(`Error setting sheet rows for ${sheetName}:`, e);
+    // Fallback to memory
+    const store = getMemoryStore();
+    store[sheetName] = rows.map((r) => ({ ...r }));
+    return false;
+  }
+}
+
+/**
  * Auto-initialize Google Sheets: creates any missing worksheet tabs,
  * adds schema headers, and inserts default seed data.
  */
