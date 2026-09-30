@@ -90,6 +90,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'Judge unassigned from event' });
     }
 
+    // 4. Reset judge password matching ASTS/admin/judges.php
+    if (action === 'reset_password') {
+      const { judgeId, newPassword } = body;
+      const { hashPassword } = await import('@/lib/auth');
+      const hashedPassword = await hashPassword(newPassword || '12345678');
+      await updateSheetRow<User>('users', Number(judgeId), {
+        password: hashedPassword,
+      });
+      return NextResponse.json({ success: true, message: 'Judge password reset successfully' });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
     console.error('Judge action error:', error);

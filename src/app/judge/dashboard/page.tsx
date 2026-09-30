@@ -35,7 +35,7 @@ export default function JudgeDashboardPage() {
       <Navbar user={user} />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-6">
-        {/* Welcome Banner */}
+        {/* Welcome Banner with Quick Shortcuts */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-yale-700 bg-yale-50 px-2 py-0.5 rounded border border-yale-200">
@@ -48,8 +48,19 @@ export default function JudgeDashboardPage() {
               Select an assigned event below to open your real-time touchscreen scoring sheet.
             </p>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-yale-50 border border-yale-100 flex items-center justify-center text-yale-700 shrink-0">
-            <Smartphone className="w-5 h-5 text-yale-700" />
+          <div className="flex items-center gap-2">
+            <Link
+              href="/judge/history"
+              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              Event History
+            </Link>
+            <Link
+              href="/judge/profile"
+              className="px-3 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg transition-colors"
+            >
+              My Profile
+            </Link>
           </div>
         </div>
 

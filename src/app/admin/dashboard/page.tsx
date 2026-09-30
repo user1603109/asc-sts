@@ -38,6 +38,7 @@ export default function AdminDashboardPage() {
     scoresCount: 0,
   });
   const [events, setEvents] = useState<any[]>([]);
+  const [pendingJudges, setPendingJudges] = useState<any[]>([]);
   const [googleStatus, setGoogleStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -58,6 +59,10 @@ export default function AdminDashboardPage() {
 
       setGoogleStatus(statusData);
 
+      if (Array.isArray(judgesData)) {
+        setPendingJudges(judgesData.filter((j: any) => j.approval_status === 'pending'));
+      }
+
       if (Array.isArray(eventsData)) {
         setEvents(eventsData);
         const totalCandidates = eventsData.reduce((acc, curr) => acc + (curr.candidatesCount || 0), 0);
@@ -72,6 +77,32 @@ export default function AdminDashboardPage() {
       console.error('Error loading dashboard:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickApproveJudge = async (judgeId: number) => {
+    try {
+      await fetch('/api/judges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_status', judgeId, status: 'approved' }),
+      });
+      loadData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleQuickRejectJudge = async (judgeId: number) => {
+    try {
+      await fetch('/api/judges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_status', judgeId, status: 'rejected' }),
+      });
+      loadData();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -380,6 +411,47 @@ export default function AdminDashboardPage() {
             </span>
           </div>
         </div>
+
+        {/* PENDING JUDGE REGISTRATIONS WIDGET (Matching ASTS/admin/dashboard.php) */}
+        {pendingJudges.length > 0 && (
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-5 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-200/80 mb-3">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-amber-700" />
+                <h3 className="font-bold text-xs text-amber-900 uppercase tracking-wider">
+                  Pending Judge Accreditations ({pendingJudges.length})
+                </h3>
+              </div>
+              <Link href="/admin/judges" className="text-xs font-bold text-amber-800 hover:underline">
+                Manage All Judges →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {pendingJudges.map((j) => (
+                <div key={j.id} className="bg-white border border-amber-200 rounded-lg p-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs">{j.full_name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">@{j.username}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleQuickApproveJudge(j.id)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md border border-emerald-200 transition-colors cursor-pointer"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleQuickRejectJudge(j.id)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-md border border-rose-200 transition-colors cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* RECENT EVENTS QUICK TABLE */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card">
