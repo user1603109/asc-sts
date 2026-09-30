@@ -40,9 +40,11 @@ export default function AdminReportsPage() {
     tabulatorTitle: 'Chief Institutional Tabulator',
     chairmanName: 'DR. JANE SMITH, EdD',
     chairmanTitle: 'Chairman, Board of Judges',
+    coordinatorName: 'MR. DON JOHN FRONDA',
+    coordinatorTitle: 'Socio-Cultural Coordinator',
     showNoted: true,
-    presidentName: 'DR. JOHN N. CABANSAG',
-    presidentTitle: 'College President / Campus Dean',
+    presidentName: 'DR. EMMANUEL P. PATTAGUAN',
+    presidentTitle: 'College President',
   });
 
   useEffect(() => {
@@ -443,7 +445,7 @@ export default function AdminReportsPage() {
               Certified Official & Authenticated by the Board of Tabulators
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
               <div>
                 <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1.5 font-bold text-slate-900 text-xs">
                   {signatories.tabulatorName}
@@ -459,6 +461,15 @@ export default function AdminReportsPage() {
                 </div>
                 <p className="text-[11px] text-slate-500 uppercase tracking-wider">
                   {signatories.chairmanTitle}
+                </p>
+              </div>
+
+              <div>
+                <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1.5 font-bold text-slate-900 text-xs">
+                  {signatories.coordinatorName}
+                </div>
+                <p className="text-[11px] text-slate-500 uppercase tracking-wider">
+                  {signatories.coordinatorTitle}
                 </p>
               </div>
             </div>
@@ -527,6 +538,23 @@ export default function AdminReportsPage() {
                     type="text"
                     value={signatories.chairmanTitle}
                     onChange={(e) => setSignatories({ ...signatories, chairmanTitle: e.target.value })}
+                    placeholder="Title / Designation"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Socio-Cultural Coordinator Name</label>
+                  <input
+                    type="text"
+                    value={signatories.coordinatorName}
+                    onChange={(e) => setSignatories({ ...signatories, coordinatorName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                  <input
+                    type="text"
+                    value={signatories.coordinatorTitle}
+                    onChange={(e) => setSignatories({ ...signatories, coordinatorTitle: e.target.value })}
                     placeholder="Title / Designation"
                     className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 mt-1"
                   />
