@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, getSheetRows } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { Candidate, Event, EventJudge, EventPortion } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -90,7 +90,6 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { updateSheetRow } = await import('@/lib/googleSheets');
     const updated = await updateSheetRow<Event>('events', Number(id), updates);
     return NextResponse.json({ success: true, event: updated });
   } catch (error: any) {
@@ -112,7 +111,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { deleteSheetRow } = await import('@/lib/googleSheets');
     await deleteSheetRow('events', Number(id));
     return NextResponse.json({ success: true, message: 'Event deleted' });
   } catch (error: any) {

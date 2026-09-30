@@ -9,13 +9,10 @@ import {
   Award,
   ShieldCheck,
   CheckCircle2,
-  FileSpreadsheet,
   Settings,
   Building,
   Layers,
-  BarChart3,
   X,
-  Download,
 } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { TabulationResult } from '@/lib/tabulation';
@@ -34,7 +31,6 @@ export default function AdminReportsPage() {
   } | null>(null);
 
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [systemStats, setSystemStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   // Customize Signatories Modal state

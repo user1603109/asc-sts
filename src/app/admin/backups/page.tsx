@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Database, Download, FileJson, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Database, Download, FileJson, CheckCircle2 } from 'lucide-react';
 import { SHEET_SCHEMAS } from '@/lib/schemas';
 
 export default function AdminBackupsPage() {

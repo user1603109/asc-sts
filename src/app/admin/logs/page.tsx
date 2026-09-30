@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Layers, RefreshCw, Search, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Layers, RefreshCw, Search } from 'lucide-react';
 
 interface AuditLog {
   id: number;

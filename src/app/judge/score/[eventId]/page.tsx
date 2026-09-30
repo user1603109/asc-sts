@@ -6,12 +6,8 @@ import Navbar from '@/components/Navbar';
 import {
   ChevronLeft,
   CheckCircle2,
-  Lock,
-  RefreshCw,
   AlertCircle,
   Save,
-  Trophy,
-  Sliders,
 } from 'lucide-react';
 import { Candidate, Criteria, Event, EventPortion, Score } from '@/lib/types';
 

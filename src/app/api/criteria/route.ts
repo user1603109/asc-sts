@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, getSheetRows } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows } from '@/lib/googleSheets';
 import { Criteria, EventPortion } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -86,7 +86,6 @@ export async function DELETE(req: NextRequest) {
     }
 
     const table = itemType === 'portion' ? 'event_portions' : 'criteria';
-    const { deleteSheetRow } = await import('@/lib/googleSheets');
     await deleteSheetRow(table, Number(id));
 
     return NextResponse.json({ success: true, message: `${itemType} deleted successfully` });

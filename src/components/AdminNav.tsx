@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, Users, Sliders, UserCheck, Trophy, Printer, Settings, ClipboardList, Award } from 'lucide-react';
+import { LayoutDashboard, Calendar, Sliders, UserCheck, Trophy, Printer, Settings, ClipboardList, Award } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },

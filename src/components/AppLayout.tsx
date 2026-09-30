@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Calendar,
-  Users,
   Sliders,
   UserCheck,
   Trophy,
@@ -18,13 +17,10 @@ import {
   Menu,
   X,
   LogOut,
-  Shield,
   Award,
   CheckCircle2,
-  Bell,
   Sparkles,
   Layers,
-  ChevronRight,
   ClipboardList,
 } from 'lucide-react';
 
@@ -139,6 +135,11 @@ export default function AppLayout({
               placeholder="Search events, contestants, criteria, or settings (Ctrl + /)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  router.push(`/admin/enlistment?tab=events&q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-yale-600 rounded-lg pl-9 pr-14 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-yale-600 transition-all"
             />
             <span className="absolute right-2.5 top-2 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-200/70 rounded border border-slate-300/60 pointer-events-none">
@@ -150,10 +151,12 @@ export default function AppLayout({
         {/* Top Right Controls & Indicators */}
         <div className="flex items-center gap-3">
           {/* DB Status Pill */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <Database className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Google Sheets DB</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+            googleConfigured ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
+          }`}>
+            <Database className={`w-3.5 h-3.5 ${googleConfigured ? 'text-emerald-600' : 'text-slate-500'}`} />
+            <span>{googleConfigured ? 'Google Sheets DB' : 'Database Active'}</span>
+            <span className={`w-1.5 h-1.5 rounded-full ${googleConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-500'}`} />
           </div>
 
           <Link
@@ -166,8 +169,11 @@ export default function AppLayout({
 
           {/* User profile dropdown button */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <div className="w-7 h-7 rounded-full bg-yale-700 text-white font-bold text-xs flex items-center justify-center">
-              A
+            <div
+              className="w-7 h-7 rounded-full bg-yale-700 text-white font-bold text-xs flex items-center justify-center uppercase"
+              title={user?.fullName || 'Administrator'}
+            >
+              {user?.fullName?.charAt(0) || 'A'}
             </div>
             <button
               onClick={handleLogout}

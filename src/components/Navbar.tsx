@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Award, LogOut, Shield, User, Database, CheckCircle2 } from 'lucide-react';
+import { Award, LogOut, Shield, User, Database } from 'lucide-react';
 
 interface NavbarProps {
   user?: {

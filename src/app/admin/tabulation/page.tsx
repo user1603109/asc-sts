@@ -10,10 +10,7 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
   Calendar,
-  Award,
-  Filter,
 } from 'lucide-react';
 import { TabulationResult } from '@/lib/tabulation';
 import { Event } from '@/lib/types';

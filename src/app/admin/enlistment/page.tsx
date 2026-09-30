@@ -11,21 +11,9 @@ import {
   Edit2,
   RefreshCw,
   Search,
-  Upload,
-  UserCheck,
-  Sliders,
-  CheckCircle2,
-  AlertCircle,
-  FolderPlus,
-  Building,
-  GraduationCap,
-  Sparkles,
-  Layers,
   X,
-  FileSpreadsheet,
-  Award,
 } from 'lucide-react';
-import { Event, Candidate, Course, Department, EventType, Organizer, EventPortion, ParticipantRegistry } from '@/lib/types';
+import { Event, Candidate, ParticipantRegistry } from '@/lib/types';
 
 function EnlistmentContent() {
   const searchParams = useSearchParams();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { EventJudge, User } from '@/lib/types';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, hashPassword } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -93,7 +93,6 @@ export async function POST(req: NextRequest) {
     // 4. Reset judge password matching ASTS/admin/judges.php
     if (action === 'reset_password') {
       const { judgeId, newPassword } = body;
-      const { hashPassword } = await import('@/lib/auth');
       const hashedPassword = await hashPassword(newPassword || '12345678');
       await updateSheetRow<User>('users', Number(judgeId), {
         password: hashedPassword,

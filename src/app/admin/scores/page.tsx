@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import { ClipboardList, RefreshCw, Trophy, Users, Search, Sliders, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, RefreshCw } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { TabulationResult } from '@/lib/tabulation';
 
@@ -21,7 +21,6 @@ function ScoresContent() {
     tabulations: TabulationResult[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetch('/api/events')

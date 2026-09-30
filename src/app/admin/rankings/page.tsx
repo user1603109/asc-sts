@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import { Trophy, RefreshCw, Award, Users, Printer, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Trophy, RefreshCw, Award, Printer } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { TabulationResult } from '@/lib/tabulation';
 
