@@ -66,23 +66,25 @@ export default function AppLayout({
       group: 'STACK & WORKSPACE',
       items: [
         { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, badge: null },
-        { label: 'Events Studio', href: '/admin/events', icon: Calendar, badge: 'active' },
-        { label: 'Contestants', href: '/admin/enlistment', icon: Users, badge: null },
+        { label: 'Events Studio', href: '/admin/events', icon: Calendar, badge: null },
+        { label: 'Enlistment / Contestants', href: '/admin/enlistment', icon: Users, badge: null },
       ],
     },
     {
       group: 'TABULATION SUITE',
       items: [
         { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy, hasDot: true },
-        { label: 'Criteria & Portions', href: '/admin/criteria', icon: Sliders, badge: 'PRO' },
-        { label: 'Judges Roster', href: '/admin/judges', icon: UserCheck, badge: 'NEW' },
+        { label: 'Criteria & Portions', href: '/admin/criteria', icon: Sliders, badge: null },
+        { label: 'Judges Roster', href: '/admin/judges', icon: UserCheck, badge: null },
       ],
     },
     {
-      group: 'REPORTS & BACKEND',
+      group: 'REPORTS & AUDIT',
       items: [
         { label: 'Official Reports', href: '/admin/reports', icon: Printer, badge: null },
-        { label: 'Sheets & System', href: '/admin/settings', icon: Settings, badge: null },
+        { label: 'System Logs', href: '/admin/logs', icon: Layers, badge: null },
+        { label: 'Database Backups', href: '/admin/backups', icon: Database, badge: null },
+        { label: 'Settings & Sheets', href: '/admin/settings', icon: Settings, badge: null },
       ],
     },
   ];
@@ -101,8 +103,15 @@ export default function AppLayout({
 
           {/* Logo & Brand */}
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-navy-900 flex items-center justify-center text-gold-400 font-black shadow-sm group-hover:bg-yale-700 transition-colors">
-              <Award className="w-4 h-4 text-gold-400" />
+            <div className="w-8 h-8 rounded-lg bg-navy-900 p-1 flex items-center justify-center shadow-sm group-hover:bg-yale-700 transition-colors">
+              <img
+                src="/api/logo"
+                alt="ASC Logo"
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/assets/img/astslogo.png';
+                }}
+              />
             </div>
             <div className="hidden sm:block">
               <div className="flex items-center gap-1.5 leading-none">

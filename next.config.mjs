@@ -1,3 +1,21 @@
+import fs from 'fs';
+import path from 'path';
+
+// Ensure public assets are available
+try {
+  const publicImgDir = path.join(process.cwd(), 'public', 'assets', 'img');
+  if (!fs.existsSync(publicImgDir)) {
+    fs.mkdirSync(publicImgDir, { recursive: true });
+  }
+  const srcLogo = path.join(process.cwd(), 'assets', 'img', 'astslogo.png');
+  const destLogo = path.join(publicImgDir, 'astslogo.png');
+  if (fs.existsSync(srcLogo) && !fs.existsSync(destLogo)) {
+    fs.copyFileSync(srcLogo, destLogo);
+  }
+} catch (e) {
+  console.warn('Could not copy logo:', e.message);
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
