@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Calendar, Clock, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, RefreshCw, PlayCircle } from 'lucide-react';
 
 export default function JudgeDashboardPage() {
   const [user, setUser] = useState<any>(null);

@@ -12,6 +12,10 @@ import {
   RefreshCw,
   Search,
   X,
+  Upload,
+  UserCheck,
+  Sliders,
+  Award,
 } from 'lucide-react';
 import { Event, Candidate, ParticipantRegistry } from '@/lib/types';
 

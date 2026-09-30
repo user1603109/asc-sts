@@ -279,10 +279,12 @@ export default function AdminReportsPage() {
                           {res.candidate.course_name || 'General Program'}
                         </td>
                         {tabData?.portions.map((p) => {
-                          const pScore = res.portionScores.find((ps) => Number(ps.portionId) === Number(p.id));
+                          const pScore = (res.portionScores || res.portionBreakdown || []).find(
+                            (ps: any) => Number(ps.portionId) === Number(p.id)
+                          );
                           return (
                             <td key={p.id} className="py-2.5 px-3 border border-slate-200 text-right font-mono">
-                              {pScore ? pScore.weightedScore.toFixed(2) : '0.00'}
+                              {pScore ? Number(pScore.weightedScore ?? pScore.portionTotal ?? 0).toFixed(2) : '0.00'}
                             </td>
                           );
                         })}

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
-import { History, ArrowLeft } from 'lucide-react';
+import { History, ArrowLeft, Calendar, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Event } from '@/lib/types';
 
 export default function JudgeHistoryPage() {

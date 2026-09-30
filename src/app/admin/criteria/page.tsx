@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import { Sliders, Plus, Trash2, RefreshCw } from 'lucide-react';
+import { Sliders, Plus, Trash2, RefreshCw, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
 import { Criteria, Event, EventPortion } from '@/lib/types';
 
 function CriteriaContent() {

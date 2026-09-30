@@ -16,6 +16,12 @@ export interface TabulationResult {
     }[];
     portionTotal: number;
   }[];
+  portionScores: {
+    portionId: number;
+    portionName: string;
+    weightedScore: number;
+    portionTotal: number;
+  }[];
   totalScore: number;
   rank: number;
   judgeScoresCount: number;
@@ -97,9 +103,17 @@ export function computeTabulation(
       };
     });
 
+    const portionScores = portionBreakdown.map((pb) => ({
+      portionId: pb.portionId,
+      portionName: pb.portionName,
+      weightedScore: pb.portionTotal,
+      portionTotal: pb.portionTotal,
+    }));
+
     return {
       candidate,
       portionBreakdown,
+      portionScores,
       totalScore: Number(grandTotal.toFixed(2)),
       rank: 0, // Assigned below
       judgeScoresCount: uniqueJudgesScored,

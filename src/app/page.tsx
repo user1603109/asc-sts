@@ -10,6 +10,8 @@ import {
   EyeOff,
   ArrowRight,
   AlertCircle,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function HomePage() {

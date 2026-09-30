@@ -9,6 +9,7 @@ import {
   UserCheck,
   Trophy,
   Database,
+  ArrowRight,
   CheckCircle2,
   AlertCircle,
   RefreshCw,

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
-import { User, Lock, Save, ArrowLeft } from 'lucide-react';
+import { User, Lock, Save, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function JudgeProfilePage() {
   const [currentUser, setCurrentUser] = useState<any>(null);

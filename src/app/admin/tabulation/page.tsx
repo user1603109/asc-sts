@@ -233,7 +233,7 @@ function TabulationContent() {
                           </td>
 
                           {/* Portion scores */}
-                          {res.portionBreakdown.map((pb) => (
+                          {(res.portionBreakdown || []).map((pb) => (
                             <td key={pb.portionId} className="py-3 px-4 text-center font-semibold text-slate-700 print:text-black">
                               {pb.portionTotal.toFixed(2)}
                             </td>
@@ -264,8 +264,8 @@ function TabulationContent() {
                                   Criteria Breakdown for #{res.candidate.order_number} {res.candidate.name}
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                  {res.portionBreakdown.flatMap((pb) =>
-                                    pb.criteriaBreakdown.map((cb) => (
+                                  {(res.portionBreakdown || []).flatMap((pb) =>
+                                    (pb.criteriaBreakdown || []).map((cb) => (
                                       <div key={cb.criteriaId} className="bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs">
                                         <div className="flex justify-between items-center font-semibold text-slate-800">
                                           <span>{cb.criteriaName}</span>

@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Save,
+  Lock,
+  RefreshCw,
 } from 'lucide-react';
 import { Candidate, Criteria, Event, EventPortion, Score } from '@/lib/types';
 

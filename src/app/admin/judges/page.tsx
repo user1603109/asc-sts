@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { UserCheck, CheckCircle2, XCircle, RefreshCw, Search, X } from 'lucide-react';
+import { UserCheck, CheckCircle2, XCircle, RefreshCw, Search, X, Key } from 'lucide-react';
 import { Event } from '@/lib/types';
 
 export default function AdminJudgesPage() {
