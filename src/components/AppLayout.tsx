@@ -24,6 +24,19 @@ import {
   ClipboardList,
 } from 'lucide-react';
 
+interface NavItem {
+  label: string;
+  href: string;
+  icon: any;
+  hasDot?: boolean;
+  badge?: string | null;
+}
+
+interface NavGroup {
+  group: string;
+  items: NavItem[];
+}
+
 interface AppLayoutProps {
   children: ReactNode;
   user?: {
@@ -70,7 +83,7 @@ export default function AppLayout({
     }
   };
 
-  const navGroups = [
+  const navGroups: NavGroup[] = [
     {
       group: 'STACK & WORKSPACE',
       items: [

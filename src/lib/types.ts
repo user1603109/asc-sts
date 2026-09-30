@@ -109,6 +109,7 @@ export interface ParticipantRegistry {
   id: number;
   name: string;
   course_id?: number | null;
+  course_name?: string;
   year_level?: string;
   image_path?: string;
 }
