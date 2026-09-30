@@ -25,6 +25,7 @@ import {
   Sparkles,
   Layers,
   ChevronRight,
+  ClipboardList,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -74,6 +75,8 @@ export default function AppLayout({
       group: 'TABULATION SUITE',
       items: [
         { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy, hasDot: true },
+        { label: 'Scores Matrix', href: '/admin/scores', icon: ClipboardList, badge: null },
+        { label: 'Official Rankings', href: '/admin/rankings', icon: Award, badge: null },
         { label: 'Criteria & Portions', href: '/admin/criteria', icon: Sliders, badge: null },
         { label: 'Judges Roster', href: '/admin/judges', icon: UserCheck, badge: null },
       ],
@@ -84,6 +87,7 @@ export default function AppLayout({
         { label: 'Official Reports', href: '/admin/reports', icon: Printer, badge: null },
         { label: 'System Logs', href: '/admin/logs', icon: Layers, badge: null },
         { label: 'Database Backups', href: '/admin/backups', icon: Database, badge: null },
+        { label: 'Sample Data Tool', href: '/admin/sample-data', icon: Sparkles, badge: 'DEMO' },
         { label: 'Settings & Sheets', href: '/admin/settings', icon: Settings, badge: null },
       ],
     },
