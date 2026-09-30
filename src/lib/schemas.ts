@@ -70,6 +70,16 @@ export const SEED_DATA: Record<string, Record<string, any>[]> = {
     { id: 2, setting_key: 'organization', setting_value: 'Apayao State College' },
     { id: 3, setting_key: 'academic_year', setting_value: '2025-2026' },
   ],
+  users: [
+    {
+      id: 1,
+      username: 'admin',
+      password: 'adminpassword123',
+      full_name: 'ASC Administrator',
+      role: 'admin',
+      approval_status: 'approved',
+    },
+  ],
   event_types: [
     { id: 1, type_name: 'Pageant' },
     { id: 2, type_name: 'Cultural' },
