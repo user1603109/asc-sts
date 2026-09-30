@@ -9,7 +9,7 @@ export async function POST() {
     const hashedAdminPw = await hashPassword('adminpassword123');
     const hashedJudgePw = await hashPassword('judge123');
 
-    // 1. Users (1 Admin + 4 Accredited Judges)
+    // 1. Users (1 Admin + 8 Accredited Judges)
     const users = [
       {
         id: 1,
@@ -48,6 +48,38 @@ export async function POST() {
         username: 'judge4',
         password: hashedJudgePw,
         full_name: 'Engr. Maria Rosario David',
+        role: 'judge',
+        approval_status: 'approved',
+      },
+      {
+        id: 6,
+        username: 'judge5',
+        password: hashedJudgePw,
+        full_name: 'Hon. Beatrice Almeda',
+        role: 'judge',
+        approval_status: 'approved',
+      },
+      {
+        id: 7,
+        username: 'judge6',
+        password: hashedJudgePw,
+        full_name: 'Arch. Ronald Villar',
+        role: 'judge',
+        approval_status: 'approved',
+      },
+      {
+        id: 8,
+        username: 'judge7',
+        password: hashedJudgePw,
+        full_name: 'Dr. Evelyn Joy Calagui',
+        role: 'judge',
+        approval_status: 'approved',
+      },
+      {
+        id: 9,
+        username: 'judge8',
+        password: hashedJudgePw,
+        full_name: 'Prof. Gabriel Dacanay',
         role: 'judge',
         approval_status: 'approved',
       },
@@ -350,18 +382,40 @@ export async function POST() {
       },
     ];
 
-    // 8. Event Judges Assignments
-    const event_judges: any[] = [];
-    let ejId = 1;
-    // Assign 3-4 judges to active competitions
-    for (let eId = 1; eId <= 16; eId++) {
-      event_judges.push({ id: ejId++, event_id: eId, user_id: 2 });
-      event_judges.push({ id: ejId++, event_id: eId, user_id: 3 });
-      event_judges.push({ id: ejId++, event_id: eId, user_id: 4 });
-      if (eId <= 5) {
-        event_judges.push({ id: ejId++, event_id: eId, user_id: 5 });
-      }
-    }
+    // 8. Event Judges Assignments - strictly 1 or 2 events per judge
+    const event_judges = [
+      // Judge 1 (user_id: 2): Event 1 & Event 4
+      { id: 1, event_id: 1, user_id: 2 },
+      { id: 2, event_id: 4, user_id: 2 },
+
+      // Judge 2 (user_id: 3): Event 1 & Event 2
+      { id: 3, event_id: 1, user_id: 3 },
+      { id: 4, event_id: 2, user_id: 3 },
+
+      // Judge 3 (user_id: 4): Event 1 & Event 8
+      { id: 5, event_id: 1, user_id: 4 },
+      { id: 6, event_id: 8, user_id: 4 },
+
+      // Judge 4 (user_id: 5): Event 2 & Event 5
+      { id: 7, event_id: 2, user_id: 5 },
+      { id: 8, event_id: 5, user_id: 5 },
+
+      // Judge 5 (user_id: 6): Event 4 & Event 9
+      { id: 9, event_id: 4, user_id: 6 },
+      { id: 10, event_id: 9, user_id: 6 },
+
+      // Judge 6 (user_id: 7): Event 8 & Event 11
+      { id: 11, event_id: 8, user_id: 7 },
+      { id: 12, event_id: 11, user_id: 7 },
+
+      // Judge 7 (user_id: 8): Event 14 & Event 15
+      { id: 13, event_id: 14, user_id: 8 },
+      { id: 14, event_id: 15, user_id: 8 },
+
+      // Judge 8 (user_id: 9): Event 12 & Event 6
+      { id: 15, event_id: 12, user_id: 9 },
+      { id: 16, event_id: 6, user_id: 9 },
+    ];
 
     // 9. Candidates assigned to Events
     const candidates: any[] = [];
