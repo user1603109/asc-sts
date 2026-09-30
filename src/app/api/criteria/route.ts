@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { appendSheetRow, getSheetRows } from '@/lib/googleSheets';
+import { Criteria, EventPortion } from '@/lib/types';
+import { getCurrentUser } from '@/lib/auth';
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const eventId = searchParams.get('eventId');
+
+    const [portions, criteriaList] = await Promise.all([
+      getSheetRows<EventPortion>('event_portions'),
+      getSheetRows<Criteria>('criteria'),
+    ]);
+
+    let filteredPortions = portions;
+    let filteredCriteria = criteriaList;
+
+    if (eventId) {
+      filteredPortions = portions.filter((p) => Number(p.event_id) === Number(eventId));
+      filteredCriteria = criteriaList.filter((c) => Number(c.event_id) === Number(eventId));
+    }
+
+    filteredPortions.sort((a, b) => (Number(a.order_number) || 0) - (Number(b.order_number) || 0));
+
+    return NextResponse.json({
+      portions: filteredPortions,
+      criteria: filteredCriteria,
+    });
+  } catch (error: any) {
+    console.error('Fetch criteria error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to fetch criteria' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { itemType } = body; // 'portion' or 'criteria'
+
+    if (itemType === 'portion') {
+      const { event_id, portion_name, percentage, order_number } = body;
+      const newPortion = await appendSheetRow<EventPortion>('event_portions', {
+        event_id: Number(event_id),
+        portion_name,
+        percentage: Number(percentage) || 0,
+        order_number: Number(order_number) || 1,
+        status: 'Upcoming',
+      });
+      return NextResponse.json({ success: true, item: newPortion });
+    } else {
+      const { event_id, portion_id, name, max_score, percentage } = body;
+      const newCriteria = await appendSheetRow<Criteria>('criteria', {
+        event_id: Number(event_id),
+        portion_id: portion_id ? Number(portion_id) : null,
+        name,
+        max_score: Number(max_score) || 100,
+        percentage: Number(percentage) || 100,
+      });
+      return NextResponse.json({ success: true, item: newCriteria });
+    }
+  } catch (error: any) {
+    console.error('Create criteria error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to create item' }, { status: 500 });
+  }
+}
