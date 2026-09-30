@@ -22,6 +22,8 @@ import {
   Sparkles,
   Layers,
   ClipboardList,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface NavItem {
@@ -59,6 +61,7 @@ export default function AppLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -114,16 +117,31 @@ export default function AppLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col font-sans">
-      {/* TOP DESKTOP & MOBILE HEADER */}
-      <header className="no-print sticky top-0 z-40 bg-gradient-to-r from-[#060D17] via-[#0A192F] to-[#0F4C81] border-b border-white/10 text-white h-14 flex items-center justify-between px-4 lg:px-6 shadow-md">
-        <div className="flex items-center gap-3">
+    <div className="h-screen flex flex-col bg-[#F8FAFC] text-slate-800 font-sans overflow-hidden">
+      {/* TOP DESKTOP & MOBILE HEADER - Fixed Height & Non-scrolling */}
+      <header className="no-print shrink-0 z-40 bg-gradient-to-r from-[#060D17] via-[#0A192F] to-[#0F4C81] border-b border-white/10 text-white h-14 flex items-center justify-between px-4 lg:px-6 shadow-md">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Mobile hamburger button */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Toggle navigation"
           >
             {sidebarOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
+          </button>
+
+          {/* Desktop minimize / maximize sidebar toggle button */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden lg:flex items-center justify-center p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 border border-white/10 transition-colors"
+            title={sidebarCollapsed ? 'Maximize sidebar (Expand)' : 'Minimize sidebar (Collapse)'}
+            aria-label="Toggle sidebar collapse"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="w-4 h-4 text-amber-400" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 text-slate-300" />
+            )}
           </button>
 
           {/* Logo & System Name */}
@@ -226,21 +244,25 @@ export default function AppLayout({
         </div>
       </header>
 
-      {/* BODY WITH FIXED/COLLAPSIBLE SIDEBAR */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* LEFT SIDEBAR */}
+      {/* BODY WITH INDEPENDENT SCROLL CONFIGURATION */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* LEFT SIDEBAR - INDEPENDENT SCROLL */}
         <aside
-          className={`no-print fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex flex-col justify-between transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
-            sidebarOpen ? 'translate-x-0 pt-14' : '-translate-x-full lg:pt-0'
+          className={`no-print fixed inset-y-0 left-0 z-30 bg-white border-r border-slate-200 flex flex-col justify-between transition-all duration-200 ease-in-out lg:static ${
+            sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
+          } ${
+            sidebarOpen ? 'w-64 translate-x-0 pt-14 lg:pt-0' : '-translate-x-full lg:translate-x-0'
           }`}
         >
-          {/* Nav links */}
-          <div className="p-4 space-y-6 overflow-y-auto">
+          {/* Nav links - Separate Independent Scroll */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-5">
             {navGroups.map((group, gIdx) => (
               <div key={gIdx} className="space-y-1.5">
-                <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400">
-                  {group.group}
-                </p>
+                {!sidebarCollapsed && (
+                  <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 truncate">
+                    {group.group}
+                  </p>
+                )}
                 <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
@@ -251,42 +273,47 @@ export default function AppLayout({
                         key={item.href}
                         href={item.href}
                         onClick={() => setSidebarOpen(false)}
-                        className={`group flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                        title={sidebarCollapsed ? item.label : undefined}
+                        className={`group flex items-center ${
+                          sidebarCollapsed ? 'justify-center px-2 py-2.5' : 'justify-between px-3 py-2'
+                        } rounded-lg text-xs font-medium transition-all ${
                           isActive
-                            ? 'bg-yale-50 text-yale-700 font-semibold'
+                            ? 'bg-yale-50 text-yale-700 font-semibold shadow-xs'
                             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <Icon
-                            className={`w-4 h-4 transition-colors ${
+                            className={`w-4 h-4 shrink-0 transition-colors ${
                               isActive
                                 ? 'text-yale-700'
                                 : 'text-slate-400 group-hover:text-slate-600'
                             }`}
                           />
-                          <span>{item.label}</span>
+                          {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                         </div>
 
                         {/* Badges / Active Dot */}
-                        <div className="flex items-center gap-1.5">
-                          {item.hasDot && (
-                            <span className="w-2 h-2 rounded-full bg-yale-600 animate-pulse" />
-                          )}
-                          {item.badge && (
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                                item.badge === 'active'
-                                  ? 'bg-yale-100 text-yale-700 border border-yale-200'
-                                  : item.badge === 'PRO'
-                                  ? 'bg-gold-100 text-gold-700 border border-gold-300'
-                                  : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                              }`}
-                            >
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
+                        {!sidebarCollapsed && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.hasDot && (
+                              <span className="w-2 h-2 rounded-full bg-yale-600 animate-pulse" />
+                            )}
+                            {item.badge && (
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                  item.badge === 'active'
+                                    ? 'bg-yale-100 text-yale-700 border border-yale-200'
+                                    : item.badge === 'PRO'
+                                    ? 'bg-gold-100 text-gold-700 border border-gold-300'
+                                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </Link>
                     );
                   })}
@@ -295,22 +322,30 @@ export default function AppLayout({
             ))}
           </div>
 
-          {/* Bottom Sidebar Box */}
-          <div className="p-4 border-t border-slate-200/90 bg-slate-50/50">
-            <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-subtle flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+          {/* Bottom Sidebar Box & Status */}
+          <div className="p-3 border-t border-slate-200/90 bg-slate-50/50 shrink-0">
+            {!sidebarCollapsed ? (
+              <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-subtle flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-slate-800 leading-tight truncate">ASC System v2.0</p>
+                    <p className="text-[10px] text-slate-400 font-medium truncate">{googleConfigured ? 'Sheets Synced' : 'Database Active'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[11px] font-bold text-slate-800 leading-tight">ASC System v2.0</p>
-                  <p className="text-[10px] text-slate-400 font-medium">{googleConfigured ? 'Sheets Synced' : 'Database Active'}</p>
+                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 shrink-0">
+                  ACTIVE
+                </span>
+              </div>
+            ) : (
+              <div className="flex justify-center" title="ASC System v2.0 - Active">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs border border-emerald-200 shadow-xs">
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
               </div>
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
-                ACTIVE
-              </span>
-            </div>
+            )}
           </div>
         </aside>
 
@@ -322,19 +357,21 @@ export default function AppLayout({
           />
         )}
 
-        {/* MAIN VIEW CONTENT AREA */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
-          {pageTitle && (
-            <div className="mb-6">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-navy-900">
-                {pageTitle}
-              </h1>
-              {pageSubtitle && (
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">{pageSubtitle}</p>
-              )}
-            </div>
-          )}
-          {children}
+        {/* MAIN VIEW CONTENT AREA - Independent Vertical Scroll */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+          <div className="max-w-7xl mx-auto">
+            {pageTitle && (
+              <div className="mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-navy-900">
+                  {pageTitle}
+                </h1>
+                {pageSubtitle && (
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">{pageSubtitle}</p>
+                )}
+              </div>
+            )}
+            {children}
+          </div>
         </main>
       </div>
     </div>
