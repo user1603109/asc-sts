@@ -76,3 +76,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message || 'Failed to create event' }, { status: 500 });
   }
 }
+
+export async function PUT(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { id, ...updates } = body;
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const { updateSheetRow } = await import('@/lib/googleSheets');
+    const updated = await updateSheetRow<Event>('events', Number(id), updates);
+    return NextResponse.json({ success: true, event: updated });
+  } catch (error: any) {
+    console.error('Update event error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update event' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const { deleteSheetRow } = await import('@/lib/googleSheets');
+    await deleteSheetRow('events', Number(id));
+    return NextResponse.json({ success: true, message: 'Event deleted' });
+  } catch (error: any) {
+    console.error('Delete event error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete event' }, { status: 500 });
+  }
+}
+

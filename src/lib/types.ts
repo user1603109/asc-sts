@@ -71,6 +71,7 @@ export interface Candidate {
   name: string;
   image_path?: string;
   course_id?: number | null;
+  course_name?: string;
   year_level?: string;
   order_number: number;
   registry_id?: number | null;

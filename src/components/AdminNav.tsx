@@ -3,14 +3,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, Users, Sliders, UserCheck, Trophy, Printer, Settings } from 'lucide-react';
+import { LayoutDashboard, Calendar, Users, Sliders, UserCheck, Trophy, Printer, Settings, ClipboardList, Award } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Enlistment Studio', href: '/admin/enlistment', icon: Calendar },
+  { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy },
+  { label: 'Scores Matrix', href: '/admin/scores', icon: ClipboardList },
+  { label: 'Official Rankings', href: '/admin/rankings', icon: Award },
   { label: 'Criteria', href: '/admin/criteria', icon: Sliders },
   { label: 'Judges', href: '/admin/judges', icon: UserCheck },
-  { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy },
   { label: 'Official Reports', href: '/admin/reports', icon: Printer },
   { label: 'System & Sheets', href: '/admin/settings', icon: Settings },
 ];
