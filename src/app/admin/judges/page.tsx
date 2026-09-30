@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { UserCheck, CheckCircle2, XCircle, RefreshCw, Search, X, Key } from 'lucide-react';
 import { Event } from '@/lib/types';
@@ -52,7 +52,7 @@ export default function AdminJudgesPage() {
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: FormEvent) => {
     e.preventDefault();
     if (!resetModalJudge) return;
     setResetting(true);

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getSheetRows } from '@/lib/googleSheets';
 import { Score, Event, Candidate, Criteria, User } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const [scores, events, candidates, criteriaList, users] = await Promise.all([

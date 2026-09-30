@@ -3,6 +3,8 @@ import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/
 import { ParticipantRegistry, Course } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const [participants, courses] = await Promise.all([

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getSheetRows } from '@/lib/googleSheets';
 import { SHEET_SCHEMAS } from '@/lib/schemas';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const backup: Record<string, any[]> = {};

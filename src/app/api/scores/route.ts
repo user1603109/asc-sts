@@ -3,6 +3,8 @@ import { appendSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets
 import { Score } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

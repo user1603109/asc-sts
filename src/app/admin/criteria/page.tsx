@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { Sliders, Plus, Trash2, RefreshCw, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
@@ -64,7 +64,7 @@ function CriteriaContent() {
     loadCriteria();
   }, [selectedEventId]);
 
-  const handleAddPortion = async (e: React.FormEvent) => {
+  const handleAddPortion = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await fetch('/api/criteria', {
@@ -83,7 +83,7 @@ function CriteriaContent() {
     }
   };
 
-  const handleAddCriteria = async (e: React.FormEvent) => {
+  const handleAddCriteria = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await fetch('/api/criteria', {

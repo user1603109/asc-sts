@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
 import { Sparkles, CheckCircle2, AlertCircle, RefreshCw, Trophy, Users, ShieldCheck, ArrowRight } from 'lucide-react';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Database, Download, FileJson, CheckCircle2 } from 'lucide-react';
 import { SHEET_SCHEMAS } from '@/lib/schemas';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import { Fragment, Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -196,7 +196,7 @@ function TabulationContent() {
                     const isExpanded = expandedCandidate === res.candidate.id;
 
                     return (
-                      <React.Fragment key={res.candidate.id}>
+                      <Fragment key={res.candidate.id}>
                         <tr className={`hover:bg-slate-50 print:hover:bg-transparent transition-colors ${
                           isRank1 ? 'bg-gold-50/50' : ''
                         }`}>
@@ -283,7 +283,7 @@ function TabulationContent() {
                             </td>
                           </tr>
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     );
                   })}
                 </tbody>

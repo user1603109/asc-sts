@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, FileSpreadsheet, Lock, Save } from 'lucide-react';
 import { SHEET_SCHEMAS } from '@/lib/schemas';
@@ -58,7 +58,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleSaveGeneral = async (e: React.FormEvent) => {
+  const handleSaveGeneral = async (e: FormEvent) => {
     e.preventDefault();
     setSavingGeneral(true);
     setGeneralMessage('');
@@ -80,7 +80,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
     setSavingProfile(true);
     setProfileMessage('');

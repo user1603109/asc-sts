@@ -3,6 +3,8 @@ import { appendSheetRow, deleteSheetRow, getSheetRows } from '@/lib/googleSheets
 import { EventJudge, User } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

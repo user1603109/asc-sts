@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -144,7 +144,7 @@ function EnlistmentContent() {
   }, []);
 
   // --- EVENT HANDLERS ---
-  const handleSaveEvent = async (e: React.FormEvent) => {
+  const handleSaveEvent = async (e: FormEvent) => {
     e.preventDefault();
     try {
       if (editingEvent) {
@@ -224,7 +224,7 @@ function EnlistmentContent() {
     }
   };
 
-  const handleSaveCandidate = async (e: React.FormEvent) => {
+  const handleSaveCandidate = async (e: FormEvent) => {
     e.preventDefault();
     if (!candidateTargetEventId) return;
     try {
@@ -259,7 +259,7 @@ function EnlistmentContent() {
     }
   };
 
-  const handleAddMeta = async (e: React.FormEvent) => {
+  const handleAddMeta = async (e: FormEvent) => {
     e.preventDefault();
     if (!metaName.trim() || !showMetaModal) return;
     try {
@@ -315,7 +315,7 @@ function EnlistmentContent() {
     setShowPortionsModal(true);
   };
 
-  const handleAddPortion = async (e: React.FormEvent) => {
+  const handleAddPortion = async (e: FormEvent) => {
     e.preventDefault();
     if (!portionEventId) return;
     try {
@@ -373,7 +373,7 @@ function EnlistmentContent() {
   };
 
   // --- PARTICIPANTS REGISTRY HANDLERS ---
-  const handleSaveParticipant = async (e: React.FormEvent) => {
+  const handleSaveParticipant = async (e: FormEvent) => {
     e.preventDefault();
     try {
       if (editingParticipant) {

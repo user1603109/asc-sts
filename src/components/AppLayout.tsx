@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 interface AppLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   user?: {
     username: string;
     fullName: string;

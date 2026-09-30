@@ -3,6 +3,8 @@ import { getSheetRows, updateSheetRow, appendSheetRow } from '@/lib/googleSheets
 import { SystemSetting } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const settings = await getSheetRows<SystemSetting>('system_settings');

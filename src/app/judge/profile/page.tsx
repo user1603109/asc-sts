@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { User, Lock, Save, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function JudgeProfilePage() {
       });
   }, []);
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     setMessage(null);
     setSavingProfile(true);
@@ -47,7 +47,7 @@ export default function JudgeProfilePage() {
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
+  const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setMessage(null);
 

@@ -3,6 +3,8 @@ import { getRowById, getSheetRows } from '@/lib/googleSheets';
 import { Candidate, Course, Criteria, Event, EventJudge, EventPortion, Score, User } from '@/lib/types';
 import { computeTabulation } from '@/lib/tabulation';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

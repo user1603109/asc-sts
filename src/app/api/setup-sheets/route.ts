@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ensureAllSheets, isGoogleConfigured } from '@/lib/googleSheets';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const configured = isGoogleConfigured();
   return NextResponse.json({
