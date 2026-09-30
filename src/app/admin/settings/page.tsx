@@ -1,9 +1,7 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, HardDrive, FileSpreadsheet } from 'lucide-react';
-import { SHEET_SCHEMAS } from '@/lib/googleSheets';
+import { SHEET_SCHEMAS } from '@/lib/schemas';
 
 export default function AdminSettingsPage() {
   const [googleStatus, setGoogleStatus] = useState<any>(null);

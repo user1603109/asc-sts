@@ -2,10 +2,13 @@ import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Award, ArrowRight, FileSpreadsheet, HardDrive, Smartphone, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { isGoogleConfigured } from '@/lib/googleSheets';
 
 export default function HomePage() {
-  const googleConfigured = isGoogleConfigured();
+  const googleConfigured = Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+    process.env.GOOGLE_PRIVATE_KEY &&
+    process.env.GOOGLE_SHEET_ID
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-800 font-sans">
