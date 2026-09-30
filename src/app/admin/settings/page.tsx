@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, HardDrive, FileSpreadsheet } from 'lucide-react';
