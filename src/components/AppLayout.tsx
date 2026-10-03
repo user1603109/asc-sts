@@ -359,7 +359,7 @@ export default function AppLayout({
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
           <div className="max-w-7xl mx-auto">
             {pageTitle && (
-              <div className="mb-6">
+              <div className="mb-6 print:hidden no-print">
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-navy-900">
                   {pageTitle}
                 </h1>

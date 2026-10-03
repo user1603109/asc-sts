@@ -28,7 +28,7 @@ export default function AdminReportsPage() {
   const [eventSearch, setEventSearch] = useState('');
   const [activeReportTab, setActiveReportTab] = useState<'enlistment' | 'registry' | 'rankings' | 'engagement'>('rankings');
 
-  // Data collections
+  // Reference datasets
   const [participants, setParticipants] = useState<ParticipantRegistry[]>([]);
   const [judges, setJudges] = useState<any[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -48,10 +48,7 @@ export default function AdminReportsPage() {
   // Customize Signatories Modal state
   const [showSignatoriesModal, setShowSignatoriesModal] = useState(false);
   const [signatories, setSignatories] = useState({
-    tabulatorName: 'ENGR. JOHN DOE, MIT',
-    tabulatorTitle: 'Chief Institutional Tabulator',
-    chairmanName: 'DR. JANE SMITH, EdD',
-    chairmanTitle: 'Chairman, Board of Judges',
+    organizerName: '',
     coordinatorName: 'MR. DON JOHN FRONDA',
     coordinatorTitle: 'Socio-Cultural Coordinator',
     showNoted: true,
@@ -88,6 +85,14 @@ export default function AdminReportsPage() {
       const res = await fetch(`/api/tabulation?eventId=${selectedEventId}`);
       const data = await res.json();
       setTabData(data);
+
+      // Automatically sync event organizer for signatories
+      if (data && data.event && data.event.organizer) {
+        setSignatories((prev) => ({
+          ...prev,
+          organizerName: data.event.organizer,
+        }));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -98,6 +103,10 @@ export default function AdminReportsPage() {
   useEffect(() => {
     loadTabData();
   }, [selectedEventId]);
+
+  const currentEvent = events.find((e) => String(e.id) === String(selectedEventId)) || tabData?.event;
+  const eventOrganizer = signatories.organizerName || currentEvent?.organizer || 'Event Organizing Committee';
+  const assignedJudges = tabData?.judges || [];
 
   // Export current active report to CSV
   const handleExportCsv = () => {
@@ -231,51 +240,51 @@ export default function AdminReportsPage() {
           </div>
         </div>
 
-        {/* 4 INSTITUTIONAL REPORT TABS */}
-        <div className="no-print flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
+        {/* 4 INSTITUTIONAL REPORT TABS - RESPONSIVE GRID (NO HORIZONTAL SCROLL) */}
+        <div className="no-print grid grid-cols-2 lg:grid-cols-4 gap-2 border-b border-slate-200 pb-3">
           <button
             onClick={() => setActiveReportTab('enlistment')}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               activeReportTab === 'enlistment'
                 ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>1. Event Enlistment Report</span>
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">1. Enlistment Report</span>
           </button>
           <button
             onClick={() => setActiveReportTab('registry')}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               activeReportTab === 'registry'
                 ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>2. Registry Report (Participants &amp; Judges)</span>
+            <Users className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">2. Master Registry</span>
           </button>
           <button
             onClick={() => setActiveReportTab('rankings')}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               activeReportTab === 'rankings'
                 ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>3. Ranking Reports</span>
+            <Trophy className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">3. Ranking Reports</span>
           </button>
           <button
             onClick={() => setActiveReportTab('engagement')}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+            className={`px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               activeReportTab === 'engagement'
                 ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <Building className="w-3.5 h-3.5" />
-            <span>4. Department Engagement Report</span>
+            <Building className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">4. Dept Engagement</span>
           </button>
         </div>
 
@@ -283,23 +292,28 @@ export default function AdminReportsPage() {
         {/* PRINTABLE INSTITUTIONAL REPORT CANVAS */}
         {/* ========================================================================= */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-10 shadow-card print:border-none print:shadow-none print:p-0">
-          {/* OFFICIAL INSTITUTIONAL HEADER */}
+          {/* OFFICIAL INSTITUTIONAL HEADER WITH DUAL LOGOS */}
           <div className="text-center pb-6 mb-6 border-b-2 border-slate-900 flex flex-col items-center">
-            <div className="flex items-center justify-center gap-4 mb-2">
-              <img
-                src="/api/logo"
-                alt="ASC Logo"
-                className="w-16 h-16 object-contain"
-                onError={(e) => {
-                  e.currentTarget.src = '/assets/img/astslogo.png';
-                }}
-              />
-              <div>
+            <div className="flex items-center justify-between w-full max-w-4xl mx-auto px-4 pb-2">
+              {/* Left Logo: ASTS Logo */}
+              <div className="w-20 h-20 flex items-center justify-center shrink-0">
+                <img
+                  src="/api/logo?name=astslogo"
+                  alt="ASTS Logo"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = '/assets/img/astslogo.png';
+                  }}
+                />
+              </div>
+
+              {/* Center: Institutional Letterhead */}
+              <div className="text-center px-4 flex-1">
                 <p className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                   Republic of the Philippines
                 </p>
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">
-                  APAYAO STATE COLLEGE
+                <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-tight uppercase">
+                  Apayao State College
                 </h1>
                 <p className="text-[11px] text-slate-600 font-medium">
                   Conner &amp; Luna Campuses • Cordillera Administrative Region
@@ -307,6 +321,18 @@ export default function AdminReportsPage() {
                 <p className="text-[10px] font-bold text-yale-700 uppercase tracking-widest mt-0.5">
                   Automated Scoring &amp; Tabulation System (ASC-STS)
                 </p>
+              </div>
+
+              {/* Right Logo: ASC Logo */}
+              <div className="w-20 h-20 flex items-center justify-center shrink-0">
+                <img
+                  src="/api/logo?name=asclogo"
+                  alt="ASC Logo"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = '/assets/img/asclogo.png';
+                  }}
+                />
               </div>
             </div>
 
@@ -609,50 +635,83 @@ export default function AdminReportsPage() {
             </div>
           )}
 
-          {/* OFFICIAL CERTIFICATION SIGNATORIES */}
+          {/* OFFICIAL CERTIFICATION SIGNATORIES - AUTOMATICALLY DERIVED FROM EVENT */}
           <div className="mt-12 pt-8 border-t border-slate-300">
-            <p className="text-center text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-8">
-              Certified Official &amp; Authenticated by the Board of Tabulators
+            <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-8">
+              Certified Official &amp; Authenticated by the Board of Tabulators &amp; Event Officials
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1.5 font-bold text-slate-900 text-xs">
-                  {signatories.tabulatorName}
+            {/* 1. THE BOARD OF JUDGES (AUTOMATICALLY POPULATED) */}
+            <div className="mb-8">
+              <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-5">
+                The Board of Judges
+              </p>
+              {assignedJudges.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center justify-center">
+                  {assignedJudges.map((judge, idx) => (
+                    <div key={judge.id || idx} className="px-2">
+                      <div className="w-52 max-w-full mx-auto border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase truncate">
+                        {judge.full_name || judge.username}
+                      </div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                        {idx === 0 ? 'Chairman, Board of Judges' : 'Member, Board of Judges'}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-[11px] text-slate-500 uppercase tracking-wider">
-                  {signatories.tabulatorTitle}
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-center">
+                  <div>
+                    <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase">
+                      DR. JANE SMITH, EdD
+                    </div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                      Chairman, Board of Judges
+                    </p>
+                  </div>
+                  <div>
+                    <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase">
+                      BOARD OF JUDGES
+                    </div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                      Accredited Event Judges
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 2. THE EVENT ORGANIZER & SOCIO-CULTURAL COORDINATOR */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-center pt-2">
+              <div>
+                <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase">
+                  {signatories.organizerName || eventOrganizer}
+                </div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                  Event Organizer / Committee Head
                 </p>
               </div>
 
               <div>
-                <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1.5 font-bold text-slate-900 text-xs">
-                  {signatories.chairmanName}
-                </div>
-                <p className="text-[11px] text-slate-500 uppercase tracking-wider">
-                  {signatories.chairmanTitle}
-                </p>
-              </div>
-
-              <div>
-                <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1.5 font-bold text-slate-900 text-xs">
+                <div className="w-56 mx-auto border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase">
                   {signatories.coordinatorName}
                 </div>
-                <p className="text-[11px] text-slate-500 uppercase tracking-wider">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
                   {signatories.coordinatorTitle}
                 </p>
               </div>
             </div>
 
+            {/* 3. NOTED BY */}
             {signatories.showNoted && (
               <div className="mt-8 text-center">
                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-4">
                   NOTED BY:
                 </p>
-                <div className="w-64 mx-auto border-b-2 border-slate-900 pb-1 mb-1.5 font-bold text-slate-900 text-xs">
+                <div className="w-64 mx-auto border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase">
                   {signatories.presidentName}
                 </div>
-                <p className="text-[11px] text-slate-500 uppercase tracking-wider">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
                   {signatories.presidentTitle}
                 </p>
               </div>
@@ -675,46 +734,27 @@ export default function AdminReportsPage() {
                 <span>Customize Report Signatories</span>
               </h2>
               <p className="text-xs text-slate-500 mb-4">
-                Update the official certifying officers displayed on institutional reports
+                Review or override the official certifying officers for the selected competition
               </p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Chief Tabulator Name</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Event Organizer (Auto-detected from event)
+                  </label>
                   <input
                     type="text"
-                    value={signatories.tabulatorName}
-                    onChange={(e) => setSignatories({ ...signatories, tabulatorName: e.target.value })}
+                    value={signatories.organizerName || eventOrganizer}
+                    onChange={(e) => setSignatories({ ...signatories, organizerName: e.target.value })}
                     className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   />
-                  <input
-                    type="text"
-                    value={signatories.tabulatorTitle}
-                    onChange={(e) => setSignatories({ ...signatories, tabulatorTitle: e.target.value })}
-                    placeholder="Title / Designation"
-                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 mt-1"
-                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Default derived from event enlistment: <span className="font-semibold text-slate-600">{currentEvent?.organizer || 'Organizing Committee'}</span>
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Board Chairman Name</label>
-                  <input
-                    type="text"
-                    value={signatories.chairmanName}
-                    onChange={(e) => setSignatories({ ...signatories, chairmanName: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                  <input
-                    type="text"
-                    value={signatories.chairmanTitle}
-                    onChange={(e) => setSignatories({ ...signatories, chairmanTitle: e.target.value })}
-                    placeholder="Title / Designation"
-                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 mt-1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Socio-Cultural Coordinator Name</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Socio-Cultural Coordinator</label>
                   <input
                     type="text"
                     value={signatories.coordinatorName}

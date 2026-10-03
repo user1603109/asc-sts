@@ -34,3 +34,5 @@ connections/
 
 # TypeScript
 *.tsbuildinfo
+
+.vercel
