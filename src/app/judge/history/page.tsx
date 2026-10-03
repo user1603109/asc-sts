@@ -1,98 +1,190 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Navbar from '@/components/Navbar';
 import Link from 'next/link';
-import { History, ArrowLeft, Calendar, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { Event } from '@/lib/types';
+import JudgeLayout from '@/components/JudgeLayout';
+import {
+  History,
+  Calendar,
+  ArrowRight,
+  CheckCircle2,
+  Trophy,
+  Users,
+  Search,
+  RefreshCw,
+  Clock,
+  Layers,
+} from 'lucide-react';
+import { Event, Score } from '@/lib/types';
 
 export default function JudgeHistoryPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/auth/me').then((res) => res.json()),
-      fetch('/api/events').then((res) => res.json()),
-    ]).then(([userData, eventsData]) => {
-      if (userData.user) setCurrentUser(userData.user);
-      if (Array.isArray(eventsData)) {
-        // Filter events that are completed or tabulating
-        setEvents(eventsData.filter((e) => e.status === 'Completed' || e.status === 'Tabulating'));
+    async function loadHistory() {
+      try {
+        setLoading(true);
+        const meRes = await fetch('/api/auth/me');
+        if (!meRes.ok) return;
+        const meData = await meRes.json();
+        if (meData.authenticated && meData.user) {
+          setCurrentUser(meData.user);
+
+          const [eventsRes, scoresRes] = await Promise.all([
+            fetch('/api/events'),
+            fetch(`/api/scores?judgeId=${meData.user.userId}`),
+          ]);
+
+          const eventsData = eventsRes.ok ? await eventsRes.json() : [];
+          const scoresData = scoresRes.ok ? await scoresRes.json() : [];
+
+          if (Array.isArray(eventsData)) {
+            // Include completed, tabulating or any event where the judge submitted scores
+            const scoredEventIds = new Set(scoresData.map((s: Score) => Number(s.event_id)));
+            const historical = eventsData.filter(
+              (e: Event) =>
+                e.status === 'Completed' ||
+                e.status === 'Tabulating' ||
+                scoredEventIds.has(Number(e.id))
+            );
+            setEvents(historical);
+          }
+
+          if (Array.isArray(scoresData)) {
+            setScores(scoresData);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load history:', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    }
+
+    loadHistory();
   }, []);
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-800 font-sans">
-      <Navbar user={currentUser} />
+  const filteredEvents = events.filter((e) =>
+    e.name?.toLowerCase().includes(search.toLowerCase()) ||
+    e.type?.toLowerCase().includes(search.toLowerCase()) ||
+    e.organizer?.toLowerCase().includes(search.toLowerCase())
+  );
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
-        <div className="mb-6">
-          <Link
-            href="/judge/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-yale-700 hover:text-yale-800 mb-2 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Active Dashboard</span>
-          </Link>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Judge Tabulation History</h1>
-          <p className="text-xs text-slate-500 mt-1">Review completed competitions and previously recorded scoring sheets</p>
+  return (
+    <JudgeLayout
+      user={currentUser}
+      pageTitle="Scoring History & Tabulation Archive"
+      pageSubtitle="Review your past submitted scorecards and archived institutional competitions"
+    >
+      <div className="space-y-4 max-w-4xl mx-auto">
+        {/* Search Bar */}
+        <div className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl shadow-xs flex items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search historical competitions by event name or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-slate-50 focus:bg-white text-slate-900 border border-slate-200 focus:border-[#0F4C81] rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-none transition-all"
+            />
+          </div>
+          <span className="text-xs font-bold text-slate-500 whitespace-nowrap hidden sm:inline">
+            {filteredEvents.length} Competitions
+          </span>
         </div>
 
+        {/* LIST MODE (NOT TABULAR) */}
         {loading ? (
-          <div className="p-12 text-center text-xs text-slate-400">Loading historical competitions...</div>
-        ) : events.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-card">
-            <History className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-bold text-slate-700">No Past Events Concluded Yet</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Events will be archived here once officially marked as Completed by the Tabulation Committee.
+          <div className="p-16 text-center bg-white rounded-2xl border border-slate-200 shadow-xs">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#0F4C81] mb-2" />
+            <p className="text-xs font-bold text-slate-700">Loading your adjudication records...</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+              <History className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">No Past Adjudications Found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Completed and archived competition scorecards will be permanently stored here for audit and verification.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {events.map((evt) => (
-              <div
-                key={evt.id}
-                className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition-shadow flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                      {evt.type || 'Competition'}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {evt.status}
-                    </span>
+          <div className="space-y-3">
+            {filteredEvents.map((evt) => {
+              const eventScores = scores.filter((s) => Number(s.event_id) === Number(evt.id));
+              const scoredCandidates = new Set(eventScores.map((s) => Number(s.candidate_id))).size;
+
+              return (
+                <div
+                  key={evt.id}
+                  className="bg-white border border-slate-200 hover:border-[#0F4C81]/50 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-3"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        {evt.type || 'Competition'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>{evt.status}</span>
+                      </span>
+                    </div>
+
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                      {evt.name}
+                    </h3>
+
+                    {evt.description && (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                        {evt.description}
+                      </p>
+                    )}
+
+                    <div className="mt-3 flex items-center gap-2 sm:gap-4 flex-wrap text-xs text-slate-600">
+                      <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200/60">
+                        <Users className="w-3.5 h-3.5 text-[#0F4C81]" />
+                        <span>Contestants Evaluated: <strong className="text-slate-900 font-bold">{scoredCandidates}</strong></span>
+                      </span>
+
+                      <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200/60">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>AY {evt.academic_year || '2025-2026'}</span>
+                      </span>
+
+                      {evt.organizer && (
+                        <span className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-md border border-slate-200/60 text-slate-500">
+                          <span>{evt.organizer}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">{evt.name}</h3>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{evt.description || 'No description'}</p>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Scores Locked & Synced</span>
+                    </span>
 
-                  <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Academic Year {evt.academic_year || '2025-2026'}</span>
+                    <Link
+                      href={`/judge/score/${evt.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#0F4C81] text-slate-700 hover:text-white font-bold text-xs transition-colors"
+                    >
+                      <span>Review Score Record</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 </div>
-
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <Link
-                    href={`/judge/score/${evt.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-yale-700 hover:text-yale-800 transition-colors"
-                  >
-                    <span>View Score Record</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </JudgeLayout>
   );
 }

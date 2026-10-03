@@ -197,6 +197,147 @@ export async function updateSheetRow<T extends Record<string, any>>(
 }
 
 /**
+ * Fast bulk upsert for judge scores. Executes in a single batch read & write to avoid timeouts.
+ */
+export async function upsertScoresBatch(scoreItems: {
+  event_id: number;
+  judge_id: number;
+  candidate_id: number;
+  criteria_id: number;
+  score: number;
+}[]): Promise<boolean> {
+  if (!scoreItems || scoreItems.length === 0) return true;
+
+  const sheets = getSheetsClient();
+  if (!sheets || !SPREADSHEET_ID) {
+    const store = getMemoryStore();
+    if (!store['scores']) store['scores'] = [];
+    const list = store['scores'];
+    for (const item of scoreItems) {
+      const idx = list.findIndex(
+        (s) =>
+          Number(s.event_id) === Number(item.event_id) &&
+          Number(s.judge_id) === Number(item.judge_id) &&
+          Number(s.candidate_id) === Number(item.candidate_id) &&
+          Number(s.criteria_id) === Number(item.criteria_id)
+      );
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], score: Number(item.score) };
+      } else {
+        const maxId = list.reduce((m, s) => Math.max(m, Number(s.id) || 0), 0);
+        list.push({ id: maxId + 1, ...item, score: Number(item.score) });
+      }
+    }
+    return true;
+  }
+
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'scores!A1:Z',
+    });
+
+    let rows = res.data.values || [];
+    if (rows.length === 0) {
+      const defaultHeaders = SHEET_SCHEMAS['scores'] || ['id', 'event_id', 'judge_id', 'candidate_id', 'criteria_id', 'score'];
+      rows = [defaultHeaders];
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'scores!A1:Z1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [defaultHeaders] },
+      });
+    }
+
+    const headers = rows[0] as string[];
+    const idCol = headers.indexOf('id');
+    const evtCol = headers.indexOf('event_id');
+    const jdgCol = headers.indexOf('judge_id');
+    const candCol = headers.indexOf('candidate_id');
+    const critCol = headers.indexOf('criteria_id');
+    const scoreCol = headers.indexOf('score');
+
+    let maxId = 0;
+    for (let i = 1; i < rows.length; i++) {
+      const rId = Number(rows[i][idCol]) || 0;
+      if (rId > maxId) maxId = rId;
+    }
+
+    const updateRequests: { range: string; values: any[][] }[] = [];
+    const appendRows: any[][] = [];
+
+    for (const item of scoreItems) {
+      let foundRowIdx = -1;
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (
+          Number(r[evtCol]) === Number(item.event_id) &&
+          Number(r[jdgCol]) === Number(item.judge_id) &&
+          Number(r[candCol]) === Number(item.candidate_id) &&
+          Number(r[critCol]) === Number(item.criteria_id)
+        ) {
+          foundRowIdx = i;
+          break;
+        }
+      }
+
+      if (foundRowIdx !== -1) {
+        const sheetRowNumber = foundRowIdx + 1;
+        const row = [...rows[foundRowIdx]];
+        while (row.length < headers.length) row.push('');
+        row[scoreCol] = String(item.score);
+        rows[foundRowIdx] = row;
+
+        updateRequests.push({
+          range: `scores!A${sheetRowNumber}:Z${sheetRowNumber}`,
+          values: [row],
+        });
+      } else {
+        maxId++;
+        const newRow = headers.map((h) => {
+          if (h === 'id') return String(maxId);
+          if (h === 'event_id') return String(item.event_id);
+          if (h === 'judge_id') return String(item.judge_id);
+          if (h === 'candidate_id') return String(item.candidate_id);
+          if (h === 'criteria_id') return String(item.criteria_id);
+          if (h === 'score') return String(item.score);
+          return '';
+        });
+        rows.push(newRow);
+        appendRows.push(newRow);
+      }
+    }
+
+    if (updateRequests.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          valueInputOption: 'USER_ENTERED',
+          data: updateRequests,
+        },
+      });
+    }
+
+    if (appendRows.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'scores!A:Z',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: appendRows,
+        },
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Fast upsertScoresBatch error:', error);
+    throw error;
+  }
+}
+
+
+/**
  * Delete a row by ID from a sheet tab
  */
 export async function deleteSheetRow(sheetName: string, id: number): Promise<boolean> {

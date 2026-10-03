@@ -144,13 +144,21 @@ export default function AppLayout({
 
           {/* Logo & System Name */}
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-white/10 p-1 flex items-center justify-center border border-white/20 shadow-sm group-hover:bg-white/20 transition-all">
+            <div className="flex items-center gap-1.5 bg-white/10 p-1 rounded-lg border border-white/20 shadow-sm group-hover:bg-white/20 transition-all">
               <img
                 src="/api/logo?name=astslogo&v=2"
                 alt="ASTS Logo"
-                className="w-full h-full object-contain"
+                className="w-7 h-7 object-contain"
                 onError={(e) => {
                   e.currentTarget.src = '/assets/img/astslogo.png';
+                }}
+              />
+              <img
+                src="/api/logo?name=asclogo&v=2"
+                alt="ASC Logo"
+                className="w-7 h-7 object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/assets/img/asclogo.png';
                 }}
               />
             </div>

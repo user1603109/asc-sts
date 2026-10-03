@@ -33,8 +33,23 @@ export default function Navbar({ user }: NavbarProps) {
           href={user ? (user.role === 'admin' ? '/admin/dashboard' : '/judge/dashboard') : '/'}
           className="flex items-center gap-2.5 group"
         >
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400 font-black shadow-sm group-hover:bg-white/20 border border-white/15 transition-all">
-            <Award className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center gap-1 bg-white/10 p-1 rounded-lg border border-white/15 group-hover:bg-white/20 transition-all">
+            <img
+              src="/api/logo?name=astslogo&v=2"
+              alt="ASTS Logo"
+              className="w-7 h-7 object-contain rounded"
+              onError={(e) => {
+                e.currentTarget.src = '/assets/img/astslogo.png';
+              }}
+            />
+            <img
+              src="/api/logo?name=asclogo&v=2"
+              alt="ASC Logo"
+              className="w-7 h-7 object-contain rounded"
+              onError={(e) => {
+                e.currentTarget.src = '/assets/img/asclogo.png';
+              }}
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5 leading-none">

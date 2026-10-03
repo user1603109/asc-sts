@@ -21,7 +21,7 @@ export async function GET() {
     );
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `asc-sts-backup-${timestamp}.json`;
+    const filename = `asc-asts-backup-${timestamp}.json`;
 
     return new NextResponse(JSON.stringify(backup, null, 2), {
       status: 200,

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { User, UserRole } from './types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'asc-sts-super-secret-key-2026-secure';
+const JWT_SECRET = process.env.JWT_SECRET || 'asc-asts-super-secret-key-2026-secure';
 const encodedKey = new TextEncoder().encode(JWT_SECRET);
 
 export interface TokenPayload {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { getSheetRows, upsertScoresBatch } from '@/lib/googleSheets';
 import { Score } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -49,39 +49,21 @@ export async function POST(req: NextRequest) {
       judge_id?: number;
     }[] = Array.isArray(body) ? body : [body];
 
-    const effectiveJudgeId = user.role === 'admin' && body.judge_id ? Number(body.judge_id) : user.userId;
-    const existingScores = await getSheetRows<Score>('scores');
+    const fallbackJudgeId = user.userId;
+    const itemsToUpsert = scoreItems.map((item) => ({
+      event_id: Number(item.event_id),
+      judge_id: (user.role === 'admin' && item.judge_id) ? Number(item.judge_id) : Number(fallbackJudgeId),
+      candidate_id: Number(item.candidate_id),
+      criteria_id: Number(item.criteria_id),
+      score: Number(item.score),
+    }));
 
-    for (const item of scoreItems) {
-      const { event_id, candidate_id, criteria_id, score } = item;
+    await upsertScoresBatch(itemsToUpsert);
 
-      // Check if score already exists for (event, judge, candidate, criteria)
-      const existing = existingScores.find(
-        (s) =>
-          Number(s.event_id) === Number(event_id) &&
-          Number(s.judge_id) === Number(effectiveJudgeId) &&
-          Number(s.candidate_id) === Number(candidate_id) &&
-          Number(s.criteria_id) === Number(criteria_id)
-      );
-
-      if (existing) {
-        await updateSheetRow<Score>('scores', Number(existing.id), {
-          score: Number(score),
-        });
-      } else {
-        await appendSheetRow<Score>('scores', {
-          event_id: Number(event_id),
-          judge_id: Number(effectiveJudgeId),
-          candidate_id: Number(candidate_id),
-          criteria_id: Number(criteria_id),
-          score: Number(score),
-        });
-      }
-    }
-
-    return NextResponse.json({ success: true, message: 'Scores submitted successfully' });
+    return NextResponse.json({ success: true, message: 'Scores submitted successfully', count: itemsToUpsert.length });
   } catch (error: any) {
     console.error('Submit score error:', error);
     return NextResponse.json({ error: error.message || 'Failed to submit score' }, { status: 500 });
   }
 }
+
