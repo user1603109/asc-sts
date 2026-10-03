@@ -78,7 +78,7 @@ function EnlistmentContent() {
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvText, setCsvText] = useState('');
 
-  const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'courses' | 'organizers' | null>(null);
+  const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'organizers' | null>(null);
   const [metaName, setMetaName] = useState('');
   const [metaExtra, setMetaExtra] = useState('');
 
@@ -278,12 +278,6 @@ function EnlistmentContent() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ department_name: metaName, department_code: metaExtra }),
-        });
-      } else if (showMetaModal === 'courses') {
-        await fetch('/api/courses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ course_name: metaName }),
         });
       } else if (showMetaModal === 'types') {
         await fetch('/api/event-types', {
@@ -501,12 +495,6 @@ function EnlistmentContent() {
               className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
             >
               Departments
-            </button>
-            <button
-              onClick={() => setShowMetaModal('courses')}
-              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
-            >
-              Courses
             </button>
             <button
               onClick={() => setShowMetaModal('types')}
@@ -1684,23 +1672,6 @@ function EnlistmentContent() {
                     </div>
                   ))}
 
-                {showMetaModal === 'courses' &&
-                  courses.map((c) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
-                    >
-                      <span className="font-bold text-slate-900">{c.course_name}</span>
-                      <button
-                        onClick={() => handleDeleteMeta('courses', c.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
-                        title="Delete Course"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-
                 {showMetaModal === 'types' &&
                   eventTypes.map((t) => (
                     <div
@@ -1745,8 +1716,6 @@ function EnlistmentContent() {
                     placeholder={
                       showMetaModal === 'departments'
                         ? 'Department Name (e.g. College of Science)'
-                        : showMetaModal === 'courses'
-                        ? 'Course Name (e.g. BS Computer Science)'
                         : showMetaModal === 'types'
                         ? 'Type (e.g. Pageant, Sports, Debate)'
                         : 'Organizer Name (e.g. Student Council)'

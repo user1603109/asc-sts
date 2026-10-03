@@ -372,6 +372,39 @@ export default function AppLayout({
           </div>
         </main>
       </div>
+
+      {/* GLOBAL PRINT LAYOUT OVERRIDES */}
+      <style jsx global>{`
+        @media print {
+          html, body {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          #__next,
+          div[class*="h-screen"],
+          div[class*="overflow-hidden"],
+          div[class*="overflow-y-auto"],
+          main {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            position: static !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+          }
+          .no-print, header, aside, [aria-label="Toggle navigation"] {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
