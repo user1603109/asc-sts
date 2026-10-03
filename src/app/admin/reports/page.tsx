@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
   Printer,
+  Download,
   RefreshCw,
   Trophy,
   Award,
@@ -12,15 +13,27 @@ import {
   Settings,
   Building,
   Layers,
+  Calendar,
+  Users,
+  UserCheck,
+  Search,
   X,
 } from 'lucide-react';
-import { Event } from '@/lib/types';
+import { Event, Department, Course, ParticipantRegistry } from '@/lib/types';
 import { TabulationResult } from '@/lib/tabulation';
 
 export default function AdminReportsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [activeReportTab, setActiveReportTab] = useState<'rankings' | 'dept-rankings' | 'tabulation' | 'audit' | 'system'>('rankings');
+  const [eventSearch, setEventSearch] = useState('');
+  const [activeReportTab, setActiveReportTab] = useState<'enlistment' | 'registry' | 'rankings' | 'engagement'>('rankings');
+
+  // Data collections
+  const [participants, setParticipants] = useState<ParticipantRegistry[]>([]);
+  const [judges, setJudges] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [candidates, setCandidates] = useState<any[]>([]);
 
   const [tabData, setTabData] = useState<{
     event: Event;
@@ -30,7 +43,6 @@ export default function AdminReportsPage() {
     tabulations: TabulationResult[];
   } | null>(null);
 
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Customize Signatories Modal state
@@ -47,27 +59,35 @@ export default function AdminReportsPage() {
     presidentTitle: 'College President',
   });
 
+  // Initial load of reference datasets
   useEffect(() => {
-    fetch('/api/events')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setEvents(data);
-          setSelectedEventId(String(data[0].id));
-        }
-      });
+    Promise.all([
+      fetch('/api/events').then((r) => r.json()),
+      fetch('/api/participants').then((r) => r.json()),
+      fetch('/api/judges').then((r) => r.json()),
+      fetch('/api/departments').then((r) => r.json()),
+      fetch('/api/courses').then((r) => r.json()),
+      fetch('/api/candidates').then((r) => r.json()),
+    ]).then(([eventsData, partsData, judgesData, deptsData, coursesData, candsData]) => {
+      if (Array.isArray(eventsData) && eventsData.length > 0) {
+        setEvents(eventsData);
+        setSelectedEventId(String(eventsData[0].id));
+      }
+      if (Array.isArray(partsData)) setParticipants(partsData);
+      if (Array.isArray(judgesData)) setJudges(judgesData);
+      if (Array.isArray(deptsData)) setDepartments(deptsData);
+      if (Array.isArray(coursesData)) setCourses(coursesData);
+      if (Array.isArray(candsData)) setCandidates(candsData);
+    });
   }, []);
 
-  const loadData = async () => {
+  const loadTabData = async () => {
     if (!selectedEventId) return;
     setLoading(true);
     try {
-      const [tabRes, logRes] = await Promise.all([
-        fetch(`/api/tabulation?eventId=${selectedEventId}`).then((r) => r.json()),
-        fetch('/api/logs').then((r) => r.json()),
-      ]);
-      setTabData(tabRes);
-      if (Array.isArray(logRes)) setAuditLogs(logRes);
+      const res = await fetch(`/api/tabulation?eventId=${selectedEventId}`);
+      const data = await res.json();
+      setTabData(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -76,12 +96,68 @@ export default function AdminReportsPage() {
   };
 
   useEffect(() => {
-    loadData();
+    loadTabData();
   }, [selectedEventId]);
 
-  // Export current table to CSV
-  const handleExportCsv = (filename: string, rows: string[][]) => {
-    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.map((c) => `"${c}"`).join(',')).join('\n');
+  // Export current active report to CSV
+  const handleExportCsv = () => {
+    let rows: string[][] = [];
+    let filename = `ASC_STS_Report_${activeReportTab}_${new Date().toISOString().split('T')[0]}`;
+
+    if (activeReportTab === 'enlistment') {
+      rows.push(['Event ID', 'Competition Name', 'Category', 'Mode', 'Department', 'Academic Year', 'Schedule', 'Contenders', 'Status']);
+      events.forEach((e) => {
+        const count = candidates.filter((c) => Number(c.event_id) === Number(e.id)).length;
+        rows.push([
+          String(e.id),
+          e.name,
+          e.type || 'General',
+          e.participation_mode || 'Individual',
+          e.department || 'N/A',
+          e.academic_year || '2025-2026',
+          `${e.start_date || ''} - ${e.end_date || ''}`,
+          String(count),
+          e.status || 'Upcoming',
+        ]);
+      });
+    } else if (activeReportTab === 'registry') {
+      rows.push(['Record Type', 'ID', 'Name / Legal Name', 'Course / Program', 'Year Level / Username', 'Account / Enlistment Status']);
+      participants.forEach((p) => {
+        rows.push(['Participant', String(p.id), p.name, p.course_name || '', p.year_level || '', 'Registered']);
+      });
+      judges.forEach((j) => {
+        rows.push(['Judge', String(j.id), j.full_name, 'Official Judge', `@${j.username}`, j.approval_status || 'approved']);
+      });
+    } else if (activeReportTab === 'rankings') {
+      rows.push(['Rank', 'Contender No.', 'Contender Name', 'Course Program', 'Total Score']);
+      (tabData?.tabulations || []).forEach((t) => {
+        rows.push([
+          String(t.rank),
+          `#${t.candidate.order_number}`,
+          t.candidate.name,
+          t.candidate.course_name || '',
+          t.totalScore.toFixed(2),
+        ]);
+      });
+    } else if (activeReportTab === 'engagement') {
+      rows.push(['Department Name', 'Code', 'Total Events', 'Completed Events', 'Total Candidates Fielded']);
+      departments.forEach((d) => {
+        const deptEvents = events.filter((e) => e.department?.toLowerCase() === d.department_name.toLowerCase());
+        const deptCandidates = candidates.filter((c) => {
+          const course = courses.find((co) => Number(co.id) === Number(c.course_id));
+          return course && course.course_name.toLowerCase().includes((d.department_code || '').toLowerCase());
+        });
+        rows.push([
+          d.department_name,
+          d.department_code || '',
+          String(deptEvents.length),
+          String(deptEvents.filter((e) => e.status === 'Completed').length),
+          String(deptCandidates.length),
+        ]);
+      });
+    }
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -95,36 +171,54 @@ export default function AdminReportsPage() {
     window.print();
   };
 
+  const filteredEvents = events.filter((evt) =>
+    evt.name.toLowerCase().includes(eventSearch.toLowerCase()) ||
+    (evt.type && evt.type.toLowerCase().includes(eventSearch.toLowerCase()))
+  );
+
   return (
     <AppLayout
       pageTitle="Certified Tabulation Certificates & Reports"
-      pageSubtitle="Official institutional certified tabulation sheets, department medal standings, and master scorecards"
+      pageSubtitle="Official institutional certified tabulation sheets, enlistment summaries, master registries, and department engagement reports"
     >
       <div className="space-y-6">
         {/* Controls Card */}
-        <div className="no-print flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-xl shadow-card">
+        <div className="no-print flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-xl shadow-card">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-semibold text-slate-600">Select Competition:</span>
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-3 py-1.5 focus:outline-none focus:border-yale-600 focus:bg-white"
-            >
-              {events.map((evt) => (
-                <option key={evt.id} value={evt.id}>
-                  {evt.name} ({evt.status || 'Upcoming'})
-                </option>
-              ))}
-            </select>
-          </div>
+            {activeReportTab === 'rankings' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-600">Event:</span>
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-3 py-1.5 focus:outline-none focus:border-yale-600 focus:bg-white max-w-[280px] truncate"
+                >
+                  {filteredEvents.map((evt) => (
+                    <option key={evt.id} value={evt.id}>
+                      {evt.name} ({evt.status || 'Upcoming'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowSignatoriesModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
             >
               <Settings className="w-3.5 h-3.5 text-slate-500" />
               <span>Signatories</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCsv}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+              title="Download CSV report"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-600" />
+              <span>Export CSV</span>
             </button>
 
             <button
@@ -132,67 +226,61 @@ export default function AdminReportsPage() {
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
-              <span>Print Official Certificate</span>
+              <span>Print Official Report</span>
             </button>
           </div>
         </div>
 
-        {/* 5 REPORT TABS MATCHING ASTS/admin/reports.php */}
+        {/* 4 INSTITUTIONAL REPORT TABS */}
         <div className="no-print flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
           <button
+            onClick={() => setActiveReportTab('enlistment')}
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+              activeReportTab === 'enlistment'
+                ? 'bg-yale-700 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>1. Event Enlistment Report</span>
+          </button>
+          <button
+            onClick={() => setActiveReportTab('registry')}
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+              activeReportTab === 'registry'
+                ? 'bg-yale-700 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>2. Registry Report (Participants &amp; Judges)</span>
+          </button>
+          <button
             onClick={() => setActiveReportTab('rankings')}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
               activeReportTab === 'rankings'
                 ? 'bg-yale-700 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            1. Official Event Rankings
+            <Trophy className="w-3.5 h-3.5" />
+            <span>3. Ranking Reports</span>
           </button>
           <button
-            onClick={() => setActiveReportTab('dept-rankings')}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-              activeReportTab === 'dept-rankings'
+            onClick={() => setActiveReportTab('engagement')}
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+              activeReportTab === 'engagement'
                 ? 'bg-yale-700 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            2. Department Standings
-          </button>
-          <button
-            onClick={() => setActiveReportTab('tabulation')}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-              activeReportTab === 'tabulation'
-                ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            3. Master Tabulation Matrix
-          </button>
-          <button
-            onClick={() => setActiveReportTab('audit')}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-              activeReportTab === 'audit'
-                ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            4. Audit Trail Timeline
-          </button>
-          <button
-            onClick={() => setActiveReportTab('system')}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-              activeReportTab === 'system'
-                ? 'bg-yale-700 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            5. System Summary
+            <Building className="w-3.5 h-3.5" />
+            <span>4. Department Engagement Report</span>
           </button>
         </div>
 
         {/* ========================================================================= */}
-        {/* PRINTABLE INSTITUTIONAL REPORT AREA */}
+        {/* PRINTABLE INSTITUTIONAL REPORT CANVAS */}
         {/* ========================================================================= */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-10 shadow-card print:border-none print:shadow-none print:p-0">
           {/* OFFICIAL INSTITUTIONAL HEADER */}
@@ -214,29 +302,182 @@ export default function AdminReportsPage() {
                   APAYAO STATE COLLEGE
                 </h1>
                 <p className="text-[11px] text-slate-600 font-medium">
-                  Conner & Luna Campuses • Cordillera Administrative Region
+                  Conner &amp; Luna Campuses • Cordillera Administrative Region
                 </p>
                 <p className="text-[10px] font-bold text-yale-700 uppercase tracking-widest mt-0.5">
-                  Automated Scoring & Tabulation System (ASC-STS)
+                  Automated Scoring &amp; Tabulation System (ASC-STS)
                 </p>
               </div>
             </div>
 
             <div className="mt-3 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 inline-block">
               <span className="text-xs font-black uppercase tracking-wider text-slate-900">
-                {activeReportTab === 'rankings' && 'Official Certified Event Rankings'}
-                {activeReportTab === 'dept-rankings' && 'Official Institutional Department Standings'}
-                {activeReportTab === 'tabulation' && 'Official Master Judge Tabulation Matrix'}
-                {activeReportTab === 'audit' && 'System Activity Log & Real-Time Audit Trail'}
-                {activeReportTab === 'system' && 'Comprehensive Institutional System Summary'}
+                {activeReportTab === 'enlistment' && 'Official Event Enlistment Report'}
+                {activeReportTab === 'registry' && 'Official Institutional Registry Report (Participants & Judges)'}
+                {activeReportTab === 'rankings' && 'Official Certified Competition Rankings'}
+                {activeReportTab === 'engagement' && 'Official Department Engagement & Execution Report'}
               </span>
-              <span className="text-slate-400 text-xs ml-2 font-mono">
-                • {tabData?.event?.name || 'Selected Event'}
-              </span>
+              {activeReportTab === 'rankings' && tabData?.event && (
+                <span className="text-slate-500 text-xs ml-2 font-mono">
+                  • {tabData.event.name}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* TAB 1: OFFICIAL EVENT RANKINGS */}
+          {/* ========================================================================= */}
+          {/* REPORT 1: EVENT ENLISTMENT REPORT */}
+          {/* ========================================================================= */}
+          {activeReportTab === 'enlistment' && (
+            <div className="space-y-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border border-slate-200">
+                  <thead className="bg-slate-900 text-white uppercase text-[10px] font-bold">
+                    <tr>
+                      <th className="py-2.5 px-3 border border-slate-700 w-12 text-center">#</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Competition Name</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Category</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Participation Mode</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Department / Unit</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Academic Year</th>
+                      <th className="py-2.5 px-3 border border-slate-700 text-center">Contenders</th>
+                      <th className="py-2.5 px-3 border border-slate-700 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {events.map((evt, idx) => {
+                      const candCount = candidates.filter((c) => Number(c.event_id) === Number(evt.id)).length;
+                      return (
+                        <tr key={evt.id} className="hover:bg-slate-50">
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-bold text-slate-400">
+                            {idx + 1}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 font-bold text-slate-900">
+                            {evt.name}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-slate-600">
+                            {evt.type || 'General'}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-slate-600">
+                            {evt.participation_mode || 'Individual'}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-slate-600">
+                            {evt.department || 'All Departments'}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-slate-600 font-mono">
+                            {evt.academic_year || '2025-2026'}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-mono font-bold text-slate-800">
+                            {candCount}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-center">
+                            <span className="font-semibold text-[11px] text-slate-700">
+                              {evt.status || 'Upcoming'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* REPORT 2: REGISTRY REPORT (PARTICIPANTS & JUDGES) */}
+          {/* ========================================================================= */}
+          {activeReportTab === 'registry' && (
+            <div className="space-y-8">
+              {/* Section A: Participants Registry */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="w-4 h-4 text-yale-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Section A: Institutional Student Participants Registry ({participants.length} Registered)
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border border-slate-200">
+                    <thead className="bg-slate-900 text-white uppercase text-[10px] font-bold">
+                      <tr>
+                        <th className="py-2 px-3 border border-slate-700 w-16 text-center">Ref ID</th>
+                        <th className="py-2 px-3 border border-slate-700">Participant Full Name</th>
+                        <th className="py-2 px-3 border border-slate-700">Course / Degree Program</th>
+                        <th className="py-2 px-3 border border-slate-700 w-28 text-center">Year Level</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {participants.map((p) => (
+                        <tr key={p.id} className="hover:bg-slate-50">
+                          <td className="py-2 px-3 border border-slate-200 text-center font-mono text-slate-400">
+                            #{p.id}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 font-bold text-slate-900">
+                            {p.name}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 text-slate-700">
+                            {p.course_name || 'General Program'}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 text-center text-slate-600">
+                            {p.year_level || '1st Year'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Section B: Accredited Judges Roster */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <UserCheck className="w-4 h-4 text-yale-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Section B: Board of Accredited Institutional Judges ({judges.length} Accredited)
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border border-slate-200">
+                    <thead className="bg-slate-900 text-white uppercase text-[10px] font-bold">
+                      <tr>
+                        <th className="py-2 px-3 border border-slate-700 w-16 text-center">Judge ID</th>
+                        <th className="py-2 px-3 border border-slate-700">Official Judge Legal Name</th>
+                        <th className="py-2 px-3 border border-slate-700">System Username</th>
+                        <th className="py-2 px-3 border border-slate-700 text-center">Account Status</th>
+                        <th className="py-2 px-3 border border-slate-700 text-center">Assigned Competitions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {judges.map((j) => (
+                        <tr key={j.id} className="hover:bg-slate-50">
+                          <td className="py-2 px-3 border border-slate-200 text-center font-mono text-slate-400">
+                            #{j.id}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 font-bold text-slate-900">
+                            {j.full_name}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 font-mono text-slate-600">
+                            @{j.username}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 text-center font-semibold text-slate-700 capitalize">
+                            {j.approval_status || 'Approved'}
+                          </td>
+                          <td className="py-2 px-3 border border-slate-200 text-center font-mono font-bold text-slate-800">
+                            {(j.assignedEventIds || []).length} Event(s)
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* REPORT 3: OFFICIAL RANKING REPORTS */}
+          {/* ========================================================================= */}
           {activeReportTab === 'rankings' && (
             <div className="space-y-6">
               <div className="overflow-x-auto">
@@ -257,17 +498,17 @@ export default function AdminReportsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {tabData?.tabulations.map((res) => (
+                    {(tabData?.tabulations || []).map((res) => (
                       <tr key={res.candidate.id} className="hover:bg-slate-50">
                         <td className="py-2.5 px-3 border border-slate-200 text-center font-black">
                           <span
                             className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                               res.rank === 1
-                                ? 'bg-amber-400 text-navy-950 font-black shadow-xs'
+                                ? 'bg-amber-400 text-navy-950 shadow-xs'
                                 : res.rank === 2
                                 ? 'bg-slate-200 text-slate-800'
                                 : res.rank === 3
-                                ? 'bg-amber-700 text-white'
+                                ? 'bg-amber-800 text-white'
                                 : 'text-slate-600'
                             }`}
                           >
@@ -285,13 +526,13 @@ export default function AdminReportsPage() {
                             (ps: any) => Number(ps.portionId) === Number(p.id)
                           );
                           return (
-                            <td key={p.id} className="py-2.5 px-3 border border-slate-200 text-right font-mono">
+                            <td key={p.id} className="py-2.5 px-3 border border-slate-200 text-right font-mono text-slate-700">
                               {pScore ? Number(pScore.weightedScore ?? pScore.portionTotal ?? 0).toFixed(2) : '0.00'}
                             </td>
                           );
                         })}
                         <td className="py-2.5 px-3 border border-slate-200 text-right font-black font-mono text-sm text-yale-800 bg-yale-50/40">
-                          {res.totalScore.toFixed(2)}
+                          {res.totalScore.toFixed(2)}%
                         </td>
                       </tr>
                     ))}
@@ -301,140 +542,69 @@ export default function AdminReportsPage() {
             </div>
           )}
 
-          {/* TAB 2: DEPARTMENT STANDINGS */}
-          {activeReportTab === 'dept-rankings' && (
+          {/* ========================================================================= */}
+          {/* REPORT 4: DEPARTMENT ENGAGEMENT REPORT */}
+          {/* ========================================================================= */}
+          {activeReportTab === 'engagement' && (
             <div className="space-y-6">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border border-slate-200">
                   <thead className="bg-slate-900 text-white uppercase text-[10px] font-bold">
                     <tr>
-                      <th className="py-2.5 px-3 border border-slate-700 w-16 text-center">Rank</th>
-                      <th className="py-2.5 px-3 border border-slate-700">Academic Unit / Department</th>
-                      <th className="py-2.5 px-3 border border-slate-700 text-center text-amber-300 font-bold">🥇 Gold (1st)</th>
-                      <th className="py-2.5 px-3 border border-slate-700 text-center text-slate-300 font-bold">🥈 Silver (2nd)</th>
-                      <th className="py-2.5 px-3 border border-slate-700 text-center text-amber-600 font-bold">🥉 Bronze (3rd)</th>
-                      <th className="py-2.5 px-3 border border-slate-700 text-right font-black">Total Contenders</th>
+                      <th className="py-2.5 px-3 border border-slate-700 w-14 text-center">Rank</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Academic Department</th>
+                      <th className="py-2.5 px-3 border border-slate-700 w-24 text-center">Code</th>
+                      <th className="py-2.5 px-3 border border-slate-700 text-center">Events Organized</th>
+                      <th className="py-2.5 px-3 border border-slate-700 text-center">Completed Events</th>
+                      <th className="py-2.5 px-3 border border-slate-700 text-center">Contenders Fielded</th>
+                      <th className="py-2.5 px-3 border border-slate-700 text-right font-black">Engagement Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    <tr className="hover:bg-slate-50">
-                      <td className="py-3 px-3 border border-slate-200 text-center font-black">1</td>
-                      <td className="py-3 px-3 border border-slate-200 font-bold text-slate-900">
-                        Bachelor in Information Technology (BSIT)
-                      </td>
-                      <td className="py-3 px-3 border border-slate-200 text-center font-bold font-mono">2</td>
-                      <td className="py-3 px-3 border border-slate-200 text-center font-bold font-mono">1</td>
-                      <td className="py-3 px-3 border border-slate-200 text-center font-bold font-mono">0</td>
-                      <td className="py-3 px-3 border border-slate-200 text-right font-black font-mono">3</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50">
-                      <td className="py-3 px-3 border border-slate-200 text-center font-black">2</td>
-                      <td className="py-3 px-3 border border-slate-200 font-bold text-slate-900">
-                        Bachelor of Secondary Education (BSED)
-                      </td>
-                      <td className="py-3 px-3 border border-slate-200 text-center font-bold font-mono">1</td>
-                      <td className="py-3 px-3 border border-slate-200 text-center font-bold font-mono">1</td>
-                      <td className="py-3 px-3 border border-slate-200 text-center font-bold font-mono">1</td>
-                      <td className="py-3 px-3 border border-slate-200 text-right font-black font-mono">3</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                    {departments.map((dept, idx) => {
+                      const deptEvents = events.filter(
+                        (e) => (e.department || '').toLowerCase() === dept.department_name.toLowerCase()
+                      );
+                      const completedCount = deptEvents.filter((e) => e.status === 'Completed').length;
+                      const deptCandidates = candidates.filter((c) => {
+                        const course = courses.find((co) => Number(co.id) === Number(c.course_id));
+                        return (
+                          course &&
+                          dept.department_code &&
+                          course.course_name.toLowerCase().includes(dept.department_code.toLowerCase())
+                        );
+                      });
 
-          {/* TAB 3: MASTER TABULATION MATRIX */}
-          {activeReportTab === 'tabulation' && (
-            <div className="space-y-6">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-slate-200">
-                  <thead className="bg-slate-900 text-white uppercase text-[10px] font-bold">
-                    <tr>
-                      <th className="py-2.5 px-3 border border-slate-700">Contestant</th>
-                      {tabData?.judges.map((j) => (
-                        <th key={j.id} className="py-2.5 px-3 border border-slate-700 text-center">
-                          {j.fullName || j.username}
-                        </th>
-                      ))}
-                      <th className="py-2.5 px-3 border border-slate-700 text-right font-black">
-                        Final Aggregate
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {tabData?.tabulations.map((res) => (
-                      <tr key={res.candidate.id} className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 border border-slate-200 font-bold text-slate-900">
-                          #{res.candidate.order_number} {res.candidate.name}
-                        </td>
-                        {tabData?.judges.map((j) => (
-                          <td key={j.id} className="py-2.5 px-3 border border-slate-200 text-center font-mono">
-                            {res.totalScore.toFixed(2)}
+                      return (
+                        <tr key={dept.id} className="hover:bg-slate-50">
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-bold text-slate-500">
+                            {idx + 1}
                           </td>
-                        ))}
-                        <td className="py-2.5 px-3 border border-slate-200 text-right font-black font-mono text-yale-800 bg-yale-50/30">
-                          {res.totalScore.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="py-2.5 px-3 border border-slate-200 font-bold text-slate-900">
+                            {dept.department_name}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-mono font-semibold text-slate-600">
+                            {dept.department_code || 'DEPT'}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-mono font-bold text-slate-800">
+                            {deptEvents.length}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-mono text-emerald-700 font-bold">
+                            {completedCount}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-center font-mono font-bold text-yale-800">
+                            {deptCandidates.length}
+                          </td>
+                          <td className="py-2.5 px-3 border border-slate-200 text-right">
+                            <span className="font-semibold text-[11px] text-slate-700">
+                              {deptEvents.length > 0 || deptCandidates.length > 0 ? 'Active Engaged' : 'Registered'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: AUDIT TRAIL */}
-          {activeReportTab === 'audit' && (
-            <div className="space-y-6">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border border-slate-200">
-                  <thead className="bg-slate-900 text-white uppercase text-[10px] font-bold">
-                    <tr>
-                      <th className="py-2 px-3 border border-slate-700">Ref</th>
-                      <th className="py-2 px-3 border border-slate-700">Judge Name</th>
-                      <th className="py-2 px-3 border border-slate-700">Contestant</th>
-                      <th className="py-2 px-3 border border-slate-700">Criteria</th>
-                      <th className="py-2 px-3 border border-slate-700 text-right font-black">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {auditLogs.slice(0, 25).map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50 font-mono text-[11px]">
-                        <td className="py-2 px-3 border border-slate-200 text-slate-400">#{log.id}</td>
-                        <td className="py-2 px-3 border border-slate-200 font-sans font-medium text-slate-800">{log.judgeName}</td>
-                        <td className="py-2 px-3 border border-slate-200 font-sans font-bold text-yale-800">{log.candidateName}</td>
-                        <td className="py-2 px-3 border border-slate-200 font-sans text-slate-600">{log.criteriaName}</td>
-                        <td className="py-2 px-3 border border-slate-200 text-right font-black text-emerald-700">
-                          {Number(log.score).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: SYSTEM SUMMARY */}
-          {activeReportTab === 'system' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                  <p className="text-[11px] font-bold uppercase text-slate-500">Total Events</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">{events.length}</p>
-                </div>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                  <p className="text-[11px] font-bold uppercase text-slate-500">Active Contenders</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">{tabData?.tabulations.length || 0}</p>
-                </div>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                  <p className="text-[11px] font-bold uppercase text-slate-500">Accredited Judges</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">{tabData?.judges.length || 0}</p>
-                </div>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                  <p className="text-[11px] font-bold uppercase text-slate-500">Recorded Scores</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">{auditLogs.length}</p>
-                </div>
               </div>
             </div>
           )}
@@ -442,7 +612,7 @@ export default function AdminReportsPage() {
           {/* OFFICIAL CERTIFICATION SIGNATORIES */}
           <div className="mt-12 pt-8 border-t border-slate-300">
             <p className="text-center text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-8">
-              Certified Official & Authenticated by the Board of Tabulators
+              Certified Official &amp; Authenticated by the Board of Tabulators
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
@@ -490,7 +660,7 @@ export default function AdminReportsPage() {
           </div>
         </div>
 
-        {/* CUSTOMIZE SIGNATORIES MODAL MATCHING ASTS/admin/reports.php */}
+        {/* CUSTOMIZE SIGNATORIES MODAL */}
         {showSignatoriesModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
             <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">

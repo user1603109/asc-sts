@@ -2,18 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, Sliders, UserCheck, Trophy, Printer, Settings, ClipboardList, Award } from 'lucide-react';
+import { LayoutDashboard, Calendar, Sliders, UserCheck, Trophy, Printer, Settings, Award } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { label: 'Enlistment Studio', href: '/admin/enlistment', icon: Calendar },
-  { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy },
-  { label: 'Scores Matrix', href: '/admin/scores', icon: ClipboardList },
+  { label: 'Enlistment & Registry', href: '/admin/enlistment', icon: Calendar },
+  { label: 'Tabulation & Scores', href: '/admin/tabulation', icon: Trophy },
   { label: 'Official Rankings', href: '/admin/rankings', icon: Award },
-  { label: 'Criteria', href: '/admin/criteria', icon: Sliders },
-  { label: 'Judges', href: '/admin/judges', icon: UserCheck },
+  { label: 'Criteria & Portions', href: '/admin/criteria', icon: Sliders },
+  { label: 'Judges Roster & Assignment', href: '/admin/judges', icon: UserCheck },
   { label: 'Official Reports', href: '/admin/reports', icon: Printer },
-  { label: 'System & Sheets', href: '/admin/settings', icon: Settings },
+  { label: 'Settings & Sheets', href: '/admin/settings', icon: Settings },
 ];
 
 export default function AdminNav() {

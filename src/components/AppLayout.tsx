@@ -91,17 +91,16 @@ export default function AppLayout({
       group: 'STACK & WORKSPACE',
       items: [
         { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, badge: null },
-        { label: 'Enlistment Studio', href: '/admin/enlistment', icon: Calendar, badge: null },
+        { label: 'Enlistment & Registry', href: '/admin/enlistment', icon: Calendar, badge: null },
       ],
     },
     {
       group: 'TABULATION SUITE',
       items: [
-        { label: 'Live Tabulation', href: '/admin/tabulation', icon: Trophy, hasDot: true },
-        { label: 'Scores Matrix', href: '/admin/scores', icon: ClipboardList, badge: null },
+        { label: 'Tabulation & Scores', href: '/admin/tabulation', icon: Trophy, hasDot: true },
         { label: 'Official Rankings', href: '/admin/rankings', icon: Award, badge: null },
         { label: 'Criteria & Portions', href: '/admin/criteria', icon: Sliders, badge: null },
-        { label: 'Judges Roster', href: '/admin/judges', icon: UserCheck, badge: null },
+        { label: 'Judges Roster & Assignment', href: '/admin/judges', icon: UserCheck, badge: null },
       ],
     },
     {
@@ -110,7 +109,6 @@ export default function AppLayout({
         { label: 'Official Reports', href: '/admin/reports', icon: Printer, badge: null },
         { label: 'System Logs', href: '/admin/logs', icon: Layers, badge: null },
         { label: 'Database Backups', href: '/admin/backups', icon: Database, badge: null },
-        { label: 'Sample Data Tool', href: '/admin/sample-data', icon: Sparkles, badge: 'DEMO' },
         { label: 'Settings & Sheets', href: '/admin/settings', icon: Settings, badge: null },
       ],
     },
@@ -331,7 +329,7 @@ export default function AppLayout({
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-slate-800 leading-tight truncate">ASC System v2.0</p>
+                    <p className="text-[11px] font-bold text-slate-800 leading-tight truncate">ASC-ASTS v2.0</p>
                     <p className="text-[10px] text-slate-400 font-medium truncate">{googleConfigured ? 'Sheets Synced' : 'Database Active'}</p>
                   </div>
                 </div>
@@ -340,7 +338,7 @@ export default function AppLayout({
                 </span>
               </div>
             ) : (
-              <div className="flex justify-center" title="ASC System v2.0 - Active">
+              <div className="flex justify-center" title="ASC-ASTS v2.0 - Active">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs border border-emerald-200 shadow-xs">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>

@@ -319,6 +319,9 @@ export async function ensureAllSheets(): Promise<{
   existingTabs: string[];
 }> {
   const sheets = getSheetsClient();
+  if (!sheets || !SPREADSHEET_ID) {
+    throw new Error('Google Sheets credentials are not configured.');
+  }
   const spreadsheet = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
   });

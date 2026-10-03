@@ -102,6 +102,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'Judge password reset successfully' });
     }
 
+    // 5. Edit judge information
+    if (action === 'edit_judge') {
+      const { judgeId, full_name, username } = body;
+      if (!judgeId || !full_name) {
+        return NextResponse.json({ error: 'Judge ID and full name are required' }, { status: 400 });
+      }
+      await updateSheetRow<User>('users', Number(judgeId), {
+        full_name: full_name.trim(),
+        username: (username || '').trim().toLowerCase(),
+      });
+      return NextResponse.json({ success: true, message: 'Judge details updated successfully' });
+    }
+
+    // 6. Delete judge
+    if (action === 'delete_judge') {
+      const { judgeId } = body;
+      if (!judgeId) {
+        return NextResponse.json({ error: 'Judge ID is required' }, { status: 400 });
+      }
+      // Clean up event_judges assignments first
+      const eventJudges = await getSheetRows<EventJudge>('event_judges');
+      const assignments = eventJudges.filter((ej) => Number(ej.user_id) === Number(judgeId));
+      for (const a of assignments) {
+        await deleteSheetRow('event_judges', Number(a.id));
+      }
+      // Delete user
+      await deleteSheetRow('users', Number(judgeId));
+      return NextResponse.json({ success: true, message: 'Judge removed successfully' });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
     console.error('Judge action error:', error);

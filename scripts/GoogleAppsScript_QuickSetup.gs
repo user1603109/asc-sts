@@ -1,16 +1,3 @@
-/**
- * =========================================================================
- * APAYAO STATE COLLEGE - AUTOMATED SCORING & TABULATION SYSTEM (ASC-STS)
- * Google Apps Script: Quick Database Initializer
- * =========================================================================
- * 
- * HOW TO USE:
- * 1. Open your Google Spreadsheet in your browser.
- * 2. Click "Extensions" -> "Apps Script".
- * 3. Delete any code in the editor, paste this entire script, and click "Run" (initializeDatabase).
- * 4. All 13 relational tables and seed data will be created instantly!
- */
-
 function initializeDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 

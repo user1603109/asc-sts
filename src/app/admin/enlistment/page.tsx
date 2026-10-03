@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
+import PhotoUploader from '@/components/PhotoUploader';
 import {
   Calendar,
   Users,
@@ -462,8 +463,8 @@ function EnlistmentContent() {
 
   return (
     <AppLayout
-      pageTitle="Enlistment Studio & Institutional Registry"
-      pageSubtitle="Complete competition management: event definitions, portions, judge assignments, and student roster"
+      pageTitle="Enlistment & Registry"
+      pageSubtitle="Complete institutional competition management: event definitions, portions, judge assignments, and student roster"
     >
       <div className="space-y-6">
         {/* TABS NAVIGATION MATCHING ASTS/admin/enlistment.php */}
@@ -1350,16 +1351,11 @@ function EnlistmentContent() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Photo Image URL</label>
-                  <input
-                    type="text"
-                    value={participantForm.image_path}
-                    onChange={(e) => setParticipantForm({ ...participantForm, image_path: e.target.value })}
-                    placeholder="https://... or Google Drive URL"
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
-                  />
-                </div>
+                <PhotoUploader
+                  value={participantForm.image_path}
+                  onChange={(url) => setParticipantForm({ ...participantForm, image_path: url })}
+                  label="Participant Profile Photo"
+                />
 
                 <div className="flex justify-end gap-2 pt-2">
                   <button
@@ -1601,13 +1597,11 @@ function EnlistmentContent() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Photo URL (optional)"
+                  <div className="col-span-2">
+                    <PhotoUploader
                       value={candidateForm.image_path}
-                      onChange={(e) => setCandidateForm({ ...candidateForm, image_path: e.target.value })}
-                      className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                      onChange={(url) => setCandidateForm({ ...candidateForm, image_path: url })}
+                      label="Contender Official Photo"
                     />
                   </div>
                 </div>
@@ -1802,7 +1796,7 @@ function EnlistmentContent() {
 
 export default function AdminEnlistmentPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Enlistment Studio...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Enlistment &amp; Registry...</div>}>
       <EnlistmentContent />
     </Suspense>
   );

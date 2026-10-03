@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import { Trophy, RefreshCw, Award, Printer } from 'lucide-react';
+import { Trophy, RefreshCw, Award, Search, CheckCircle2 } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { TabulationResult } from '@/lib/tabulation';
 
@@ -13,6 +13,7 @@ function RankingsContent() {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>(initialEventId || '');
+  const [eventSearch, setEventSearch] = useState('');
   const [tabData, setTabData] = useState<{
     event: Event;
     portions: any[];
@@ -51,35 +52,50 @@ function RankingsContent() {
     loadRankings();
   }, [selectedEventId]);
 
+  const filteredEvents = events.filter((evt) =>
+    evt.name.toLowerCase().includes(eventSearch.toLowerCase()) ||
+    (evt.type && evt.type.toLowerCase().includes(eventSearch.toLowerCase()))
+  );
+
   return (
     <AppLayout
       pageTitle="Official Competition Rankings"
       pageSubtitle="Authenticated composite leaderboard and award standings calculated across weighted criteria"
     >
       <div className="space-y-6">
-        {/* Controls Card */}
-        <div className="no-print flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-xl shadow-card">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-semibold text-slate-600">Select Competition:</span>
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-3 py-1.5 focus:outline-none focus:border-yale-600 focus:bg-white"
-            >
-              {events.map((evt) => (
-                <option key={evt.id} value={evt.id}>{evt.name}</option>
-              ))}
-            </select>
+        {/* Controls Card with Searchable Competition Selector */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-xl shadow-card">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-2xl">
+            {/* Search Input Filter */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={eventSearch}
+                onChange={(e) => setEventSearch(e.target.value)}
+                placeholder="Search competition..."
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-yale-600 focus:bg-white"
+              />
+            </div>
+
+            {/* Event Dropdown */}
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-xs font-semibold text-slate-600 shrink-0">Competition:</span>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-3 py-1.5 focus:outline-none focus:border-yale-600 focus:bg-white truncate"
+              >
+                {filteredEvents.map((evt) => (
+                  <option key={evt.id} value={evt.id}>
+                    {evt.name} ({evt.status || 'Upcoming'})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Board</span>
-            </button>
             <button
               onClick={loadRankings}
               disabled={loading}
@@ -93,7 +109,7 @@ function RankingsContent() {
 
         {/* Podium Top 3 Highlight Cards */}
         {tabData && tabData.tabulations.length >= 3 && (
-          <div className="no-print grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* 2nd Place */}
             {tabData.tabulations[1] && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-card flex items-center gap-4 order-2 md:order-1">
@@ -158,21 +174,29 @@ function RankingsContent() {
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4 text-yale-700" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Official Leaderboard ({tabData?.tabulations.length || 0} Contenders)
+                Official Roster Leaderboard ({tabData?.tabulations.length || 0} Contenders)
               </h2>
             </div>
+            <span className="text-xs font-medium text-slate-500">
+              {tabData?.event ? `${tabData.event.name}` : ''}
+            </span>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center text-xs text-slate-400">Loading standings...</div>
+            <div className="p-16 text-center text-xs text-slate-400">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto text-yale-700 mb-2" />
+              Calculating official standings...
+            </div>
           ) : !tabData || tabData.tabulations.length === 0 ? (
-            <div className="p-12 text-center text-xs text-slate-400">No contenders evaluated yet.</div>
+            <div className="p-16 text-center text-xs text-slate-400">
+              No contenders tabulated for this event yet.
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3 px-4 w-16 text-center">Rank</th>
+                    <th className="py-3 px-4 w-20 text-center">Rank</th>
                     <th className="py-3 px-4">Contender</th>
                     <th className="py-3 px-4">Course Program</th>
                     {tabData.portions.map((p) => (
@@ -200,7 +224,7 @@ function RankingsContent() {
                               ? 'bg-slate-200 text-slate-800'
                               : res.rank === 3
                               ? 'bg-amber-800 text-white'
-                              : 'text-slate-500'
+                              : 'text-slate-500 border border-slate-200'
                           }`}
                         >
                           {res.rank}
@@ -210,9 +234,16 @@ function RankingsContent() {
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center font-bold text-slate-600 text-xs shrink-0">
                             {res.candidate.image_path ? (
-                              <img src={res.candidate.image_path} alt={res.candidate.name} className="w-full h-full object-cover" />
+                              <img
+                                src={res.candidate.image_path}
+                                alt={res.candidate.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
                             ) : (
-                              res.candidate.order_number
+                              `#${res.candidate.order_number}`
                             )}
                           </div>
                           <div>
