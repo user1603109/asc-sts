@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ASC-STS | Automated Scoring & Tabulation System',
-  description: 'Apayao State College Automated Scoring & Tabulation System with Google Sheets Database',
+  title: 'ASC-ASTS | Apayao State College Tabulation Suite',
+  description: 'Apayao State College ASC-ASTS Tabulation System with Google Sheets & Drive Integration',
 };
 
 export default function RootLayout({

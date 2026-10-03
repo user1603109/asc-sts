@@ -146,8 +146,8 @@ export default function AppLayout({
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-white/10 p-1 flex items-center justify-center border border-white/20 shadow-sm group-hover:bg-white/20 transition-all">
               <img
-                src="/api/logo"
-                alt="ASC Logo"
+                src="/api/logo?name=astslogo&v=2"
+                alt="ASTS Logo"
                 className="w-full h-full object-contain"
                 onError={(e) => {
                   e.currentTarget.src = '/assets/img/astslogo.png';
@@ -157,11 +157,11 @@ export default function AppLayout({
             <div>
               <div className="flex items-center gap-1.5 leading-none">
                 <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-amber-400 transition-colors">
-                  ASC<span className="text-amber-400">-STS</span>
+                  ASC<span className="text-amber-400">-ASTS</span>
                 </span>
               </div>
               <p className="text-[10px] text-slate-300/80 font-medium hidden sm:block">
-                Automated Scoring &amp; Tabulation System • Apayao State College
+                Apayao State College • Tabulation Suite
               </p>
             </div>
           </Link>

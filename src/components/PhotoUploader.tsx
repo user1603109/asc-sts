@@ -75,7 +75,7 @@ export default function PhotoUploader({
               alt="Preview"
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.currentTarget.src = '/assets/img/astslogo.png';
+                e.currentTarget.src = '/api/logo?name=astslogo&v=2';
               }}
             />
           </div>

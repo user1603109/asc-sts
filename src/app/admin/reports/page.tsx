@@ -111,7 +111,7 @@ export default function AdminReportsPage() {
   // Export current active report to CSV
   const handleExportCsv = () => {
     let rows: string[][] = [];
-    let filename = `ASC_STS_Report_${activeReportTab}_${new Date().toISOString().split('T')[0]}`;
+    let filename = `ASC_ASTS_Report_${activeReportTab}_${new Date().toISOString().split('T')[0]}`;
 
     if (activeReportTab === 'enlistment') {
       rows.push(['Event ID', 'Competition Name', 'Category', 'Mode', 'Department', 'Academic Year', 'Schedule', 'Contenders', 'Status']);
@@ -298,7 +298,7 @@ export default function AdminReportsPage() {
               {/* Left Logo: ASTS Logo */}
               <div className="w-20 h-20 flex items-center justify-center shrink-0">
                 <img
-                  src="/api/logo?name=astslogo"
+                  src="/api/logo?name=astslogo&v=2"
                   alt="ASTS Logo"
                   className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
                   onError={(e) => {
@@ -319,14 +319,14 @@ export default function AdminReportsPage() {
                   Conner &amp; Luna Campuses • Cordillera Administrative Region
                 </p>
                 <p className="text-[10px] font-bold text-yale-700 uppercase tracking-widest mt-0.5">
-                  Automated Scoring &amp; Tabulation System (ASC-STS)
+                  Automated Scoring &amp; Tabulation System (ASC-ASTS)
                 </p>
               </div>
 
               {/* Right Logo: ASC Logo */}
               <div className="w-20 h-20 flex items-center justify-center shrink-0">
                 <img
-                  src="/api/logo?name=asclogo"
+                  src="/api/logo?name=asclogo&v=2"
                   alt="ASC Logo"
                   className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
                   onError={(e) => {
@@ -636,90 +636,116 @@ export default function AdminReportsPage() {
           )}
 
           {/* OFFICIAL CERTIFICATION SIGNATORIES - AUTOMATICALLY DERIVED FROM EVENT */}
-          <div
-            className="mt-6 pt-5 print:mt-4 print:pt-4 border-t-2 border-slate-300 print-signatories"
-            style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
-          >
-            <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-4 print:mb-2">
-              Certified Official &amp; Authenticated by the Board of Tabulators &amp; Event Officials
-            </p>
-
-            {/* 1. THE BOARD OF JUDGES (AUTOMATICALLY POPULATED) */}
-            <div className="mb-4 print:mb-3">
-              <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3 print:mb-2">
-                The Board of Judges
+          {activeReportTab === 'registry' ? (
+            /* MASTER REGISTRY: NO TABULATORS/JUDGES - ONLY SOCIO-CULTURAL COORDINATOR */
+            <div
+              className="mt-8 pt-6 border-t-2 border-slate-300 print-signatories"
+              style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+            >
+              <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-6 print:mb-4">
+                Institutional Master Registry • Verified &amp; Certified Official
               </p>
-              {assignedJudges.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 print:grid-cols-3 gap-y-5 gap-x-4 print:gap-y-4 print:gap-x-3 text-center justify-center items-end">
-                  {assignedJudges.map((judge, idx) => (
-                    <div key={judge.id || idx} className="signatory-card flex flex-col items-center px-1">
-                      <div className="min-w-[180px] max-w-[280px] sm:max-w-[320px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
-                        {judge.full_name || judge.username}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="signatory-card flex flex-col items-center px-1">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-4">
+                    Certified &amp; Verified Correct:
+                  </p>
+                  <div className="min-w-[220px] max-w-[340px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-xs uppercase px-2 text-center leading-snug break-words whitespace-normal">
+                    {signatories.coordinatorName}
+                  </div>
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
+                    {signatories.coordinatorTitle}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* EVENT SPECIFIC REPORTS (RANKINGS, ENLISTMENT, ENGAGEMENT) */
+            <div
+              className="mt-6 pt-5 print:mt-4 print:pt-4 border-t-2 border-slate-300 print-signatories"
+              style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+            >
+              <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-4 print:mb-2">
+                Certified Official &amp; Authenticated by the Board of Tabulators &amp; Event Officials
+              </p>
+
+              {/* 1. THE BOARD OF JUDGES (AUTOMATICALLY POPULATED) */}
+              <div className="mb-4 print:mb-3">
+                <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3 print:mb-2">
+                  The Board of Judges
+                </p>
+                {assignedJudges.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 print:grid-cols-3 gap-y-5 gap-x-4 print:gap-y-4 print:gap-x-3 text-center justify-center items-end">
+                    {assignedJudges.map((judge, idx) => (
+                      <div key={judge.id || idx} className="signatory-card flex flex-col items-center px-1">
+                        <div className="min-w-[180px] max-w-[280px] sm:max-w-[320px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
+                          {judge.full_name || judge.username}
+                        </div>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
+                          {idx === 0 ? 'Chairman, Board of Judges' : 'Member, Board of Judges'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 print:grid-cols-2 gap-4 text-center justify-center items-end">
+                    <div className="signatory-card flex flex-col items-center px-1">
+                      <div className="min-w-[180px] max-w-[280px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
+                        DR. JANE SMITH, EdD
                       </div>
                       <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
-                        {idx === 0 ? 'Chairman, Board of Judges' : 'Member, Board of Judges'}
+                        Chairman, Board of Judges
                       </p>
                     </div>
-                  ))}
+                    <div className="signatory-card flex flex-col items-center px-1">
+                      <div className="min-w-[180px] max-w-[280px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
+                        BOARD OF JUDGES
+                      </div>
+                      <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
+                        Accredited Event Judges
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. THE EVENT ORGANIZER & SOCIO-CULTURAL COORDINATOR */}
+              <div className="grid grid-cols-2 print:grid-cols-2 gap-y-4 gap-x-6 print:gap-x-4 text-center pt-3 print:pt-2 justify-center items-end">
+                <div className="signatory-card flex flex-col items-center px-1">
+                  <div className="min-w-[180px] max-w-[280px] sm:max-w-[320px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
+                    {signatories.organizerName || eventOrganizer}
+                  </div>
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
+                    Event Organizer / Committee Head
+                  </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 print:grid-cols-2 gap-4 text-center justify-center items-end">
-                  <div className="signatory-card flex flex-col items-center px-1">
-                    <div className="min-w-[180px] max-w-[280px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
-                      DR. JANE SMITH, EdD
-                    </div>
-                    <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
-                      Chairman, Board of Judges
-                    </p>
+
+                <div className="signatory-card flex flex-col items-center px-1">
+                  <div className="min-w-[180px] max-w-[280px] sm:max-w-[320px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
+                    {signatories.coordinatorName}
                   </div>
-                  <div className="signatory-card flex flex-col items-center px-1">
-                    <div className="min-w-[180px] max-w-[280px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
-                      BOARD OF JUDGES
-                    </div>
-                    <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
-                      Accredited Event Judges
-                    </p>
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
+                    {signatories.coordinatorTitle}
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. NOTED BY */}
+              {signatories.showNoted && (
+                <div className="signatory-card mt-5 print:mt-3 text-center flex flex-col items-center justify-center">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1.5">
+                    NOTED BY:
+                  </p>
+                  <div className="min-w-[200px] max-w-[320px] border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
+                    {signatories.presidentName}
                   </div>
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
+                    {signatories.presidentTitle}
+                  </p>
                 </div>
               )}
             </div>
-
-            {/* 2. THE EVENT ORGANIZER & SOCIO-CULTURAL COORDINATOR */}
-            <div className="grid grid-cols-2 print:grid-cols-2 gap-y-4 gap-x-6 print:gap-x-4 text-center pt-3 print:pt-2 justify-center items-end">
-              <div className="signatory-card flex flex-col items-center px-1">
-                <div className="min-w-[180px] max-w-[280px] sm:max-w-[320px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
-                  {signatories.organizerName || eventOrganizer}
-                </div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
-                  Event Organizer / Committee Head
-                </p>
-              </div>
-
-              <div className="signatory-card flex flex-col items-center px-1">
-                <div className="min-w-[180px] max-w-[280px] sm:max-w-[320px] w-full border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
-                  {signatories.coordinatorName}
-                </div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
-                  {signatories.coordinatorTitle}
-                </p>
-              </div>
-            </div>
-
-            {/* 3. NOTED BY */}
-            {signatories.showNoted && (
-              <div className="signatory-card mt-5 print:mt-3 text-center flex flex-col items-center justify-center">
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1.5">
-                  NOTED BY:
-                </p>
-                <div className="min-w-[200px] max-w-[320px] border-b-2 border-slate-900 pb-1 mb-1 font-bold text-slate-900 text-[11px] uppercase px-1 text-center leading-snug break-words whitespace-normal">
-                  {signatories.presidentName}
-                </div>
-                <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">
-                  {signatories.presidentTitle}
-                </p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* PRINT STYLES FOR BOND PAPER SIZES */}

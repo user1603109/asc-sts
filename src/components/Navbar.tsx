@@ -39,7 +39,7 @@ export default function Navbar({ user }: NavbarProps) {
           <div>
             <div className="flex items-center gap-1.5 leading-none">
               <span className="font-extrabold text-sm tracking-tight text-white">
-                ASC<span className="text-amber-400">-STS</span>
+                ASC<span className="text-amber-400">-ASTS</span>
               </span>
               <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
                 PORTAL
