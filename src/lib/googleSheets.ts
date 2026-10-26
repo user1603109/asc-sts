@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { SHEET_SCHEMAS, SEED_DATA } from './schemas';
+import { isTursoConfigured, executeTurso, executeTursoBatch } from './turso';
 
 export { SHEET_SCHEMAS, SEED_DATA };
 
@@ -55,6 +56,15 @@ function getSheetsClient() {
  * Read all rows from a given sheet tab as typed objects
  */
 export async function getSheetRows<T = Record<string, any>>(sheetName: string): Promise<T[]> {
+  if (isTursoConfigured()) {
+    try {
+      const res = await executeTurso(`SELECT * FROM ${sheetName}`);
+      return res.rows as T[];
+    } catch (e) {
+      console.error(`Turso getSheetRows error for ${sheetName}:`, e);
+    }
+  }
+
   const sheets = getSheetsClient();
   if (!sheets || !SPREADSHEET_ID) {
     const store = getMemoryStore();
@@ -93,6 +103,15 @@ export async function getSheetRows<T = Record<string, any>>(sheetName: string): 
  * Fetch a single row by ID
  */
 export async function getRowById<T = Record<string, any>>(sheetName: string, id: number): Promise<T | null> {
+  if (isTursoConfigured()) {
+    try {
+      const res = await executeTurso(`SELECT * FROM ${sheetName} WHERE id = ?`, [Number(id)]);
+      return (res.rows[0] as T) || null;
+    } catch (e) {
+      console.error(`Turso getRowById error for ${sheetName}:`, e);
+    }
+  }
+
   const rows = await getSheetRows<T>(sheetName);
   return rows.find((r: any) => Number(r.id) === Number(id)) || null;
 }
@@ -101,6 +120,19 @@ export async function getRowById<T = Record<string, any>>(sheetName: string, id:
  * Append a row to a sheet tab, auto-incrementing ID if not supplied
  */
 export async function appendSheetRow<T extends Record<string, any>>(sheetName: string, data: Partial<T>): Promise<T> {
+  if (isTursoConfigured()) {
+    try {
+      const cols = Object.keys(data).filter((k) => k !== 'id' || (data.id !== undefined && data.id !== null));
+      const placeholders = cols.map(() => '?').join(', ');
+      const values = cols.map((k) => (data as any)[k]);
+      const sql = `INSERT INTO ${sheetName} (${cols.join(', ')}) VALUES (${placeholders})`;
+      const res = await executeTurso(sql, values);
+      return { ...data, id: res.lastInsertRowid || (data as any).id } as T;
+    } catch (e) {
+      console.error(`Turso appendSheetRow error for ${sheetName}:`, e);
+    }
+  }
+
   const existingRows = await getSheetRows(sheetName);
   
   // Calculate next ID
@@ -149,6 +181,19 @@ export async function updateSheetRow<T extends Record<string, any>>(
   id: number,
   data: Partial<T>
 ): Promise<boolean> {
+  if (isTursoConfigured()) {
+    try {
+      const cols = Object.keys(data).filter((k) => k !== 'id');
+      if (cols.length === 0) return true;
+      const setClause = cols.map((k) => `${k} = ?`).join(', ');
+      const values = [...cols.map((k) => (data as any)[k]), Number(id)];
+      await executeTurso(`UPDATE ${sheetName} SET ${setClause} WHERE id = ?`, values);
+      return true;
+    } catch (e) {
+      console.error(`Turso updateSheetRow error for ${sheetName}:`, e);
+    }
+  }
+
   const sheets = getSheetsClient();
   if (!sheets || !SPREADSHEET_ID) {
     const store = getMemoryStore();
@@ -207,6 +252,26 @@ export async function upsertScoresBatch(scoreItems: {
   score: number;
 }[]): Promise<boolean> {
   if (!scoreItems || scoreItems.length === 0) return true;
+
+  if (isTursoConfigured()) {
+    try {
+      const stmts: Array<{ sql: string; args?: any[] }> = [];
+      for (const item of scoreItems) {
+        stmts.push({
+          sql: `DELETE FROM scores WHERE event_id = ? AND judge_id = ? AND candidate_id = ? AND criteria_id = ?`,
+          args: [Number(item.event_id), Number(item.judge_id), Number(item.candidate_id), Number(item.criteria_id)],
+        });
+        stmts.push({
+          sql: `INSERT INTO scores (event_id, judge_id, candidate_id, criteria_id, score) VALUES (?, ?, ?, ?, ?)`,
+          args: [Number(item.event_id), Number(item.judge_id), Number(item.candidate_id), Number(item.criteria_id), Number(item.score)],
+        });
+      }
+      await executeTursoBatch(stmts);
+      return true;
+    } catch (e) {
+      console.error('Turso upsertScoresBatch error:', e);
+    }
+  }
 
   const sheets = getSheetsClient();
   if (!sheets || !SPREADSHEET_ID) {
@@ -341,6 +406,15 @@ export async function upsertScoresBatch(scoreItems: {
  * Delete a row by ID from a sheet tab
  */
 export async function deleteSheetRow(sheetName: string, id: number): Promise<boolean> {
+  if (isTursoConfigured()) {
+    try {
+      await executeTurso(`DELETE FROM ${sheetName} WHERE id = ?`, [Number(id)]);
+      return true;
+    } catch (e) {
+      console.error(`Turso deleteSheetRow error for ${sheetName}:`, e);
+    }
+  }
+
   const sheets = getSheetsClient();
   if (!sheets || !SPREADSHEET_ID) {
     const store = getMemoryStore();
@@ -403,6 +477,27 @@ export async function setSheetRows<T extends Record<string, any>>(
   sheetName: string,
   rows: T[]
 ): Promise<boolean> {
+  if (isTursoConfigured()) {
+    try {
+      const stmts: Array<{ sql: string; args?: any[] }> = [
+        { sql: `DELETE FROM ${sheetName}` },
+      ];
+      for (const r of rows) {
+        const cols = Object.keys(r);
+        const placeholders = cols.map(() => '?').join(', ');
+        const values = cols.map((k) => (r as any)[k]);
+        stmts.push({
+          sql: `INSERT INTO ${sheetName} (${cols.join(', ')}) VALUES (${placeholders})`,
+          args: values,
+        });
+      }
+      await executeTursoBatch(stmts);
+      return true;
+    } catch (e) {
+      console.error(`Turso setSheetRows error for ${sheetName}:`, e);
+    }
+  }
+
   const schema = SHEET_SCHEMAS[sheetName] || (rows.length > 0 ? Object.keys(rows[0]) : []);
   const sheets = getSheetsClient();
   if (!sheets || !SPREADSHEET_ID) {

@@ -10,6 +10,11 @@ export default function AdminSettingsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
 
+  // Turso Database state
+  const [tursoStatus, setTursoStatus] = useState<any>(null);
+  const [syncingTurso, setSyncingTurso] = useState(false);
+  const [tursoMessage, setTursoMessage] = useState('');
+
   // General Settings state
   const [generalSettings, setGeneralSettings] = useState({
     system_name: 'Automated Scoring & Tabulation System',
@@ -35,6 +40,11 @@ export default function AdminSettingsPage() {
       .then((res) => res.json())
       .then((data) => setGoogleStatus(data));
 
+    fetch('/api/setup-turso')
+      .then((res) => res.json())
+      .then((data) => setTursoStatus(data))
+      .catch((err) => console.error(err));
+
     fetch('/api/settings')
       .then((res) => res.json())
       .then((data) => {
@@ -55,6 +65,25 @@ export default function AdminSettingsPage() {
       setSyncResult({ success: false, error: e.message });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleInitTurso = async () => {
+    setSyncingTurso(true);
+    setTursoMessage('');
+    try {
+      const res = await fetch('/api/setup-turso', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to initialize Turso');
+      setTursoMessage(data.message || 'Turso database initialized successfully!');
+      // refresh status
+      const checkRes = await fetch('/api/setup-turso');
+      const checkData = await checkRes.json();
+      setTursoStatus(checkData);
+    } catch (e: any) {
+      setTursoMessage(`Error: ${e.message}`);
+    } finally {
+      setSyncingTurso(false);
     }
   };
 
@@ -276,7 +305,59 @@ export default function AdminSettingsPage() {
           </form>
         </div>
 
-        {/* 3. GOOGLE SHEETS CLOUD DATABASE CONNECTION */}
+        {/* 3. TURSO 9GB LIBSQL HIGH-SPEED CLOUD DATABASE */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-yale-50 text-yale-700 flex items-center justify-center border border-yale-200">
+                <Database className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900">Turso 9GB Cloud Database (High-Speed LibSQL)</h2>
+                  {tursoStatus?.configured ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      Active (Sub-20ms)
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                      Awaiting Credentials
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {tursoStatus?.configured
+                    ? `Connected to Turso Cloud. Verified ${tursoStatus.tablesCount || 13} tables.`
+                    : 'Add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Vercel or .env.local to enable 9GB ultra-fast database.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleInitTurso}
+              disabled={syncingTurso || !tursoStatus?.configured}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingTurso ? 'animate-spin' : ''}`} />
+              <span>{syncingTurso ? 'Initializing...' : 'Initialize / Seed 13 Tables'}</span>
+            </button>
+          </div>
+
+          {tursoMessage && (
+            <div
+              className={`p-3.5 rounded-lg border text-xs flex items-center gap-2.5 ${
+                tursoMessage.startsWith('Error')
+                  ? 'bg-rose-50 border-rose-200 text-rose-800'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {tursoMessage.startsWith('Error') ? <AlertCircle className="w-4 h-4 text-rose-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              <span>{tursoMessage}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 4. GOOGLE SHEETS CLOUD DATABASE CONNECTION (FALLBACK) */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
