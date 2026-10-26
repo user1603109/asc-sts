@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { EventPortion } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -31,6 +31,22 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    if (Array.isArray(body)) {
+      const existing = await getSheetRows<EventPortion>('event_portions');
+      let maxId = existing.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0);
+      const newItems = body.map((item) => ({
+        id: ++maxId,
+        event_id: Number(item.event_id),
+        portion_name: String(item.portion_name || '').trim(),
+        percentage: Number(item.percentage) || 0,
+        order_number: Number(item.order_number) || 1,
+        status: item.status || 'Upcoming',
+      }));
+      await setSheetRows('event_portions', [...existing, ...newItems]);
+      return NextResponse.json({ success: true, count: newItems.length });
+    }
+
     const { event_id, portion_name, percentage, order_number, status } = body;
 
     if (!event_id || !portion_name) {

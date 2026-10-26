@@ -44,6 +44,12 @@ export default function AdminJudgesPage() {
   const [deleteConfirmJudge, setDeleteConfirmJudge] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Add judge modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ full_name: '', username: '', password: '12345678', event_id: '' });
+  const [addingJudge, setAddingJudge] = useState(false);
+  const [addError, setAddError] = useState('');
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -144,21 +150,21 @@ export default function AdminJudgesPage() {
       // Update local state for assign modal judge and list
       setJudges((prev) =>
         prev.map((j) => {
-          if (j.id === judgeId) {
-            const currentIds: number[] = j.assignedEventIds || [];
+          if (Number(j.id) === Number(judgeId)) {
+            const currentIds: number[] = (j.assignedEventIds || []).map(Number);
             const nextIds = isCurrentlyAssigned
-              ? currentIds.filter((id) => id !== eventId)
-              : [...currentIds, eventId];
+              ? currentIds.filter((id) => id !== Number(eventId))
+              : [...currentIds, Number(eventId)];
             return { ...j, assignedEventIds: nextIds };
           }
           return j;
         })
       );
-      if (assignModalJudge && assignModalJudge.id === judgeId) {
-        const currentIds: number[] = assignModalJudge.assignedEventIds || [];
+      if (assignModalJudge && Number(assignModalJudge.id) === Number(judgeId)) {
+        const currentIds: number[] = (assignModalJudge.assignedEventIds || []).map(Number);
         const nextIds = isCurrentlyAssigned
-          ? currentIds.filter((id) => id !== eventId)
-          : [...currentIds, eventId];
+          ? currentIds.filter((id) => id !== Number(eventId))
+          : [...currentIds, Number(eventId)];
         setAssignModalJudge({ ...assignModalJudge, assignedEventIds: nextIds });
       }
     } catch (e) {
@@ -181,6 +187,31 @@ export default function AdminJudgesPage() {
       console.error(e);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleCreateJudge = async (e: FormEvent) => {
+    e.preventDefault();
+    setAddingJudge(true);
+    setAddError('');
+    try {
+      const res = await fetch('/api/judges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_judge',
+          ...addForm,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create judge');
+      setShowAddModal(false);
+      setAddForm({ full_name: '', username: '', password: '12345678', event_id: '' });
+      loadData();
+    } catch (err: any) {
+      setAddError(err.message || 'Error creating judge');
+    } finally {
+      setAddingJudge(false);
     }
   };
 
@@ -210,6 +241,16 @@ export default function AdminJudgesPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setAddError('');
+                setShowAddModal(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add New Judge</span>
+            </button>
             <button
               onClick={loadData}
               disabled={loading}
@@ -251,7 +292,7 @@ export default function AdminJudgesPage() {
                 ) : (
                   filteredJudges.map((j) => {
                     const assignedList = events.filter((e) =>
-                      (j.assignedEventIds || []).includes(Number(e.id))
+                      (j.assignedEventIds || []).map(Number).includes(Number(e.id))
                     );
 
                     return (
@@ -406,7 +447,7 @@ export default function AdminJudgesPage() {
                   <p className="text-xs text-slate-400 py-6 text-center">No competitions created in Enlistment.</p>
                 ) : (
                   events.map((evt) => {
-                    const isAssigned = (assignModalJudge.assignedEventIds || []).includes(Number(evt.id));
+                    const isAssigned = (assignModalJudge.assignedEventIds || []).map(Number).includes(Number(evt.id));
                     return (
                       <div
                         key={evt.id}
@@ -602,6 +643,104 @@ export default function AdminJudgesPage() {
                   {deleting ? 'Deleting...' : 'Delete Judge'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. ADD NEW JUDGE MODAL */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-yale-700" />
+                <span>Accredit New Judge</span>
+              </h2>
+              <p className="text-xs text-slate-500 mb-4">
+                Register an official judge and provide their scoring credentials.
+              </p>
+
+              {addError && (
+                <div className="mb-4 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                  {addError}
+                </div>
+              )}
+
+              <form onSubmit={handleCreateJudge} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Full Legal Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Jane M. Doe"
+                    value={addForm.full_name}
+                    onChange={(e) => setAddForm({ ...addForm, full_name: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Username / Sign-in ID *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. judge_jane"
+                    value={addForm.username}
+                    onChange={(e) => setAddForm({ ...addForm, username: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Initial Password *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addForm.password}
+                    onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Default password is 12345678</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Initial Competition Assignment (Optional)</label>
+                  <select
+                    value={addForm.event_id}
+                    onChange={(e) => setAddForm({ ...addForm, event_id: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                  >
+                    <option value="">-- None (Assign Later) --</option>
+                    {events.map((evt) => (
+                      <option key={evt.id} value={evt.id}>
+                        {evt.name} ({evt.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-3 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={addingJudge}
+                    className="px-4 py-2 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm flex items-center gap-1.5"
+                  >
+                    {addingJudge ? 'Registering...' : 'Accredit Judge'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

@@ -1,4 +1,5 @@
-import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { NextRequest, NextResponse } from 'next/server';
+import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { Criteria, EventPortion } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -42,7 +43,57 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { itemType } = body; // 'portion' or 'criteria'
+    const { itemType } = body; // 'portion', 'criteria', or 'preset'
+
+    if (itemType === 'preset') {
+      const { event_id, segments } = body;
+      if (!event_id || !Array.isArray(segments)) {
+        return NextResponse.json({ error: 'event_id and segments are required' }, { status: 400 });
+      }
+
+      const [existingPortions, existingCriteria] = await Promise.all([
+        getSheetRows<EventPortion>('event_portions'),
+        getSheetRows<Criteria>('criteria'),
+      ]);
+
+      let nextPortionId = existingPortions.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0) + 1;
+      let nextCriteriaId = existingCriteria.reduce((m, c) => Math.max(m, Number(c.id) || 0), 0) + 1;
+
+      const newPortions: EventPortion[] = [...existingPortions];
+      const newCriteria: Criteria[] = [...existingCriteria];
+
+      for (const seg of segments) {
+        const portionId = nextPortionId++;
+        newPortions.push({
+          id: portionId,
+          event_id: Number(event_id),
+          portion_name: (seg.portion_name || '').trim(),
+          percentage: Number(seg.percentage) || 0,
+          order_number: Number(seg.order_number) || 1,
+          status: seg.status || 'Upcoming',
+        });
+
+        if (Array.isArray(seg.criteria)) {
+          for (const crit of seg.criteria) {
+            newCriteria.push({
+              id: nextCriteriaId++,
+              event_id: Number(event_id),
+              portion_id: portionId,
+              name: (crit.name || '').trim(),
+              max_score: Number(crit.max_score) || 100,
+              percentage: Number(crit.percentage) || 100,
+            });
+          }
+        }
+      }
+
+      await Promise.all([
+        setSheetRows('event_portions', newPortions),
+        setSheetRows('criteria', newCriteria),
+      ]);
+
+      return NextResponse.json({ success: true, countPortions: segments.length });
+    }
 
     if (itemType === 'portion') {
       const { event_id, portion_name, percentage, order_number, status } = body;

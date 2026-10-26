@@ -373,32 +373,6 @@ export default function AppLayout({
               </div>
             ))}
           </div>
-
-          {/* Bottom Sidebar Box & Status */}
-          <div className="p-3 border-t border-slate-200/90 bg-slate-50/50 shrink-0">
-            {!sidebarCollapsed ? (
-              <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-subtle flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-slate-800 leading-tight truncate">ASC-ASTS v2.0</p>
-                    <p className="text-[10px] text-slate-400 font-medium truncate">{googleConfigured ? 'Sheets Synced' : 'Database Active'}</p>
-                  </div>
-                </div>
-                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 shrink-0">
-                  ACTIVE
-                </span>
-              </div>
-            ) : (
-              <div className="flex justify-center" title="ASC-ASTS v2.0 - Active">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs border border-emerald-200 shadow-xs">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-              </div>
-            )}
-          </div>
         </aside>
 
         {/* Backdrop for mobile */}

@@ -78,7 +78,7 @@ function EnlistmentContent() {
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvText, setCsvText] = useState('');
 
-  const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'organizers' | null>(null);
+  const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'organizers' | 'courses' | null>(null);
   const [metaName, setMetaName] = useState('');
   const [metaExtra, setMetaExtra] = useState('');
 
@@ -179,13 +179,11 @@ function EnlistmentContent() {
             { portion_name: 'Evening Gown / Formal Wear', percentage: 25, order_number: 3 },
             { portion_name: 'Final Question & Answer', percentage: 25, order_number: 4 },
           ];
-          for (const p of presets) {
-            await fetch('/api/event-portions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ event_id: created.event.id, ...p }),
-            });
-          }
+          await fetch('/api/event-portions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(presets.map((p) => ({ event_id: created.event.id, ...p }))),
+          });
         }
       }
       setShowEventModal(false);
@@ -251,8 +249,15 @@ function EnlistmentContent() {
           body: JSON.stringify({ event_id: candidateTargetEventId, ...candidateForm }),
         });
       }
-      setShowCandidateModal(false);
       setEditingCandidate(null);
+      const currentCandsCount = candidates.filter((c) => Number(c.event_id) === Number(candidateTargetEventId)).length;
+      setCandidateForm({
+        name: '',
+        course_id: courses[0]?.id ? String(courses[0].id) : '',
+        year_level: '1st Year',
+        order_number: currentCandsCount + 2,
+        image_path: '',
+      });
       loadAllData();
     } catch (e) {
       console.error(e);
@@ -278,6 +283,12 @@ function EnlistmentContent() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ department_name: metaName, department_code: metaExtra }),
+        });
+      } else if (showMetaModal === 'courses') {
+        await fetch('/api/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ course_name: metaName }),
         });
       } else if (showMetaModal === 'types') {
         await fetch('/api/event-types', {
@@ -495,6 +506,12 @@ function EnlistmentContent() {
               className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
             >
               Departments
+            </button>
+            <button
+              onClick={() => setShowMetaModal('courses')}
+              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+            >
+              Courses
             </button>
             <button
               onClick={() => setShowMetaModal('types')}
@@ -1081,7 +1098,7 @@ function EnlistmentContent() {
 
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
                 {registry.map((p) => {
-                  const checked = syncSelectedIds.includes(p.id);
+                  const checked = syncSelectedIds.includes(Number(p.id));
                   return (
                     <label
                       key={p.id}
@@ -1093,8 +1110,8 @@ function EnlistmentContent() {
                         type="checkbox"
                         checked={checked}
                         onChange={(e) => {
-                          if (e.target.checked) setSyncSelectedIds([...syncSelectedIds, p.id]);
-                          else setSyncSelectedIds(syncSelectedIds.filter((id) => id !== p.id));
+                          if (e.target.checked) setSyncSelectedIds([...syncSelectedIds, Number(p.id)]);
+                          else setSyncSelectedIds(syncSelectedIds.filter((id) => id !== Number(p.id)));
                         }}
                         className="rounded border-slate-300 text-yale-700 focus:ring-yale-600"
                       />
@@ -1233,7 +1250,7 @@ function EnlistmentContent() {
 
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
                 {judgesList.map((j) => {
-                  const checked = assignedJudgeIds.includes(j.id);
+                  const checked = assignedJudgeIds.includes(Number(j.id));
                   return (
                     <label
                       key={j.id}
@@ -1245,8 +1262,8 @@ function EnlistmentContent() {
                         type="checkbox"
                         checked={checked}
                         onChange={(e) => {
-                          if (e.target.checked) setAssignedJudgeIds([...assignedJudgeIds, j.id]);
-                          else setAssignedJudgeIds(assignedJudgeIds.filter((id) => id !== j.id));
+                          if (e.target.checked) setAssignedJudgeIds([...assignedJudgeIds, Number(j.id)]);
+                          else setAssignedJudgeIds(assignedJudgeIds.filter((id) => id !== Number(j.id)));
                         }}
                         className="rounded border-slate-300 text-indigo-700 focus:ring-indigo-600"
                       />
@@ -1666,6 +1683,23 @@ function EnlistmentContent() {
                         onClick={() => handleDeleteMeta('departments', d.id)}
                         className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
                         title="Delete Department"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                {showMetaModal === 'courses' &&
+                  courses.map((c) => (
+                    <div
+                      key={c.id}
+                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                    >
+                      <span className="font-bold text-slate-900">{c.course_name}</span>
+                      <button
+                        onClick={() => handleDeleteMeta('courses', c.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                        title="Delete Course"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

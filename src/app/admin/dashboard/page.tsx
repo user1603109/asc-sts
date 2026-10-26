@@ -20,11 +20,17 @@ import {
   Layers,
   Activity,
   ChevronUp,
+  ChevronDown,
   Play,
   BookOpen,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+  const [showStatsCards, setShowStatsCards] = useState(true);
+  const [showCard1, setShowCard1] = useState(true);
+  const [showCard2, setShowCard2] = useState(true);
+  const [showCard3, setShowCard3] = useState(true);
+
   const [stats, setStats] = useState({
     totalEvents: 0,
     activeEvents: 0,
@@ -147,8 +153,13 @@ export default function AdminDashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-slate-900">Your tournament at a glance</span>
-            <button className="text-slate-400 hover:text-slate-600 p-0.5">
-              <ChevronUp className="w-4 h-4" />
+            <button
+              type="button"
+              onClick={() => setShowStatsCards(!showStatsCards)}
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+              title={showStatsCards ? 'Minimize Statistics' : 'Expand Statistics'}
+            >
+              {showStatsCards ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
@@ -166,7 +177,8 @@ export default function AdminDashboardPage() {
         {/* ========================================================================= */}
         {/* 8 STATISTIC CARDS (MATCHING ASTS/admin/dashboard.php) */}
         {/* ========================================================================= */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {showStatsCards && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-200">
           
           {/* Card 1: Total Competitions */}
           <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#0A192F] to-[#172D4D] border border-amber-400/25 group">
@@ -388,6 +400,7 @@ export default function AdminDashboardPage() {
           </div>
 
         </div>
+        )}
 
         {/* TOP 3-CARD PORTBOX-STYLE GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -400,11 +413,18 @@ export default function AdminDashboardPage() {
                   <Calendar className="w-4 h-4 text-yale-600" />
                   <h3 className="font-bold text-xs text-slate-800">Event services breakdown</h3>
                 </div>
-                <button className="text-slate-400 hover:text-slate-600">
-                  <ChevronUp className="w-3.5 h-3.5" />
+                <button
+                  type="button"
+                  onClick={() => setShowCard1(!showCard1)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                  title={showCard1 ? 'Minimize' : 'Expand'}
+                >
+                  {showCard1 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Active competitions in this session</p>
+              {showCard1 && (
+                <>
+                  <p className="text-[11px] text-slate-400 mt-1">Active competitions in this session</p>
 
               {/* Stat number & pill */}
               <div className="flex items-center gap-3 mt-3">
@@ -448,24 +468,28 @@ export default function AdminDashboardPage() {
                   ))
                 )}
               </div>
+                </>
+              )}
             </div>
 
             {/* Footer Buttons */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-              <Link
-                href="/admin/enlistment"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors"
-              >
-                <Play className="w-3 h-3 fill-current" />
-                <span>Create Event</span>
-              </Link>
-              <Link
-                href="/admin/tabulation"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-colors"
-              >
-                <span>Live Board</span>
-              </Link>
-            </div>
+            {showCard1 && (
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <Link
+                  href="/admin/enlistment"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors"
+                >
+                  <Play className="w-3 h-3 fill-current" />
+                  <span>Create Event</span>
+                </Link>
+                <Link
+                  href="/admin/tabulation"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-colors"
+                >
+                  <span>Live Board</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* CARD 2: Tabulation Resource Telemetry */}
@@ -477,11 +501,18 @@ export default function AdminDashboardPage() {
                   <Trophy className="w-4 h-4 text-gold-600" />
                   <h3 className="font-bold text-xs text-slate-800">Scoring & tabulation telemetry</h3>
                 </div>
-                <button className="text-slate-400 hover:text-slate-600">
-                  <ChevronUp className="w-3.5 h-3.5" />
+                <button
+                  type="button"
+                  onClick={() => setShowCard2(!showCard2)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                  title={showCard2 ? 'Minimize' : 'Expand'}
+                >
+                  {showCard2 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Live judge score aggregation status</p>
+              {showCard2 && (
+                <>
+                  <p className="text-[11px] text-slate-400 mt-1">Live judge score aggregation status</p>
 
               {/* Big Stat */}
               <div className="flex items-center gap-3 mt-3">
@@ -520,19 +551,23 @@ export default function AdminDashboardPage() {
                   <div className="bg-yale-600 h-1.5 rounded-full w-full" />
                 </div>
               </div>
-            </div>
+            </>
+          )}
+        </div>
 
             {/* Footer Action */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <Link
-                href="/admin/tabulation"
-                className="inline-flex items-center gap-1.5 text-yale-700 hover:text-yale-800 font-bold"
-              >
-                <Activity className="w-3.5 h-3.5" />
-                <span>View Tabulation Report</span>
-              </Link>
-              <span className="text-[10px] text-slate-400">Updated just now</span>
-            </div>
+            {showCard2 && (
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <Link
+                  href="/admin/tabulation"
+                  className="inline-flex items-center gap-1.5 text-yale-700 hover:text-yale-800 font-bold"
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>View Tabulation Report</span>
+                </Link>
+                <span className="text-[10px] text-slate-400">Updated just now</span>
+              </div>
+            )}
           </div>
 
           {/* CARD 3: Database Studio Metrics (Google Sheets) */}
@@ -544,11 +579,18 @@ export default function AdminDashboardPage() {
                   <Database className="w-4 h-4 text-yale-700" />
                   <h3 className="font-bold text-xs text-slate-800">Database Studio metrics</h3>
                 </div>
-                <button className="text-slate-400 hover:text-slate-600">
-                  <ChevronUp className="w-3.5 h-3.5" />
+                <button
+                  type="button"
+                  onClick={() => setShowCard3(!showCard3)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+                  title={showCard3 ? 'Minimize' : 'Expand'}
+                >
+                  {showCard3 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Google Sheets schema density & tables</p>
+              {showCard3 && (
+                <>
+                  <p className="text-[11px] text-slate-400 mt-1">Google Sheets schema density & tables</p>
 
               {/* 3 mini stat blocks */}
               <div className="grid grid-cols-3 gap-2 mt-3 pt-2 text-center">
@@ -577,17 +619,21 @@ export default function AdminDashboardPage() {
                   <span className="font-mono text-[11px] text-slate-700">5TB Google Drive</span>
                 </div>
               </div>
+                </>
+              )}
             </div>
 
             {/* Footer Action */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <Link
-                href="/admin/settings"
-                className="w-full text-center py-2 px-3 rounded-lg bg-yale-700 hover:bg-yale-800 text-white font-bold text-xs shadow-sm transition-colors"
-              >
-                Manage Database Studio Pro
-              </Link>
-            </div>
+            {showCard3 && (
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <Link
+                  href="/admin/settings"
+                  className="w-full text-center py-2 px-3 rounded-lg bg-yale-700 hover:bg-yale-800 text-white font-bold text-xs shadow-sm transition-colors"
+                >
+                  Manage Database Studio Pro
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

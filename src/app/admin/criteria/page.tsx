@@ -382,43 +382,25 @@ function CriteriaContent() {
     if (!confirm(`Apply "${preset.name}" to this pageant? This will append the defined segments and standard criteria.`)) return;
     setApplyingPreset(true);
     try {
-      for (const seg of preset.segments) {
-        const segRes = await fetch('/api/criteria', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            itemType: 'portion',
-            event_id: Number(selectedEventId),
-            portion_name: seg.portion_name,
-            percentage: seg.percentage,
-            order_number: seg.order_number,
-            status: 'Upcoming',
-          }),
-        });
-        const segData = await segRes.json();
-        const portionId = segData.item?.id;
-
-        if (portionId && seg.criteria) {
-          for (const crit of seg.criteria) {
-            await fetch('/api/criteria', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                itemType: 'criteria',
-                event_id: Number(selectedEventId),
-                portion_id: portionId,
-                name: crit.name,
-                max_score: crit.max_score,
-                percentage: crit.percentage,
-              }),
-            });
-          }
-        }
+      const res = await fetch('/api/criteria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemType: 'preset',
+          event_id: Number(selectedEventId),
+          segments: preset.segments,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        alert(data.error || 'Failed to apply preset');
+      } else {
+        setShowPresetModal(false);
+        loadCriteria();
       }
-      setShowPresetModal(false);
-      loadCriteria();
     } catch (e) {
       console.error('Error applying preset:', e);
+      alert('Error applying preset template');
     } finally {
       setApplyingPreset(false);
     }

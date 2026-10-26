@@ -67,57 +67,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-800 font-sans">
-      {/* REDESIGNED HEADER: Gradient of Dark Navy Blue & Yale Blue */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-[#011F5B] via-[#0A2540] to-[#0A192F] border-b border-navy-800/80 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Logo & College Title */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/15 backdrop-blur-sm group-hover:scale-105 transition-transform">
-                <img
-                  src="/api/logo?name=astslogo&v=2"
-                  alt="ASTS Logo"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.currentTarget.src = '/assets/img/astslogo.png';
-                  }}
-                />
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center border border-white/15 backdrop-blur-sm group-hover:scale-105 transition-transform">
-                <img
-                  src="/api/logo?name=asclogo&v=2"
-                  alt="ASC Logo"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.currentTarget.src = '/assets/img/asclogo.png';
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 leading-none">
-                <span className="font-extrabold text-base tracking-tight text-white">
-                  ASC<span className="text-gold-400">-ASTS</span>
-                </span>
-                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-gold-400/20 text-gold-300 border border-gold-400/30">
-                  OFFICIAL
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-300 font-medium mt-0.5">
-                Apayao State College
-              </p>
-            </div>
-          </Link>
-
-          {/* Right Status Badge */}
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="hidden sm:inline">ASC-ASTS Institutional Portal</span>
-            <span className="sm:hidden">ASTS Active</span>
-          </div>
-        </div>
-      </header>
-
       {/* HERO & UNIVERSAL LOGIN MAIN SECTION */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
         <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
@@ -155,11 +104,10 @@ export default function HomePage() {
               <span>Apayao State College • Official Tabulation Suite</span>
             </div>
 
-            {/* Headline - Removed 'Automated Scoring & Tabulation System' as requested */}
+            {/* Headline */}
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
-              ASC-ASTS{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yale-700 via-yale-800 to-navy-900">
-                Institutional Console
+                ASC Tabulation &amp; Scoring System
               </span>
             </h1>
 

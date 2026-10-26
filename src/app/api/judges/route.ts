@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { EventJudge, User } from '@/lib/types';
 import { getCurrentUser, hashPassword } from '@/lib/auth';
 
@@ -51,6 +51,39 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { action } = body;
+
+    // 0. Create new judge
+    if (action === 'create_judge') {
+      const { full_name, username, password, event_id } = body;
+      if (!full_name || !username) {
+        return NextResponse.json({ error: 'Full name and username are required' }, { status: 400 });
+      }
+
+      const users = await getSheetRows<User>('users');
+      const cleanUser = username.trim().toLowerCase();
+      if (users.some((u) => u.username?.toLowerCase() === cleanUser)) {
+        return NextResponse.json({ error: `Username @${cleanUser} is already in use` }, { status: 400 });
+      }
+
+      const hashedPassword = await hashPassword(password || '12345678');
+      const newJudge = await appendSheetRow<User>('users', {
+        username: cleanUser,
+        password: hashedPassword,
+        full_name: full_name.trim(),
+        role: 'judge',
+        approval_status: 'approved',
+      });
+
+      // Optionally assign to an initial event
+      if (event_id && newJudge?.id) {
+        await appendSheetRow<EventJudge>('event_judges', {
+          event_id: Number(event_id),
+          user_id: Number(newJudge.id),
+        });
+      }
+
+      return NextResponse.json({ success: true, message: 'Judge accredited successfully', judge: newJudge });
+    }
 
     // 1. Update status (approve / reject / suspend)
     if (action === 'update_status') {
@@ -121,11 +154,11 @@ export async function POST(req: NextRequest) {
       if (!judgeId) {
         return NextResponse.json({ error: 'Judge ID is required' }, { status: 400 });
       }
-      // Clean up event_judges assignments first
+      // Clean up event_judges assignments atomically
       const eventJudges = await getSheetRows<EventJudge>('event_judges');
-      const assignments = eventJudges.filter((ej) => Number(ej.user_id) === Number(judgeId));
-      for (const a of assignments) {
-        await deleteSheetRow('event_judges', Number(a.id));
+      const remainingAssignments = eventJudges.filter((ej) => Number(ej.user_id) !== Number(judgeId));
+      if (remainingAssignments.length !== eventJudges.length) {
+        await setSheetRows('event_judges', remainingAssignments);
       }
       // Delete user
       await deleteSheetRow('users', Number(judgeId));

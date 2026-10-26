@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows } from '@/lib/googleSheets';
+import { getSheetRows, setSheetRows } from '@/lib/googleSheets';
 import { EventJudge, User } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
@@ -52,22 +53,18 @@ export async function POST(req: NextRequest) {
     }
 
     const currentJudges = await getSheetRows<EventJudge>('event_judges');
-    const existingForEvent = currentJudges.filter((ej) => Number(ej.event_id) === Number(event_id));
+    // Keep other events, replace this event's assignments in one atomic batch
+    const remaining = currentJudges.filter((ej) => Number(ej.event_id) !== Number(event_id));
+    let maxId = currentJudges.reduce((m, r) => Math.max(m, Number(r.id) || 0), 0);
+    const newAssignments = judge_ids
+      .filter((jid: any) => Boolean(jid))
+      .map((jid: any) => ({
+        id: ++maxId,
+        event_id: Number(event_id),
+        user_id: Number(jid),
+      }));
 
-    // Delete existing assignments for this event
-    for (const ej of existingForEvent) {
-      await deleteSheetRow('event_judges', ej.id);
-    }
-
-    // Add new assignments
-    for (const judgeId of judge_ids) {
-      if (judgeId) {
-        await appendSheetRow<EventJudge>('event_judges', {
-          event_id: Number(event_id),
-          user_id: Number(judgeId),
-        });
-      }
-    }
+    await setSheetRows('event_judges', [...remaining, ...newAssignments]);
 
     return NextResponse.json({ success: true, message: 'Judges assigned successfully' });
   } catch (error: any) {
