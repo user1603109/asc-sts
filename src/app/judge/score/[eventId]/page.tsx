@@ -482,6 +482,9 @@ export default function JudgeScoringSheetPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                           <h3 className="font-bold text-sm text-slate-900 leading-snug">{crit.name}</h3>
+                          {crit.description && (
+                            <p className="text-[11px] text-slate-500 mt-0.5">{crit.description}</p>
+                          )}
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[11px] font-bold text-[#0F4C81]">Weight: {crit.percentage}%</span>
                             <span className="text-slate-300">•</span>

@@ -83,6 +83,7 @@ export interface EventPortion {
   percentage: number;
   order_number: number;
   status: PortionStatus;
+  description?: string;
 }
 
 export interface Criteria {
@@ -90,6 +91,7 @@ export interface Criteria {
   event_id: number;
   portion_id: number | null;
   name: string;
+  description?: string;
   max_score: number;
   percentage: number;
 }

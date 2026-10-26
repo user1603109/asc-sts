@@ -225,7 +225,8 @@ export async function initTursoTables(): Promise<boolean> {
       portion_name TEXT,
       percentage REAL,
       order_number INTEGER,
-      status TEXT
+      status TEXT,
+      description TEXT
     );`,
     `CREATE TABLE IF NOT EXISTS criteria (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -233,7 +234,8 @@ export async function initTursoTables(): Promise<boolean> {
       portion_id INTEGER,
       name TEXT,
       max_score REAL,
-      percentage REAL
+      percentage REAL,
+      description TEXT
     );`,
     `CREATE TABLE IF NOT EXISTS scores (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

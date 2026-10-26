@@ -36,6 +36,7 @@ export const SHEET_SCHEMAS: Record<string, string[]> = {
     'percentage',
     'order_number',
     'status',
+    'description',
   ],
   criteria: [
     'id',
@@ -44,6 +45,7 @@ export const SHEET_SCHEMAS: Record<string, string[]> = {
     'name',
     'max_score',
     'percentage',
+    'description',
   ],
   scores: [
     'id',
