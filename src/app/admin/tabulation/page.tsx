@@ -250,7 +250,7 @@ function TabulationContent() {
                               <td className="py-3 px-4 font-bold text-slate-900">
                                 {res.candidate.name}
                                 <span className="block text-[11px] font-normal text-slate-400">
-                                  {res.candidate.course_name || res.candidate.year_level || 'Contender'}
+                                  {res.candidate.department || res.candidate.course_name || res.candidate.year_level || 'Contender'}
                                 </span>
                               </td>
 

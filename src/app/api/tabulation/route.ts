@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRowById, getSheetRows } from '@/lib/googleSheets';
-import { Candidate, Course, Criteria, Event, EventJudge, EventPortion, Score, User } from '@/lib/types';
+import { Candidate, Criteria, Department, Event, EventJudge, EventPortion, Score, User } from '@/lib/types';
 import { computeTabulation } from '@/lib/tabulation';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     const eventId = Number(eventIdStr);
 
-    const [event, candidates, portions, criteriaList, scores, eventJudges, users, courses] = await Promise.all([
+    const [event, candidates, portions, criteriaList, scores, eventJudges, users, departments] = await Promise.all([
       getRowById<Event>('events', eventId),
       getSheetRows<Candidate>('candidates'),
       getSheetRows<EventPortion>('event_portions'),
@@ -25,20 +25,27 @@ export async function GET(req: NextRequest) {
       getSheetRows<Score>('scores'),
       getSheetRows<EventJudge>('event_judges'),
       getSheetRows<User>('users'),
-      getSheetRows<Course>('courses'),
+      getSheetRows<Department>('departments'),
     ]);
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
+    const deptMap = new Map(departments.map((d) => [Number(d.id), d.department_name]));
+
     const eventCandidates = candidates
       .filter((c) => Number(c.event_id) === eventId)
       .map((c) => {
-        const course = courses.find((co) => Number(co.id) === Number(c.course_id));
+        const deptName =
+          c.department ||
+          (c.department_id ? deptMap.get(Number(c.department_id)) : '') ||
+          c.course_name ||
+          '';
         return {
           ...c,
-          course_name: course ? course.course_name : '',
+          department: deptName,
+          course_name: deptName, // for any legacy component expecting course_name
         };
       });
 

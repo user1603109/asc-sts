@@ -29,20 +29,17 @@ export interface EventType {
   type_name: string;
 }
 
-export interface Course {
-  id: number;
-  course_name: string;
-}
-
 export interface Department {
   id: number;
   department_name: string;
-  department_code?: string;
 }
 
 export interface Organizer {
   id: number;
-  organizer_name: string;
+  first_name: string;
+  middle_name?: string;
+  surname: string;
+  organizer_name?: string;
 }
 
 export interface Event {
@@ -70,6 +67,8 @@ export interface Candidate {
   event_id: number;
   name: string;
   image_path?: string;
+  department?: string;
+  department_id?: number | null;
   course_id?: number | null;
   course_name?: string;
   year_level?: string;
@@ -108,6 +107,8 @@ export interface Score {
 export interface ParticipantRegistry {
   id: number;
   name: string;
+  department?: string;
+  department_id?: number | null;
   course_id?: number | null;
   course_name?: string;
   year_level?: string;

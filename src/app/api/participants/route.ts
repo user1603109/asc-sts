@@ -1,5 +1,6 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
-import { ParticipantRegistry, Course } from '@/lib/types';
+import { ParticipantRegistry, Department } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -7,17 +8,26 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const [participants, courses] = await Promise.all([
+    const [participants, departments] = await Promise.all([
       getSheetRows<ParticipantRegistry>('participants_registry'),
-      getSheetRows<Course>('courses'),
+      getSheetRows<Department>('departments'),
     ]);
 
-    const courseMap = new Map(courses.map((c) => [Number(c.id), c.course_name]));
+    const deptMap = new Map(departments.map((d) => [Number(d.id), d.department_name]));
 
-    const enriched = participants.map((p) => ({
-      ...p,
-      course_name: courseMap.get(Number(p.course_id)) || '',
-    }));
+    const enriched = participants.map((p) => {
+      const deptName =
+        p.department ||
+        (p.department_id ? deptMap.get(Number(p.department_id)) : '') ||
+        (p.course_id ? deptMap.get(Number(p.course_id)) : '') ||
+        p.course_name ||
+        '';
+      return {
+        ...p,
+        department: deptName,
+        course_name: deptName, // backward compat
+      };
+    });
 
     return NextResponse.json(enriched);
   } catch (error: any) {
@@ -44,7 +54,7 @@ export async function POST(req: NextRequest) {
           toAppend.push({
             id: ++maxId,
             name: item.name.trim(),
-            course_id: item.course_id ? Number(item.course_id) : null,
+            department: (item.department || item.course_name || '').trim(),
             year_level: item.year_level || '',
             image_path: item.image_path || '',
           });
@@ -54,14 +64,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: toAppend.length, participants: toAppend });
     }
 
-    const { name, course_id, year_level, image_path } = body;
+    const { name, department, course_name, year_level, image_path } = body;
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Participant name is required' }, { status: 400 });
     }
 
     const newParticipant = await appendSheetRow<ParticipantRegistry>('participants_registry', {
       name: name.trim(),
-      course_id: course_id ? Number(course_id) : null,
+      department: (department || course_name || '').trim(),
       year_level: year_level || '',
       image_path: image_path || '',
     });
@@ -80,7 +90,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, name, course_id, year_level, image_path } = body;
+    const { id, name, department, course_name, year_level, image_path } = body;
 
     if (!id || !name) {
       return NextResponse.json({ error: 'ID and name are required' }, { status: 400 });
@@ -88,7 +98,7 @@ export async function PUT(req: NextRequest) {
 
     const updated = await updateSheetRow<ParticipantRegistry>('participants_registry', Number(id), {
       name: name.trim(),
-      course_id: course_id ? Number(course_id) : null,
+      department: (department || course_name || '').trim(),
       year_level: year_level || '',
       image_path: image_path || '',
     });

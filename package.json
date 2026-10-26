@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "setup:sheets": "node scripts/init-sheets.mjs",
+    "wipe:database": "node scripts/wipe-database.mjs",
     "optimize:logos": "python scripts/optimize-logos.py"
   },
   "dependencies": {

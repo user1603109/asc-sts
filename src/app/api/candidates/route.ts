@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
-import { Candidate, Course, ParticipantRegistry } from '@/lib/types';
+import { Candidate, Department, ParticipantRegistry } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -10,9 +10,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const eventId = searchParams.get('eventId');
 
-    const [candidates, courses] = await Promise.all([
+    const [candidates, departments] = await Promise.all([
       getSheetRows<Candidate>('candidates'),
-      getSheetRows<Course>('courses'),
+      getSheetRows<Department>('departments'),
     ]);
 
     let filtered = candidates;
@@ -23,10 +23,16 @@ export async function GET(req: NextRequest) {
     filtered.sort((a, b) => (Number(a.order_number) || 0) - (Number(b.order_number) || 0));
 
     const enriched = filtered.map((c) => {
-      const course = courses.find((co) => Number(co.id) === Number(c.course_id));
+      const dept = departments.find(
+        (d) =>
+          (c.department_id && Number(d.id) === Number(c.department_id)) ||
+          (c.department && d.department_name.toLowerCase() === c.department.toLowerCase())
+      );
+      const deptName = c.department || (dept ? dept.department_name : '') || c.course_name || '';
       return {
         ...c,
-        course_name: course ? course.course_name : '',
+        department: deptName,
+        course_name: deptName, // backward compat
       };
     });
 
@@ -83,7 +89,7 @@ export async function POST(req: NextRequest) {
             event_id: Number(event_id),
             registry_id: participant.id,
             name: participant.name,
-            course_id: participant.course_id ? Number(participant.course_id) : null,
+            department: participant.department || participant.course_name || '',
             year_level: participant.year_level || '',
             image_path: participant.image_path || '',
             order_number: nextOrder++,
@@ -96,7 +102,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'Roster synced successfully' });
     }
 
-    const { event_id, name, image_path, course_id, year_level, order_number, registry_id } = body;
+    const { event_id, name, image_path, department, course_name, year_level, order_number, registry_id } = body;
 
     if (!event_id || !name) {
       return NextResponse.json({ error: 'event_id and name are required' }, { status: 400 });
@@ -106,7 +112,7 @@ export async function POST(req: NextRequest) {
       event_id: Number(event_id),
       name: name.trim(),
       image_path: image_path || '',
-      course_id: course_id ? Number(course_id) : null,
+      department: (department || course_name || '').trim(),
       year_level: year_level || '',
       order_number: Number(order_number) || 1,
       registry_id: registry_id ? Number(registry_id) : null,
@@ -127,7 +133,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, name, image_path, course_id, year_level, order_number } = body;
+    const { id, name, image_path, department, course_name, year_level, order_number } = body;
 
     if (!id || !name) {
       return NextResponse.json({ error: 'id and name are required' }, { status: 400 });
@@ -136,7 +142,7 @@ export async function PUT(req: NextRequest) {
     const updated = await updateSheetRow<Candidate>('candidates', Number(id), {
       name: name.trim(),
       image_path: image_path || '',
-      course_id: course_id ? Number(course_id) : null,
+      department: (department || course_name || '').trim(),
       year_level: year_level || '',
       order_number: Number(order_number) || 1,
     });

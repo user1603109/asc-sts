@@ -19,7 +19,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { Event, Department, Course, ParticipantRegistry } from '@/lib/types';
+import { Event, Department, ParticipantRegistry } from '@/lib/types';
 import { TabulationResult } from '@/lib/tabulation';
 
 export default function AdminReportsPage() {
@@ -32,7 +32,6 @@ export default function AdminReportsPage() {
   const [participants, setParticipants] = useState<ParticipantRegistry[]>([]);
   const [judges, setJudges] = useState<any[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [candidates, setCandidates] = useState<any[]>([]);
 
   const [tabData, setTabData] = useState<{
@@ -63,9 +62,8 @@ export default function AdminReportsPage() {
       fetch('/api/participants').then((r) => r.json()),
       fetch('/api/judges').then((r) => r.json()),
       fetch('/api/departments').then((r) => r.json()),
-      fetch('/api/courses').then((r) => r.json()),
       fetch('/api/candidates').then((r) => r.json()),
-    ]).then(([eventsData, partsData, judgesData, deptsData, coursesData, candsData]) => {
+    ]).then(([eventsData, partsData, judgesData, deptsData, candsData]) => {
       if (Array.isArray(eventsData) && eventsData.length > 0) {
         setEvents(eventsData);
         setSelectedEventId(String(eventsData[0].id));
@@ -73,7 +71,6 @@ export default function AdminReportsPage() {
       if (Array.isArray(partsData)) setParticipants(partsData);
       if (Array.isArray(judgesData)) setJudges(judgesData);
       if (Array.isArray(deptsData)) setDepartments(deptsData);
-      if (Array.isArray(coursesData)) setCourses(coursesData);
       if (Array.isArray(candsData)) setCandidates(candsData);
     });
   }, []);
@@ -429,7 +426,7 @@ export default function AdminReportsPage() {
                       <tr>
                         <th className="py-2 px-3 border border-slate-700 w-16 text-center">Ref ID</th>
                         <th className="py-2 px-3 border border-slate-700">Participant Full Name</th>
-                        <th className="py-2 px-3 border border-slate-700">Course / Degree Program</th>
+                        <th className="py-2 px-3 border border-slate-700">Academic Department</th>
                         <th className="py-2 px-3 border border-slate-700 w-28 text-center">Year Level</th>
                       </tr>
                     </thead>
@@ -443,7 +440,7 @@ export default function AdminReportsPage() {
                             {p.name}
                           </td>
                           <td className="py-2 px-3 border border-slate-200 text-slate-700">
-                            {p.course_name || 'General Program'}
+                            {p.department || p.course_name || 'General Department'}
                           </td>
                           <td className="py-2 px-3 border border-slate-200 text-center text-slate-600">
                             {p.year_level || '1st Year'}
@@ -512,7 +509,7 @@ export default function AdminReportsPage() {
                     <tr>
                       <th className="py-2.5 px-3 border border-slate-700 w-16 text-center">Rank</th>
                       <th className="py-2.5 px-3 border border-slate-700">Contender / Candidate</th>
-                      <th className="py-2.5 px-3 border border-slate-700">Course / Department</th>
+                      <th className="py-2.5 px-3 border border-slate-700">Academic Department</th>
                       {tabData?.portions.map((p) => (
                         <th key={p.id} className="py-2.5 px-3 border border-slate-700 text-right">
                           {p.portion_name} ({p.percentage}%)
@@ -545,7 +542,7 @@ export default function AdminReportsPage() {
                           #{res.candidate.order_number} {res.candidate.name}
                         </td>
                         <td className="py-2.5 px-3 border border-slate-200 text-slate-600">
-                          {res.candidate.course_name || 'General Program'}
+                          {res.candidate.department || res.candidate.course_name || 'General Department'}
                         </td>
                         {tabData?.portions.map((p) => {
                           const pScore = (res.portionScores || res.portionBreakdown || []).find(

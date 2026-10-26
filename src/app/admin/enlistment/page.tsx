@@ -22,7 +22,6 @@ import {
   Event,
   Candidate,
   ParticipantRegistry,
-  Course,
   Department,
   EventType,
   Organizer,
@@ -40,7 +39,6 @@ function EnlistmentContent() {
   const [events, setEvents] = useState<Event[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [registry, setRegistry] = useState<ParticipantRegistry[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
@@ -78,9 +76,22 @@ function EnlistmentContent() {
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvText, setCsvText] = useState('');
 
-  const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'organizers' | 'courses' | null>(null);
-  const [metaName, setMetaName] = useState('');
-  const [metaExtra, setMetaExtra] = useState('');
+  // Metadata management modals & CRUD states
+  const [showMetaModal, setShowMetaModal] = useState<'types' | 'departments' | 'organizers' | null>(null);
+
+  // Academic Department CRUD state (Name only, no code)
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [deptName, setDeptName] = useState('');
+
+  // Event Type CRUD state
+  const [editingType, setEditingType] = useState<EventType | null>(null);
+  const [typeName, setTypeName] = useState('');
+
+  // Organizer CRUD state (First Name, Middle Name, Surname)
+  const [editingOrganizer, setEditingOrganizer] = useState<Organizer | null>(null);
+  const [orgFirstName, setOrgFirstName] = useState('');
+  const [orgMiddleName, setOrgMiddleName] = useState('');
+  const [orgSurname, setOrgSurname] = useState('');
 
   // Form states
   const [eventForm, setEventForm] = useState({
@@ -99,7 +110,7 @@ function EnlistmentContent() {
 
   const [candidateForm, setCandidateForm] = useState({
     name: '',
-    course_id: '',
+    department: '',
     year_level: '1st Year',
     order_number: 1,
     image_path: '',
@@ -107,7 +118,7 @@ function EnlistmentContent() {
 
   const [participantForm, setParticipantForm] = useState({
     name: '',
-    course_id: '',
+    department: '',
     year_level: '1st Year',
     image_path: '',
   });
@@ -123,11 +134,10 @@ function EnlistmentContent() {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [evRes, candRes, regRes, crsRes, deptRes, typeRes, orgRes, judRes] = await Promise.all([
+      const [evRes, candRes, regRes, deptRes, typeRes, orgRes, judRes] = await Promise.all([
         fetch('/api/events').then((r) => r.json()),
         fetch('/api/candidates').then((r) => r.json()),
         fetch('/api/participants').then((r) => r.json()),
-        fetch('/api/courses').then((r) => r.json()),
         fetch('/api/departments').then((r) => r.json()),
         fetch('/api/event-types').then((r) => r.json()),
         fetch('/api/organizers').then((r) => r.json()),
@@ -137,7 +147,6 @@ function EnlistmentContent() {
       if (Array.isArray(evRes)) setEvents(evRes);
       if (Array.isArray(candRes)) setCandidates(candRes);
       if (Array.isArray(regRes)) setRegistry(regRes);
-      if (Array.isArray(crsRes)) setCourses(crsRes);
       if (Array.isArray(deptRes)) setDepartments(deptRes);
       if (Array.isArray(typeRes)) setEventTypes(typeRes);
       if (Array.isArray(orgRes)) setOrganizers(orgRes);
@@ -253,7 +262,7 @@ function EnlistmentContent() {
       const currentCandsCount = candidates.filter((c) => Number(c.event_id) === Number(candidateTargetEventId)).length;
       setCandidateForm({
         name: '',
-        course_id: courses[0]?.id ? String(courses[0].id) : '',
+        department: departments[0]?.department_name || '',
         year_level: '1st Year',
         order_number: currentCandsCount + 2,
         image_path: '',
@@ -274,47 +283,133 @@ function EnlistmentContent() {
     }
   };
 
-  const handleAddMeta = async (e: FormEvent) => {
+  // --- ACADEMIC DEPARTMENT CRUD HANDLERS ---
+  const handleSaveDepartment = async (e: FormEvent) => {
     e.preventDefault();
-    if (!metaName.trim() || !showMetaModal) return;
+    if (!deptName.trim()) return;
     try {
-      if (showMetaModal === 'departments') {
+      if (editingDepartment) {
+        await fetch('/api/departments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingDepartment.id, department_name: deptName.trim() }),
+        });
+      } else {
         await fetch('/api/departments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ department_name: metaName, department_code: metaExtra }),
-        });
-      } else if (showMetaModal === 'courses') {
-        await fetch('/api/courses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ course_name: metaName }),
-        });
-      } else if (showMetaModal === 'types') {
-        await fetch('/api/event-types', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type_name: metaName }),
-        });
-      } else if (showMetaModal === 'organizers') {
-        await fetch('/api/organizers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ organizer_name: metaName }),
+          body: JSON.stringify({ department_name: deptName.trim() }),
         });
       }
-      setMetaName('');
-      setMetaExtra('');
+      setEditingDepartment(null);
+      setDeptName('');
       loadAllData();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleDeleteMeta = async (endpoint: string, id: number) => {
-    if (!confirm('Are you sure you want to delete this record?')) return;
+  const handleDeleteDepartment = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this academic department?')) return;
     try {
-      await fetch(`/api/${endpoint}?id=${id}`, { method: 'DELETE' });
+      await fetch(`/api/departments?id=${id}`, { method: 'DELETE' });
+      if (editingDepartment?.id === id) {
+        setEditingDepartment(null);
+        setDeptName('');
+      }
+      loadAllData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // --- EVENT TYPE CRUD HANDLERS ---
+  const handleSaveType = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!typeName.trim()) return;
+    try {
+      if (editingType) {
+        await fetch('/api/event-types', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingType.id, type_name: typeName.trim() }),
+        });
+      } else {
+        await fetch('/api/event-types', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type_name: typeName.trim() }),
+        });
+      }
+      setEditingType(null);
+      setTypeName('');
+      loadAllData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteType = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this event type?')) return;
+    try {
+      await fetch(`/api/event-types?id=${id}`, { method: 'DELETE' });
+      if (editingType?.id === id) {
+        setEditingType(null);
+        setTypeName('');
+      }
+      loadAllData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // --- ORGANIZER CRUD HANDLERS (First Name, Middle Name, Surname) ---
+  const handleSaveOrganizer = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!orgFirstName.trim() || !orgSurname.trim()) return;
+    try {
+      if (editingOrganizer) {
+        await fetch('/api/organizers', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingOrganizer.id,
+            first_name: orgFirstName.trim(),
+            middle_name: orgMiddleName.trim(),
+            surname: orgSurname.trim(),
+          }),
+        });
+      } else {
+        await fetch('/api/organizers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            first_name: orgFirstName.trim(),
+            middle_name: orgMiddleName.trim(),
+            surname: orgSurname.trim(),
+          }),
+        });
+      }
+      setEditingOrganizer(null);
+      setOrgFirstName('');
+      setOrgMiddleName('');
+      setOrgSurname('');
+      loadAllData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteOrganizer = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this organizer?')) return;
+    try {
+      await fetch(`/api/organizers?id=${id}`, { method: 'DELETE' });
+      if (editingOrganizer?.id === id) {
+        setEditingOrganizer(null);
+        setOrgFirstName('');
+        setOrgMiddleName('');
+        setOrgSurname('');
+      }
       loadAllData();
     } catch (err) {
       console.error(err);
@@ -442,10 +537,10 @@ function EnlistmentContent() {
       for (const line of lines) {
         const parts = line.split(',').map((p) => p.trim());
         if (parts[0]) {
-          const matchedCourse = courses.find((c) => c.course_name.toLowerCase().includes(parts[1]?.toLowerCase() || ''));
+          const matchedDept = departments.find((d) => d.department_name.toLowerCase().includes(parts[1]?.toLowerCase() || ''));
           rowsToInsert.push({
             name: parts[0],
-            course_id: matchedCourse ? matchedCourse.id : null,
+            department: matchedDept ? matchedDept.department_name : (parts[1] || ''),
             year_level: parts[2] || '1st Year',
             image_path: parts[3] || '',
           });
@@ -502,28 +597,39 @@ function EnlistmentContent() {
           {/* Quick Meta Configuration Dropdowns */}
           <div className="hidden md:flex items-center gap-2 pb-2">
             <button
-              onClick={() => setShowMetaModal('departments')}
-              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              onClick={() => {
+                setShowMetaModal('departments');
+                setEditingDepartment(null);
+                setDeptName('');
+              }}
+              className="px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition-colors flex items-center gap-1.5"
             >
-              Departments
+              <span>Academic Departments</span>
+              <span className="font-mono text-[10px] bg-slate-200/80 px-1 rounded text-slate-700">{departments.length}</span>
             </button>
             <button
-              onClick={() => setShowMetaModal('courses')}
-              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              onClick={() => {
+                setShowMetaModal('types');
+                setEditingType(null);
+                setTypeName('');
+              }}
+              className="px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition-colors flex items-center gap-1.5"
             >
-              Courses
+              <span>Event Types</span>
+              <span className="font-mono text-[10px] bg-slate-200/80 px-1 rounded text-slate-700">{eventTypes.length}</span>
             </button>
             <button
-              onClick={() => setShowMetaModal('types')}
-              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              onClick={() => {
+                setShowMetaModal('organizers');
+                setEditingOrganizer(null);
+                setOrgFirstName('');
+                setOrgMiddleName('');
+                setOrgSurname('');
+              }}
+              className="px-2.5 py-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition-colors flex items-center gap-1.5"
             >
-              Event Types
-            </button>
-            <button
-              onClick={() => setShowMetaModal('organizers')}
-              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
-            >
-              Organizers
+              <span>Organizers</span>
+              <span className="font-mono text-[10px] bg-slate-200/80 px-1 rounded text-slate-700">{organizers.length}</span>
             </button>
           </div>
         </div>
@@ -770,7 +876,7 @@ function EnlistmentContent() {
                   type="text"
                   value={registrySearch}
                   onChange={(e) => setRegistrySearch(e.target.value)}
-                  placeholder="Search registered students by name or course..."
+                  placeholder="Search registered students by name or department..."
                   className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-yale-600 focus:bg-white"
                 />
               </div>
@@ -799,7 +905,7 @@ function EnlistmentContent() {
                     setEditingParticipant(null);
                     setParticipantForm({
                       name: '',
-                      course_id: courses[0]?.id ? String(courses[0].id) : '',
+                      department: departments[0]?.department_name || '',
                       year_level: '1st Year',
                       image_path: '',
                     });
@@ -838,7 +944,7 @@ function EnlistmentContent() {
                           />
                         </th>
                         <th className="py-3 px-4">Student Contender</th>
-                        <th className="py-3 px-4">Course Program</th>
+                        <th className="py-3 px-4">Academic Department</th>
                         <th className="py-3 px-4">Year Level</th>
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
@@ -848,7 +954,8 @@ function EnlistmentContent() {
                         .filter(
                           (p) =>
                             p.name.toLowerCase().includes(registrySearch.toLowerCase()) ||
-                            (p.course_name && p.course_name.toLowerCase().includes(registrySearch.toLowerCase()))
+                            ((p.department || p.course_name) &&
+                              (p.department || p.course_name)!.toLowerCase().includes(registrySearch.toLowerCase()))
                         )
                         .map((p) => {
                           const isSelected = selectedRegistryIds.includes(p.id);
@@ -881,7 +988,7 @@ function EnlistmentContent() {
                                 </div>
                               </td>
                               <td className="py-3 px-4 text-slate-700 font-medium">
-                                {p.course_name || 'General Program'}
+                                {p.department || p.course_name || 'General Department'}
                               </td>
                               <td className="py-3 px-4 text-slate-500">
                                 {p.year_level || '1st Year'}
@@ -893,7 +1000,7 @@ function EnlistmentContent() {
                                       setEditingParticipant(p);
                                       setParticipantForm({
                                         name: p.name,
-                                        course_id: p.course_id ? String(p.course_id) : '',
+                                        department: p.department || p.course_name || '',
                                         year_level: p.year_level || '1st Year',
                                         image_path: p.image_path || '',
                                       });
@@ -984,7 +1091,7 @@ function EnlistmentContent() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Department</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Academic Department</label>
                     <select
                       value={eventForm.department}
                       onChange={(e) => setEventForm({ ...eventForm, department: e.target.value })}
@@ -992,7 +1099,7 @@ function EnlistmentContent() {
                     >
                       <option value="">General / All Campus</option>
                       {departments.map((d) => (
-                        <option key={d.id} value={d.department_name}>{d.department_name} ({d.department_code})</option>
+                        <option key={d.id} value={d.department_name}>{d.department_name}</option>
                       ))}
                     </select>
                   </div>
@@ -1028,18 +1135,38 @@ function EnlistmentContent() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
-                  <select
-                    value={eventForm.status}
-                    onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
-                  >
-                    <option value="Upcoming">Upcoming</option>
-                    <option value="Ongoing">Ongoing</option>
-                    <option value="Tabulating">Tabulating</option>
-                    <option value="Completed">Completed</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Organizing Body / Chair</label>
+                    <select
+                      value={eventForm.organizer}
+                      onChange={(e) => setEventForm({ ...eventForm, organizer: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    >
+                      <option value="">Select Organizer (Optional)...</option>
+                      {organizers.map((o) => {
+                        const orgName = o.organizer_name || `${o.first_name || ''} ${o.middle_name ? o.middle_name + ' ' : ''}${o.surname || ''}`.trim() || `Organizer #${o.id}`;
+                        return (
+                          <option key={o.id} value={orgName}>
+                            {orgName}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                    <select
+                      value={eventForm.status}
+                      onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    >
+                      <option value="Upcoming">Upcoming</option>
+                      <option value="Ongoing">Ongoing</option>
+                      <option value="Tabulating">Tabulating</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
                 </div>
 
                 {!editingEvent && (
@@ -1116,7 +1243,7 @@ function EnlistmentContent() {
                         className="rounded border-slate-300 text-yale-700 focus:ring-yale-600"
                       />
                       <span className="flex-1">{p.name}</span>
-                      <span className="text-[11px] text-slate-400 font-normal">{p.course_name}</span>
+                      <span className="text-[11px] text-slate-400 font-normal">{p.department || p.course_name || 'General Department'}</span>
                     </label>
                   );
                 })}
@@ -1330,14 +1457,15 @@ function EnlistmentContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Course Program</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Academic Department</label>
                   <select
-                    value={participantForm.course_id}
-                    onChange={(e) => setParticipantForm({ ...participantForm, course_id: e.target.value })}
+                    value={participantForm.department}
+                    onChange={(e) => setParticipantForm({ ...participantForm, department: e.target.value })}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
                   >
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>{c.course_name}</option>
+                    <option value="">Select Academic Department...</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.department_name}>{d.department_name}</option>
                     ))}
                   </select>
                 </div>
@@ -1398,7 +1526,7 @@ function EnlistmentContent() {
                 Import Contestants from CSV
               </h2>
               <p className="text-xs text-slate-500 mb-3">
-                Paste comma-separated rows. Format: <span className="font-mono text-slate-700">Full Name, Course Name, Year Level, Image URL</span>
+                Paste comma-separated rows. Format: <span className="font-mono text-slate-700">Full Name, Academic Department, Year Level, Image URL</span>
               </p>
 
               <textarea
@@ -1492,7 +1620,7 @@ function EnlistmentContent() {
                             <div>
                               <h4 className="font-bold text-xs text-slate-900">{cand.name}</h4>
                               <p className="text-[11px] text-slate-500">
-                                {courseObj?.course_name || 'Unassigned Course'} • {cand.year_level || '1st Year'}
+                                {cand.department || cand.course_name || 'General Department'} • {cand.year_level || '1st Year'}
                               </p>
                             </div>
                           </div>
@@ -1503,7 +1631,7 @@ function EnlistmentContent() {
                                 setEditingCandidate(cand);
                                 setCandidateForm({
                                   name: cand.name,
-                                  course_id: cand.course_id ? String(cand.course_id) : (courses[0]?.id ? String(courses[0].id) : ''),
+                                  department: cand.department || cand.course_name || (departments[0]?.department_name || ''),
                                   year_level: cand.year_level || '1st Year',
                                   order_number: Number(cand.order_number) || 1,
                                   image_path: cand.image_path || '',
@@ -1541,7 +1669,7 @@ function EnlistmentContent() {
                         setEditingCandidate(null);
                         setCandidateForm({
                           name: '',
-                          course_id: courses[0]?.id ? String(courses[0].id) : '',
+                          department: departments[0]?.department_name || '',
                           year_level: '1st Year',
                           order_number: candidates.filter((c) => Number(c.event_id) === Number(candidateTargetEventId)).length + 1,
                           image_path: '',
@@ -1593,12 +1721,13 @@ function EnlistmentContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <select
-                      value={candidateForm.course_id}
-                      onChange={(e) => setCandidateForm({ ...candidateForm, course_id: e.target.value })}
+                      value={candidateForm.department}
+                      onChange={(e) => setCandidateForm({ ...candidateForm, department: e.target.value })}
                       className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
                     >
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>{c.course_name}</option>
+                      <option value="">Select Academic Department...</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.department_name}>{d.department_name}</option>
                       ))}
                     </select>
                   </div>
@@ -1637,158 +1766,335 @@ function EnlistmentContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* MODAL 8: METADATA MANAGEMENT (DEPARTMENTS, COURSES, EVENT TYPES, ORGANIZERS) */}
+        {/* MODAL 8: METADATA MANAGEMENT (DEPARTMENTS, EVENT TYPES, ORGANIZERS) */}
         {/* ========================================================================= */}
         {showMetaModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
               <button
                 onClick={() => {
                   setShowMetaModal(null);
-                  setMetaName('');
-                  setMetaExtra('');
+                  setEditingDepartment(null);
+                  setDeptName('');
+                  setEditingType(null);
+                  setTypeName('');
+                  setEditingOrganizer(null);
+                  setOrgFirstName('');
+                  setOrgMiddleName('');
+                  setOrgSurname('');
                 }}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <h2 className="text-base font-bold text-slate-900 mb-1">
                 {showMetaModal === 'departments' && 'Manage Academic Departments'}
-                {showMetaModal === 'courses' && 'Manage Degree Programs & Courses'}
                 {showMetaModal === 'types' && 'Manage Competition Event Types'}
                 {showMetaModal === 'organizers' && 'Manage Sponsoring Organizers'}
               </h2>
               <p className="text-xs text-slate-500 mb-4">
-                Maintain official classifications used across events, candidates, and official reports.
+                {showMetaModal === 'departments' && 'Maintain institutional academic departments. Contestants and participants are categorized directly under Academic Department.'}
+                {showMetaModal === 'types' && 'Define competition classifications (e.g. Pageant, Cultural, Sports, Literary, Academic).'}
+                {showMetaModal === 'organizers' && 'Maintain official organizers with First Name, Middle Name (optional), and Surname.'}
               </p>
 
               {/* Items List */}
               <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 mb-4 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
-                {showMetaModal === 'departments' &&
-                  departments.map((d) => (
-                    <div
-                      key={d.id}
-                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
-                    >
-                      <div>
+                {showMetaModal === 'departments' && (
+                  departments.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic text-center py-4">No academic departments added yet.</p>
+                  ) : (
+                    departments.map((d) => (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                      >
                         <span className="font-bold text-slate-900">{d.department_name}</span>
-                        {d.department_code && (
-                          <span className="ml-2 font-mono text-[10px] text-yale-700 bg-yale-50 px-1.5 py-0.5 rounded border border-yale-200">
-                            {d.department_code}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingDepartment(d);
+                              setDeptName(d.department_name);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-yale-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Edit Department"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDepartment(d.id)}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Department"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteMeta('departments', d.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
-                        title="Delete Department"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                    ))
+                  )
+                )}
 
-                {showMetaModal === 'courses' &&
-                  courses.map((c) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
-                    >
-                      <span className="font-bold text-slate-900">{c.course_name}</span>
-                      <button
-                        onClick={() => handleDeleteMeta('courses', c.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
-                        title="Delete Course"
+                {showMetaModal === 'types' && (
+                  eventTypes.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic text-center py-4">No event types added yet.</p>
+                  ) : (
+                    eventTypes.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <span className="font-bold text-slate-900">{t.type_name}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingType(t);
+                              setTypeName(t.type_name);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-yale-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Edit Event Type"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteType(t.id)}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Event Type"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )
+                )}
 
-                {showMetaModal === 'types' &&
-                  eventTypes.map((t) => (
-                    <div
-                      key={t.id}
-                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
-                    >
-                      <span className="font-bold text-slate-900">{t.type_name}</span>
-                      <button
-                        onClick={() => handleDeleteMeta('event-types', t.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
-                        title="Delete Event Type"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-
-                {showMetaModal === 'organizers' &&
-                  organizers.map((o) => (
-                    <div
-                      key={o.id}
-                      className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
-                    >
-                      <span className="font-bold text-slate-900">{o.organizer_name}</span>
-                      <button
-                        onClick={() => handleDeleteMeta('organizers', o.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
-                        title="Delete Organizer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                {showMetaModal === 'organizers' && (
+                  organizers.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic text-center py-4">No organizers added yet.</p>
+                  ) : (
+                    organizers.map((o) => {
+                      const displayName = o.organizer_name || `${o.first_name || ''} ${o.middle_name ? o.middle_name + ' ' : ''}${o.surname || ''}`.trim() || 'Organizer';
+                      return (
+                        <div
+                          key={o.id}
+                          className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg text-xs"
+                        >
+                          <div>
+                            <span className="font-bold text-slate-900">{displayName}</span>
+                            {(o.first_name || o.surname) && (
+                              <span className="block text-[10px] text-slate-500 font-mono">
+                                {o.surname}, {o.first_name} {o.middle_name ? `(${o.middle_name})` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingOrganizer(o);
+                                setOrgFirstName(o.first_name || '');
+                                setOrgMiddleName(o.middle_name || '');
+                                setOrgSurname(o.surname || '');
+                              }}
+                              className="p-1 rounded text-slate-400 hover:text-yale-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title="Edit Organizer"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOrganizer(o.id)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Delete Organizer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )
+                )}
               </div>
 
-              {/* Add Item Form */}
-              <form onSubmit={handleAddMeta} className="pt-3 border-t border-slate-100 space-y-2.5">
-                <div className="flex gap-2">
+              {/* Form: Academic Department */}
+              {showMetaModal === 'departments' && (
+                <form onSubmit={handleSaveDepartment} className="pt-3 border-t border-slate-100 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                      {editingDepartment ? `Editing Department #${editingDepartment.id}` : 'Add New Department'}
+                    </span>
+                    {editingDepartment && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingDepartment(null);
+                          setDeptName('');
+                        }}
+                        className="text-[11px] text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     required
-                    placeholder={
-                      showMetaModal === 'departments'
-                        ? 'Department Name (e.g. College of Science)'
-                        : showMetaModal === 'types'
-                        ? 'Type (e.g. Pageant, Sports, Debate)'
-                        : 'Organizer Name (e.g. Student Council)'
-                    }
-                    value={metaName}
-                    onChange={(e) => setMetaName(e.target.value)}
-                    className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                    placeholder="Department Name (e.g. College of Information Technology)"
+                    value={deptName}
+                    onChange={(e) => setDeptName(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
                   />
-                  {showMetaModal === 'departments' && (
-                    <input
-                      type="text"
-                      placeholder="Code (e.g. CS)"
-                      value={metaExtra}
-                      onChange={(e) => setMetaExtra(e.target.value)}
-                      className="w-24 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white uppercase font-mono"
-                    />
-                  )}
-                </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMetaModal(null);
+                        setEditingDepartment(null);
+                        setDeptName('');
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm cursor-pointer"
+                    >
+                      {editingDepartment ? 'Update Department' : 'Add Department'}
+                    </button>
+                  </div>
+                </form>
+              )}
 
-                <div className="flex justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMetaModal(null);
-                      setMetaName('');
-                      setMetaExtra('');
-                    }}
-                    className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
-                  >
-                    Close
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm"
-                  >
-                    Add Record
-                  </button>
-                </div>
-              </form>
+              {/* Form: Event Types */}
+              {showMetaModal === 'types' && (
+                <form onSubmit={handleSaveType} className="pt-3 border-t border-slate-100 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                      {editingType ? `Editing Event Type #${editingType.id}` : 'Add New Event Type'}
+                    </span>
+                    {editingType && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingType(null);
+                          setTypeName('');
+                        }}
+                        className="text-[11px] text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Event Type Name (e.g. Pageant, Cultural, Debate)"
+                    value={typeName}
+                    onChange={(e) => setTypeName(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                  />
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMetaModal(null);
+                        setEditingType(null);
+                        setTypeName('');
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm cursor-pointer"
+                    >
+                      {editingType ? 'Update Event Type' : 'Add Event Type'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Form: Organizers */}
+              {showMetaModal === 'organizers' && (
+                <form onSubmit={handleSaveOrganizer} className="pt-3 border-t border-slate-100 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                      {editingOrganizer ? `Editing Organizer: ${editingOrganizer.surname}, ${editingOrganizer.first_name}` : 'Add New Organizer'}
+                    </span>
+                    {editingOrganizer && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingOrganizer(null);
+                          setOrgFirstName('');
+                          setOrgMiddleName('');
+                          setOrgSurname('');
+                        }}
+                        className="text-[11px] text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">First Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Don John"
+                        value={orgFirstName}
+                        onChange={(e) => setOrgFirstName(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">Middle Name (optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. A."
+                        value={orgMiddleName}
+                        onChange={(e) => setOrgMiddleName(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">Surname *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Fronda"
+                        value={orgSurname}
+                        onChange={(e) => setOrgSurname(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMetaModal(null);
+                        setEditingOrganizer(null);
+                        setOrgFirstName('');
+                        setOrgMiddleName('');
+                        setOrgSurname('');
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm cursor-pointer"
+                    >
+                      {editingOrganizer ? 'Update Organizer' : 'Add Organizer'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         )}

@@ -1,11 +1,10 @@
-// Column definitions matching database/asts.sql
+// Column definitions matching institutional database standards
 export const SHEET_SCHEMAS: Record<string, string[]> = {
   system_settings: ['id', 'setting_key', 'setting_value'],
   users: ['id', 'username', 'password', 'full_name', 'role', 'approval_status'],
   event_types: ['id', 'type_name'],
-  courses: ['id', 'course_name'],
-  departments: ['id', 'department_name', 'department_code'],
-  organizers: ['id', 'organizer_name'],
+  departments: ['id', 'department_name'],
+  organizers: ['id', 'first_name', 'middle_name', 'surname', 'organizer_name'],
   events: [
     'id',
     'name',
@@ -25,7 +24,7 @@ export const SHEET_SCHEMAS: Record<string, string[]> = {
     'event_id',
     'name',
     'image_path',
-    'course_id',
+    'department',
     'year_level',
     'order_number',
     'registry_id',
@@ -57,13 +56,13 @@ export const SHEET_SCHEMAS: Record<string, string[]> = {
   participants_registry: [
     'id',
     'name',
-    'course_id',
+    'department',
     'year_level',
     'image_path',
   ],
 };
 
-// Initial Seed Data matching database/asts.sql
+// Initial Seed Data matching institutional classifications
 export const SEED_DATA: Record<string, Record<string, any>[]> = {
   system_settings: [
     { id: 1, setting_key: 'system_name', setting_value: 'Automated Scoring & Tabulation System' },
@@ -87,34 +86,21 @@ export const SEED_DATA: Record<string, Record<string, any>[]> = {
     { id: 4, type_name: 'Sports' },
     { id: 5, type_name: 'Literary' },
   ],
-  courses: [
-    { id: 1, course_name: 'Bachelor of Secondary Education' },
-    { id: 2, course_name: 'Bachelor of Elementary Education' },
-    { id: 3, course_name: 'Bachelor in Information Technology' },
-    { id: 4, course_name: 'Bachelor in Industrial Technology' },
-    { id: 5, course_name: 'Bachelor of Technical Teacher Education' },
-    { id: 6, course_name: 'Bachelor of Science in Civil Engineering' },
-    { id: 7, course_name: 'Bachelor of Science in Hotel & Restaurant Mgmt.' },
-    { id: 8, course_name: 'Bachelor of Science in Agriculture' },
-    { id: 9, course_name: 'Bachelor of Science in Business Administration' },
-    { id: 10, course_name: 'Bachelor of Science in Tourism' },
-    { id: 11, course_name: 'Bachelor of Science in Criminology' },
-  ],
   departments: [
-    { id: 1, department_name: 'Bachelor of Secondary Education', department_code: 'BSED' },
-    { id: 2, department_name: 'Bachelor of Elementary Education', department_code: 'BEED' },
-    { id: 3, department_name: 'Bachelor in Information Technology', department_code: 'BSIT' },
-    { id: 4, department_name: 'Bachelor in Industrial Technology', department_code: 'BINDT' },
-    { id: 5, department_name: 'Bachelor of Technical Teacher Education', department_code: 'BTTE' },
-    { id: 6, department_name: 'Bachelor of Science in Civil Engineering', department_code: 'BSCE' },
-    { id: 7, department_name: 'Bachelor of Science in Hotel & Restaurant Mgmt.', department_code: 'BSHRM' },
-    { id: 8, department_name: 'Bachelor of Science in Agriculture', department_code: 'BSA' },
-    { id: 9, department_name: 'Bachelor of Science in Business Administration', department_code: 'BSBA' },
-    { id: 10, department_name: 'Bachelor of Science in Tourism', department_code: 'BST' },
-    { id: 11, department_name: 'Bachelor of Science in Criminology', department_code: 'BSCrim' },
+    { id: 1, department_name: 'Bachelor of Secondary Education' },
+    { id: 2, department_name: 'Bachelor of Elementary Education' },
+    { id: 3, department_name: 'Bachelor in Information Technology' },
+    { id: 4, department_name: 'Bachelor in Industrial Technology' },
+    { id: 5, department_name: 'Bachelor of Technical Teacher Education' },
+    { id: 6, department_name: 'Bachelor of Science in Civil Engineering' },
+    { id: 7, department_name: 'Bachelor of Science in Hotel & Restaurant Mgmt.' },
+    { id: 8, department_name: 'Bachelor of Science in Agriculture' },
+    { id: 9, department_name: 'Bachelor of Science in Business Administration' },
+    { id: 10, department_name: 'Bachelor of Science in Tourism' },
+    { id: 11, department_name: 'Bachelor of Science in Criminology' },
   ],
   organizers: [
-    { id: 1, organizer_name: 'ASC Supreme Student Council' },
-    { id: 2, organizer_name: 'ASC Sports & Cultural Affairs' },
+    { id: 1, first_name: 'Don John', middle_name: 'A.', surname: 'Fronda', organizer_name: 'Don John A. Fronda' },
+    { id: 2, first_name: 'Maria', middle_name: '', surname: 'Santos', organizer_name: 'Maria Santos' },
   ],
 };

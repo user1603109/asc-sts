@@ -10,12 +10,12 @@ const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY
   ? process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
   : undefined;
-const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
+export const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 // In-memory demo store fallback when environment variables are not yet configured
 let memoryStore: Record<string, any[]> | null = null;
 
-function getMemoryStore(): Record<string, any[]> {
+export function getMemoryStore(): Record<string, any[]> {
   if (!memoryStore) {
     memoryStore = {};
     for (const [tab, seeds] of Object.entries(SEED_DATA)) {
@@ -35,7 +35,7 @@ export function isGoogleConfigured(): boolean {
   return Boolean(SERVICE_ACCOUNT_EMAIL && PRIVATE_KEY && SPREADSHEET_ID);
 }
 
-function getSheetsClient() {
+export function getSheetsClient() {
   if (!isGoogleConfigured()) {
     return null;
   }

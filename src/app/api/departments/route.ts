@@ -19,14 +19,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
     }
 
-    const { department_name, department_code } = await req.json();
+    const { department_name } = await req.json();
     if (!department_name || !department_name.trim()) {
       return NextResponse.json({ error: 'Department name is required' }, { status: 400 });
     }
 
     const newDept = await appendSheetRow<Department>('departments', {
       department_name: department_name.trim(),
-      department_code: (department_code || '').trim().toUpperCase(),
     });
 
     return NextResponse.json({ success: true, department: newDept });
@@ -42,14 +41,13 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
     }
 
-    const { id, department_name, department_code } = await req.json();
+    const { id, department_name } = await req.json();
     if (!id || !department_name) {
       return NextResponse.json({ error: 'id and department_name are required' }, { status: 400 });
     }
 
     const updated = await updateSheetRow<Department>('departments', Number(id), {
       department_name: department_name.trim(),
-      department_code: (department_code || '').trim().toUpperCase(),
     });
 
     return NextResponse.json({ success: true, department: updated });

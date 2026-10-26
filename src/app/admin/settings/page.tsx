@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, FileSpreadsheet, Lock, Save } from 'lucide-react';
+import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, FileSpreadsheet, Lock, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { SHEET_SCHEMAS } from '@/lib/schemas';
 
 export default function AdminSettingsPage() {
@@ -14,6 +14,10 @@ export default function AdminSettingsPage() {
   const [tursoStatus, setTursoStatus] = useState<any>(null);
   const [syncingTurso, setSyncingTurso] = useState(false);
   const [tursoMessage, setTursoMessage] = useState('');
+
+  // Wipe database state
+  const [wiping, setWiping] = useState(false);
+  const [wipeMessage, setWipeMessage] = useState('');
 
   // General Settings state
   const [generalSettings, setGeneralSettings] = useState({
@@ -84,6 +88,32 @@ export default function AdminSettingsPage() {
       setTursoMessage(`Error: ${e.message}`);
     } finally {
       setSyncingTurso(false);
+    }
+  };
+
+  const handleWipeDatabase = async () => {
+    if (!confirm('⚠️ DANGER: Are you sure you want to delete ALL competition events, candidates, scores, and judge assignments? Only the administrator account will be preserved.')) {
+      return;
+    }
+    const doubleConfirm = prompt('Type "DELETE" to confirm permanent database wipe:');
+    if (doubleConfirm !== 'DELETE') {
+      alert('Wipe cancelled: Confirmation phrase did not match.');
+      return;
+    }
+
+    setWiping(true);
+    setWipeMessage('');
+    try {
+      const res = await fetch('/api/reset-database', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to wipe database');
+      setWipeMessage(data.message || 'Database successfully wiped clean!');
+      fetch('/api/setup-turso').then((r) => r.json()).then((d) => setTursoStatus(d)).catch(() => {});
+      fetch('/api/setup-sheets').then((r) => r.json()).then((d) => setGoogleStatus(d)).catch(() => {});
+    } catch (e: any) {
+      setWipeMessage(`Error: ${e.message}`);
+    } finally {
+      setWiping(false);
     }
   };
 
@@ -425,6 +455,45 @@ export default function AdminSettingsPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* 5. DANGER ZONE: FACTORY RESET & DATABASE WIPE */}
+        <div className="bg-white border-2 border-rose-200 rounded-xl p-6 shadow-card space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-rose-900">Danger Zone: Clean Slate Database Reset</h2>
+                <p className="text-xs text-rose-600/80">
+                  Permanently deletes all competitions, contenders, scores, and judge assignments. Preserves the master administrator account.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleWipeDatabase}
+              disabled={wiping}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>{wiping ? 'Wiping Database...' : 'Wipe All Competition Data'}</span>
+            </button>
+          </div>
+
+          {wipeMessage && (
+            <div
+              className={`p-3.5 rounded-lg border text-xs flex items-center gap-2.5 ${
+                wipeMessage.startsWith('Error')
+                  ? 'bg-rose-50 border-rose-200 text-rose-800'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold'
+              }`}
+            >
+              {wipeMessage.startsWith('Error') ? <AlertCircle className="w-4 h-4 text-rose-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              <span>{wipeMessage}</span>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

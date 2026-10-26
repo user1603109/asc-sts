@@ -179,18 +179,16 @@ export async function initTursoTables(): Promise<boolean> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type_name TEXT UNIQUE
     );`,
-    `CREATE TABLE IF NOT EXISTS courses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      course_name TEXT UNIQUE
-    );`,
     `CREATE TABLE IF NOT EXISTS departments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      department_name TEXT UNIQUE,
-      department_code TEXT
+      department_name TEXT UNIQUE
     );`,
     `CREATE TABLE IF NOT EXISTS organizers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      organizer_name TEXT UNIQUE
+      first_name TEXT,
+      middle_name TEXT,
+      surname TEXT,
+      organizer_name TEXT
     );`,
     `CREATE TABLE IF NOT EXISTS events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -215,6 +213,7 @@ export async function initTursoTables(): Promise<boolean> {
       event_id INTEGER,
       name TEXT,
       image_path TEXT,
+      department TEXT,
       course_id INTEGER,
       year_level TEXT,
       order_number INTEGER,
@@ -247,6 +246,7 @@ export async function initTursoTables(): Promise<boolean> {
     `CREATE TABLE IF NOT EXISTS participants_registry (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
+      department TEXT,
       course_id INTEGER,
       year_level TEXT,
       image_path TEXT
