@@ -57,6 +57,22 @@ export default function JudgeScoringSheetPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Connectivity monitor
+  useEffect(() => {
+    setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Initial Data Load
   useEffect(() => {
@@ -244,6 +260,21 @@ export default function JudgeScoringSheetPage() {
     );
   }, [currentCandidate, user, activeCriteria, existingScores]);
 
+  // Count of candidates fully scored by this judge
+  const scoredCount = useMemo(() => {
+    if (!user || candidates.length === 0 || activeCriteria.length === 0) return 0;
+    return candidates.filter((cand) =>
+      activeCriteria.every((crit) =>
+        existingScores.some(
+          (s) =>
+            Number(s.candidate_id) === Number(cand.id) &&
+            Number(s.criteria_id) === Number(crit.id) &&
+            Number(s.judge_id) === Number(user.userId)
+        )
+      )
+    ).length;
+  }, [candidates, activeCriteria, existingScores, user]);
+
   return (
     <JudgeLayout
       user={user}
@@ -251,6 +282,19 @@ export default function JudgeScoringSheetPage() {
       pageSubtitle={`${event?.type || 'Competition'} • Official Live Touchscreen Scorecard`}
     >
       <div className="space-y-4 max-w-4xl mx-auto pb-12">
+        {/* Offline Warning Alert */}
+        {!isOnline && (
+          <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2.5 rounded-2xl flex items-center justify-between shadow-md animate-pulse">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-white" />
+              <span>Offline Warning: Internet connection lost. Please reconnect to submit scores.</span>
+            </div>
+            <span className="text-[10px] bg-rose-800 px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+              Offline
+            </span>
+          </div>
+        )}
+
         {/* Navigation Breadcrumb & Back Bar */}
         <div className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl shadow-xs flex items-center justify-between gap-3">
           <button
@@ -304,8 +348,14 @@ export default function JudgeScoringSheetPage() {
         {/* Contestant Ribbon in List / Horizontal Mode (Touch Friendly) */}
         <div className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl shadow-xs space-y-2">
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-            <span>SELECT CONTESTANT ({selectedCandidateIndex + 1} OF {candidates.length})</span>
-            <span>Tap to evaluate</span>
+            <span className="flex items-center gap-1.5">
+              <span>EVALUATED</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
+                {scoredCount} of {candidates.length}
+              </span>
+              <span>CONTESTANTS</span>
+            </span>
+            <span>Tap to switch candidate</span>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1">
@@ -526,10 +576,10 @@ export default function JudgeScoringSheetPage() {
                 </button>
               </div>
 
-              {/* Submit & Lock Score Button */}
+              {/* Submit & Lock Score Button - Opens Confirmation Modal */}
               <button
                 type="button"
-                onClick={handleSubmitScores}
+                onClick={() => setShowConfirmModal(true)}
                 disabled={submitting || activeCriteria.length === 0}
                 className="w-full sm:w-auto px-6 py-3 bg-[#0F4C81] hover:bg-[#0A3258] text-white font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
               >
@@ -541,10 +591,89 @@ export default function JudgeScoringSheetPage() {
                 ) : (
                   <>
                     <Lock className="w-4 h-4 text-amber-400" />
-                    <span>Submit & Lock Score</span>
+                    <span>Submit &amp; Lock Score</span>
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Modal to Prevent Accidental Submissions */}
+        {showConfirmModal && currentCandidate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+              <div className="bg-[#0F4C81] px-6 py-4 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-amber-400" />
+                  <h3 className="font-extrabold text-sm tracking-wide">Confirm Official Score Submission</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="text-white/80 hover:text-white text-lg font-bold p-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-[#0F4C81] text-white flex items-center justify-center font-black text-lg shrink-0">
+                    #{currentCandidate.order_number}
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-sm">{currentCandidate.name}</h4>
+                    <p className="text-xs text-slate-500 font-medium">Candidate #{currentCandidate.order_number}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 border border-slate-100 rounded-2xl p-3 bg-slate-50/50">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Scoring Breakdown</p>
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {activeCriteria.map((c) => (
+                      <div key={c.id} className="py-1.5 flex items-center justify-between">
+                        <span className="text-slate-700 font-semibold">{c.name}</span>
+                        <span className="font-mono font-bold text-slate-900">
+                          {currentScores[c.id] || 0} / {c.max_score} pts ({c.percentage}%)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                    <span className="font-extrabold text-slate-900 text-xs">Computed Total Score:</span>
+                    <span className="text-lg font-black text-[#0F4C81] font-mono">{liveTotal.toFixed(2)}%</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] flex items-start gap-2">
+                  <Lock className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                  <span>
+                    Once submitted, your score will be securely logged and synchronized in real-time to the Official Tabulation Master Sheet.
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmModal(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    Review / Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowConfirmModal(false);
+                      handleSubmitScores();
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-[#0F4C81] hover:bg-[#0A3258] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Confirm &amp; Submit</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

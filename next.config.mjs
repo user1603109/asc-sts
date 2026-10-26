@@ -21,9 +21,16 @@ try {
     }
   }
 
-  if (fs.existsSync(srcAscLogo)) {
-    fs.copyFileSync(srcAscLogo, path.join(publicImgDir, 'asclogo.png'));
-    fs.copyFileSync(srcAscLogo, path.join(publicDir, 'asclogo.png'));
+  // Optimize oversized logos automatically if larger than 1MB
+  const optScript = path.join(process.cwd(), 'scripts', 'optimize-logos.py');
+  if (fs.existsSync(srcAscLogo) && fs.existsSync(optScript)) {
+    const stats = fs.statSync(srcAscLogo);
+    if (stats.size > 1024 * 1024) {
+      try {
+        const { execSync } = await import('child_process');
+        execSync(`python "${optScript}"`, { stdio: 'ignore' });
+      } catch (_) {}
+    }
   }
 } catch (e) {
   console.warn('Could not copy logo:', e.message);

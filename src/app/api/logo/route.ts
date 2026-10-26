@@ -36,9 +36,7 @@ export async function GET(req: NextRequest) {
     return new Response(fileBuffer, {
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400, immutable',
       },
     });
   } catch (error) {

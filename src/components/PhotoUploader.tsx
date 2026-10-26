@@ -21,6 +21,51 @@ export default function PhotoUploader({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Client-side image compressor: guarantees photos stay under 1.5MB to respect Vercel's 4.5MB payload limit
+  const compressImage = async (file: File): Promise<File | Blob> => {
+    // If already under 800KB, no need to compress
+    if (file.size < 800 * 1024) return file;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const canvas = document.createElement('canvas');
+        const maxDim = 1200; // ample resolution for crisp profile badges & reports
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(file);
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+      img.onerror = () => resolve(file);
+    });
+  };
+
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file (PNG, JPG, JPEG, WEBP)');
@@ -30,8 +75,9 @@ export default function PhotoUploader({
     setUploading(true);
 
     try {
+      const processedFile = await compressImage(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', processedFile);
 
       const res = await fetch('/api/upload', {
         method: 'POST',
