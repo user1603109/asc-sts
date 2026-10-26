@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -16,6 +16,8 @@ import {
   Wifi,
   Sparkles,
   ExternalLink,
+  Shield,
+  Loader2,
 } from 'lucide-react';
 
 interface NavItem {
@@ -52,6 +54,35 @@ export default function JudgeLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentUser, setCurrentUser] = useState(user);
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(user));
+
+  // Authenticate judge session on client mount
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/auth/me')
+      .then((res) => {
+        if (!res.ok) throw new Error('Unauthorized');
+        return res.json();
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        if (!data.authenticated || (data.user?.role !== 'judge' && data.user?.role !== 'admin')) {
+          router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+        } else {
+          setCurrentUser(data.user);
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, router]);
 
   const handleLogout = async () => {
     try {
@@ -80,6 +111,21 @@ export default function JudgeLayout({
       ],
     },
   ];
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen h-screen w-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+        <div className="w-14 h-14 rounded-2xl bg-[#0F4C81] flex items-center justify-center text-white mb-3 shadow-lg animate-pulse">
+          <Shield className="w-7 h-7" />
+        </div>
+        <div className="flex items-center gap-2 text-slate-800 font-extrabold text-sm">
+          <Loader2 className="w-4 h-4 animate-spin text-[#0F4C81]" />
+          <span>Verifying Judge Session...</span>
+        </div>
+        <p className="text-[11px] text-slate-400 mt-1">Authorized accredited judges only</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen h-screen flex flex-col bg-[#F8FAFC] text-slate-800 font-sans overflow-hidden">
@@ -163,10 +209,10 @@ export default function JudgeLayout({
             title="View Judge Profile"
           >
             <div className="w-6 h-6 rounded-lg bg-amber-400 text-slate-900 font-black text-xs flex items-center justify-center shrink-0">
-              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'J'}
+              {currentUser?.fullName ? currentUser.fullName.charAt(0).toUpperCase() : 'J'}
             </div>
             <div className="hidden sm:block text-left leading-tight">
-              <div className="font-bold text-xs truncate max-w-[120px]">{user?.fullName || 'Judge Panel'}</div>
+              <div className="font-bold text-xs truncate max-w-[120px]">{currentUser?.fullName || 'Judge Panel'}</div>
               <div className="text-[10px] text-slate-300">Accredited Judge</div>
             </div>
           </Link>

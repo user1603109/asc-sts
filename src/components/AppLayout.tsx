@@ -24,6 +24,8 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
+  Shield,
+  Loader2,
 } from 'lucide-react';
 
 interface NavItem {
@@ -53,7 +55,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({
   children,
-  user = { username: 'admin', fullName: 'ASC Administrator', role: 'admin' },
+  user,
   googleConfigured = false,
   pageTitle,
   pageSubtitle,
@@ -63,7 +65,36 @@ export default function AppLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentUser, setCurrentUser] = useState(user);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Authenticate administrator session on client mount
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/auth/me')
+      .then((res) => {
+        if (!res.ok) throw new Error('Unauthorized');
+        return res.json();
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        if (!data.authenticated || data.user?.role !== 'admin') {
+          router.replace(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
+        } else {
+          setCurrentUser(data.user);
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        router.replace(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, router]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,6 +144,21 @@ export default function AppLayout({
       ],
     },
   ];
+
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen w-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+        <div className="w-14 h-14 rounded-2xl bg-[#060D17] border border-amber-400/30 flex items-center justify-center text-amber-400 mb-3 shadow-lg animate-pulse">
+          <Shield className="w-7 h-7" />
+        </div>
+        <div className="flex items-center gap-2 text-slate-800 font-extrabold text-sm">
+          <Loader2 className="w-4 h-4 animate-spin text-[#0F4C81]" />
+          <span>Verifying Administrator Privileges...</span>
+        </div>
+        <p className="text-[11px] text-slate-400 mt-1">Authorized tabulators and system controllers only</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-[#F8FAFC] text-slate-800 font-sans overflow-hidden">
@@ -226,13 +272,13 @@ export default function AppLayout({
           <Link
             href="/admin/settings"
             className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all group"
-            title={`Profile: ${user?.fullName || 'Administrator'} (${user?.role || 'admin'})`}
+            title={`Profile: ${currentUser?.fullName || 'Administrator'} (${currentUser?.role || 'admin'})`}
           >
             <div className="w-6 h-6 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center border border-amber-400/30 group-hover:scale-105 transition-transform">
               <User className="w-3.5 h-3.5" />
             </div>
             <span className="hidden sm:inline-block text-xs font-semibold text-slate-200 group-hover:text-white">
-              {user?.fullName?.split(' ')[0] || 'Profile'}
+              {currentUser?.fullName?.split(' ')[0] || 'Profile'}
             </span>
           </Link>
 
