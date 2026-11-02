@@ -99,3 +99,4 @@ JWT_SECRET=asc_asts_super_secret_key_2026_hostinger_secure
   ```bash
   npm run wipe:db
   ```
+
