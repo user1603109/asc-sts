@@ -10,7 +10,31 @@ This guide provides step-by-step instructions to deploy the **Apayao State Colle
 
 ---
 
-## 🗄️ Step 1: Create the MySQL Database in Hostinger
+## 🌐 Deploying as a Subdomain (e.g. `tabulation.yourdomain.com` or `scoring.yourdomain.com`)
+
+Deploying ASC-STS on a subdomain is recommended because it completely isolates the scoring and tabulation portal from your main website.
+
+### Step 1: Create the Subdomain in Hostinger
+1. In Hostinger **hPanel**, navigate to **Websites** (or **Domains**) → **Subdomains**.
+2. Enter your desired subdomain name (for example, `tabulation` or `scoring` or `asts`).
+3. Select your primary root domain.
+4. (Optional) Check "Custom folder for subdomain" if you want a clean dedicated folder (e.g. `public_html/tabulation`).
+5. Click **Create**.
+
+### Step 2: Deploy the Web App to the Subdomain via GitHub
+1. Return to the **Websites** dashboard and click **Create site** / **Add Website** → Select **Web App** (as shown in your screenshot).
+2. When asked which domain/subdomain to use, select your newly created subdomain (e.g., `tabulation.yourdomain.com`).
+3. Choose **GitHub** as the source provider and connect repository:
+   - **Repository**: `user1603109/asc-sts`
+   - **Branch**: `main`
+4. Set the Build and Start commands:
+   - **Node.js Version**: `20.x` or `18.x`
+   - **Build command**: `npm run build`
+   - **Start command**: `npm run start`
+
+---
+
+## 🗄️ Step 2: Create the MySQL Database in Hostinger
 
 1. Log in to your **Hostinger hPanel**.
 2. Navigate to **Databases** → **MySQL Databases**.
