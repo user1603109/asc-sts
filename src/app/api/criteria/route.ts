@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
 
     // 1. APPLY PRESET (APPEND OR OVERWRITE)
     if (itemType === 'preset') {
-      const { event_id, segments, overwrite } = body;
-      if (!event_id || !Array.isArray(segments)) {
-        return NextResponse.json({ error: 'event_id and segments are required' }, { status: 400 });
+      const { event_id, segments, flatCriteria, overwrite } = body;
+      if (!event_id || (!Array.isArray(segments) && !Array.isArray(flatCriteria))) {
+        return NextResponse.json({ error: 'event_id and segments or flatCriteria are required' }, { status: 400 });
       }
 
       if (overwrite) {
@@ -57,31 +57,52 @@ export async function POST(req: NextRequest) {
         await execute('DELETE FROM event_portions WHERE event_id = ?', [Number(event_id)]);
       }
 
-      for (const seg of segments) {
-        const newPortion = await appendSheetRow<EventPortion>('event_portions', {
-          event_id: Number(event_id),
-          portion_name: (seg.portion_name || '').trim(),
-          percentage: Number(seg.percentage) || 0,
-          order_number: Number(seg.order_number) || 1,
-          status: seg.status || 'Upcoming',
-          description: seg.description || '',
-        });
+      // Handle flat criteria (for standard non-pageant competitions)
+      if (Array.isArray(flatCriteria) && flatCriteria.length > 0) {
+        for (const crit of flatCriteria) {
+          await appendSheetRow<Criteria>('criteria', {
+            event_id: Number(event_id),
+            portion_id: null,
+            name: (crit.name || '').trim(),
+            max_score: Number(crit.max_score) || 100,
+            percentage: Number(crit.percentage) || 100,
+            description: crit.description || '',
+          });
+        }
+      }
 
-        if (Array.isArray(seg.criteria)) {
-          for (const crit of seg.criteria) {
-            await appendSheetRow<Criteria>('criteria', {
-              event_id: Number(event_id),
-              portion_id: newPortion?.id ? Number(newPortion.id) : null,
-              name: (crit.name || '').trim(),
-              max_score: Number(crit.max_score) || 100,
-              percentage: Number(crit.percentage) || 100,
-              description: crit.description || '',
-            });
+      // Handle multi-segment proceedings (for pageantry & multi-phase events)
+      if (Array.isArray(segments) && segments.length > 0) {
+        for (const seg of segments) {
+          const newPortion = await appendSheetRow<EventPortion>('event_portions', {
+            event_id: Number(event_id),
+            portion_name: (seg.portion_name || '').trim(),
+            percentage: Number(seg.percentage) || 0,
+            order_number: Number(seg.order_number) || 1,
+            status: seg.status || 'Upcoming',
+            description: seg.description || '',
+          });
+
+          if (Array.isArray(seg.criteria)) {
+            for (const crit of seg.criteria) {
+              await appendSheetRow<Criteria>('criteria', {
+                event_id: Number(event_id),
+                portion_id: newPortion?.id ? Number(newPortion.id) : null,
+                name: (crit.name || '').trim(),
+                max_score: Number(crit.max_score) || 100,
+                percentage: Number(crit.percentage) || 100,
+                description: crit.description || '',
+              });
+            }
           }
         }
       }
 
-      return NextResponse.json({ success: true, countPortions: segments.length });
+      return NextResponse.json({
+        success: true,
+        countPortions: Array.isArray(segments) ? segments.length : 0,
+        countFlatCriteria: Array.isArray(flatCriteria) ? flatCriteria.length : 0,
+      });
     }
 
     // 2. DUPLICATE ENTIRE PORTION + ITS CRITERIA

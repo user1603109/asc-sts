@@ -2,10 +2,14 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import AppLayout from '@/components/AppLayout';
+import MessageBox, { MessageBoxOptions } from '@/components/MessageBox';
 import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, FileSpreadsheet, Lock, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { SHEET_SCHEMAS } from '@/lib/schemas';
 
 export default function AdminSettingsPage() {
+  // Modal state
+  const [msgBox, setMsgBox] = useState<MessageBoxOptions | null>(null);
+
   // MySQL Database state
   const [mysqlStatus, setMysqlStatus] = useState<any>(null);
   const [syncingMysql, setSyncingMysql] = useState(false);
@@ -68,29 +72,32 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleWipeDatabase = async () => {
-    if (!confirm('⚠️ DANGER: Are you sure you want to delete ALL competition events, candidates, scores, and judge assignments? Only the administrator account will be preserved.')) {
-      return;
-    }
-    const doubleConfirm = prompt('Type "DELETE" to confirm permanent database wipe:');
-    if (doubleConfirm !== 'DELETE') {
-      alert('Wipe cancelled: Confirmation phrase did not match.');
-      return;
-    }
-
-    setWiping(true);
-    setWipeMessage('');
-    try {
-      const res = await fetch('/api/reset-database', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to wipe database');
-      setWipeMessage(data.message || 'Database successfully wiped clean!');
-      fetch('/api/setup-mysql').then((r) => r.json()).then((d) => setMysqlStatus(d)).catch(() => {});
-    } catch (e: any) {
-      setWipeMessage(`Error: ${e.message}`);
-    } finally {
-      setWiping(false);
-    }
+  const handleWipeDatabase = () => {
+    setMsgBox({
+      title: '⚠️ Danger: Permanent Database Wipe',
+      message: 'Are you sure you want to delete ALL competition events, candidates, scores, criteria, and judge assignments? Only the administrator account will be preserved.\n\nType DELETE in the box below to authorize this permanent wipe.',
+      type: 'danger',
+      confirmText: 'Wipe Database Clean',
+      cancelText: 'Cancel',
+      isPrompt: true,
+      promptPlaceholder: 'Type DELETE',
+      promptExpectedValue: 'DELETE',
+      onConfirm: async () => {
+        setWiping(true);
+        setWipeMessage('');
+        try {
+          const res = await fetch('/api/reset-database', { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to wipe database');
+          setWipeMessage(data.message || 'Database successfully wiped clean!');
+          fetch('/api/setup-mysql').then((r) => r.json()).then((d) => setMysqlStatus(d)).catch(() => {});
+        } catch (e: any) {
+          setWipeMessage(`Error: ${e.message}`);
+        } finally {
+          setWiping(false);
+        }
+      },
+    });
   };
 
   const handleSaveGeneral = async (e: FormEvent) => {
@@ -420,6 +427,8 @@ export default function AdminSettingsPage() {
           )}
         </div>
       </div>
+
+      <MessageBox isOpen={!!msgBox} options={msgBox} onClose={() => setMsgBox(null)} />
     </AppLayout>
   );
 }

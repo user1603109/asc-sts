@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import PhotoUploader from '@/components/PhotoUploader';
+import MessageBox, { MessageBoxOptions } from '@/components/MessageBox';
 import {
   Calendar,
   Users,
@@ -31,6 +32,9 @@ import {
 function EnlistmentContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') || 'events';
+
+  // System MessageBox modal state
+  const [msgBox, setMsgBox] = useState<MessageBoxOptions | null>(null);
 
   // Active Tab: 'events' or 'participants'
   const [activeTab, setActiveTab] = useState<'events' | 'participants'>(initialTab as any);
@@ -203,14 +207,21 @@ function EnlistmentContent() {
     }
   };
 
-  const handleDeleteEvent = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this competition? All scores and candidate assignments will be removed.')) return;
-    try {
-      await fetch(`/api/events?id=${id}`, { method: 'DELETE' });
-      loadAllData();
-    } catch (e) {
-      console.error(e);
-    }
+  const handleDeleteEvent = (id: number) => {
+    setMsgBox({
+      title: 'Delete Competition Event',
+      message: 'Are you sure you want to delete this competition? All scores, candidate assignments, and criteria will be permanently removed.',
+      type: 'danger',
+      confirmText: 'Delete Event',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/events?id=${id}`, { method: 'DELETE' });
+          loadAllData();
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   };
 
   // --- CANDIDATE & ROSTER SYNC HANDLERS ---
@@ -273,14 +284,21 @@ function EnlistmentContent() {
     }
   };
 
-  const handleDeleteCandidate = async (id: number) => {
-    if (!confirm('Remove this candidate from the event?')) return;
-    try {
-      await fetch(`/api/candidates?id=${id}`, { method: 'DELETE' });
-      loadAllData();
-    } catch (e) {
-      console.error(e);
-    }
+  const handleDeleteCandidate = (id: number) => {
+    setMsgBox({
+      title: 'Remove Candidate',
+      message: 'Are you sure you want to remove this candidate from the event? Any associated segment scores will be cleared.',
+      type: 'danger',
+      confirmText: 'Remove Candidate',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/candidates?id=${id}`, { method: 'DELETE' });
+          loadAllData();
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   };
 
   // --- ACADEMIC DEPARTMENT CRUD HANDLERS ---
@@ -309,18 +327,25 @@ function EnlistmentContent() {
     }
   };
 
-  const handleDeleteDepartment = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this academic department?')) return;
-    try {
-      await fetch(`/api/departments?id=${id}`, { method: 'DELETE' });
-      if (editingDepartment?.id === id) {
-        setEditingDepartment(null);
-        setDeptName('');
-      }
-      loadAllData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeleteDepartment = (id: number) => {
+    setMsgBox({
+      title: 'Delete Department',
+      message: 'Are you sure you want to delete this academic department?',
+      type: 'danger',
+      confirmText: 'Delete Department',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/departments?id=${id}`, { method: 'DELETE' });
+          if (editingDepartment?.id === id) {
+            setEditingDepartment(null);
+            setDeptName('');
+          }
+          loadAllData();
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
   };
 
   // --- EVENT TYPE CRUD HANDLERS ---
@@ -349,18 +374,25 @@ function EnlistmentContent() {
     }
   };
 
-  const handleDeleteType = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this event type?')) return;
-    try {
-      await fetch(`/api/event-types?id=${id}`, { method: 'DELETE' });
-      if (editingType?.id === id) {
-        setEditingType(null);
-        setTypeName('');
-      }
-      loadAllData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeleteType = (id: number) => {
+    setMsgBox({
+      title: 'Delete Event Type',
+      message: 'Are you sure you want to delete this event category type?',
+      type: 'danger',
+      confirmText: 'Delete Type',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/event-types?id=${id}`, { method: 'DELETE' });
+          if (editingType?.id === id) {
+            setEditingType(null);
+            setTypeName('');
+          }
+          loadAllData();
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
   };
 
   // --- ORGANIZER CRUD HANDLERS (First Name, Middle Name, Surname) ---
@@ -400,20 +432,27 @@ function EnlistmentContent() {
     }
   };
 
-  const handleDeleteOrganizer = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this organizer?')) return;
-    try {
-      await fetch(`/api/organizers?id=${id}`, { method: 'DELETE' });
-      if (editingOrganizer?.id === id) {
-        setEditingOrganizer(null);
-        setOrgFirstName('');
-        setOrgMiddleName('');
-        setOrgSurname('');
-      }
-      loadAllData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeleteOrganizer = (id: number) => {
+    setMsgBox({
+      title: 'Delete Organizer',
+      message: 'Are you sure you want to delete this organizer?',
+      type: 'danger',
+      confirmText: 'Delete Organizer',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/organizers?id=${id}`, { method: 'DELETE' });
+          if (editingOrganizer?.id === id) {
+            setEditingOrganizer(null);
+            setOrgFirstName('');
+            setOrgMiddleName('');
+            setOrgSurname('');
+          }
+          loadAllData();
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
   };
 
   // --- PORTIONS HANDLERS ---
@@ -507,26 +546,40 @@ function EnlistmentContent() {
     }
   };
 
-  const handleDeleteParticipant = async (id: number) => {
-    if (!confirm('Delete participant from registry?')) return;
-    try {
-      await fetch(`/api/participants?id=${id}`, { method: 'DELETE' });
-      loadAllData();
-    } catch (e) {
-      console.error(e);
-    }
+  const handleDeleteParticipant = (id: number) => {
+    setMsgBox({
+      title: 'Delete Participant',
+      message: 'Are you sure you want to delete this participant from the institutional registry?',
+      type: 'danger',
+      confirmText: 'Delete Participant',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/participants?id=${id}`, { method: 'DELETE' });
+          loadAllData();
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   };
 
-  const handleBulkDeleteParticipants = async () => {
+  const handleBulkDeleteParticipants = () => {
     if (selectedRegistryIds.length === 0) return;
-    if (!confirm(`Permanently delete ${selectedRegistryIds.length} selected participant(s)?`)) return;
-    try {
-      await fetch(`/api/participants?ids=${selectedRegistryIds.join(',')}`, { method: 'DELETE' });
-      setSelectedRegistryIds([]);
-      loadAllData();
-    } catch (e) {
-      console.error(e);
-    }
+    setMsgBox({
+      title: 'Bulk Delete Participants',
+      message: `Permanently delete ${selectedRegistryIds.length} selected participant(s) from the registry?`,
+      type: 'danger',
+      confirmText: `Delete (${selectedRegistryIds.length})`,
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/participants?ids=${selectedRegistryIds.join(',')}`, { method: 'DELETE' });
+          setSelectedRegistryIds([]);
+          loadAllData();
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   };
 
   const handleImportCsv = async () => {
@@ -2098,6 +2151,8 @@ function EnlistmentContent() {
           </div>
         )}
       </div>
+
+      <MessageBox isOpen={!!msgBox} options={msgBox} onClose={() => setMsgBox(null)} />
     </AppLayout>
   );
 }

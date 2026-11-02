@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useMemo, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
+import MessageBox, { MessageBoxOptions } from '@/components/MessageBox';
 import {
   Sliders,
   Plus,
@@ -29,11 +30,113 @@ import {
   FileText,
   Percent,
   CheckCheck,
+  Music,
+  Mic,
+  Award,
 } from 'lucide-react';
 import { Criteria, Event, EventPortion } from '@/lib/types';
 
 // Built-in Scalable Pageant & Competition Proceeding Presets
-const COMPETITION_PRESETS = [
+export interface PresetCriteriaItem {
+  name: string;
+  max_score: number;
+  percentage: number;
+  description: string;
+}
+
+export interface PresetSegmentItem {
+  portion_name: string;
+  percentage: number;
+  order_number: number;
+  description: string;
+  criteria: PresetCriteriaItem[];
+}
+
+export interface CompetitionPreset {
+  name: string;
+  category: 'Pageantry' | 'Performing Arts' | 'Dance & Culture' | 'Academic Competition';
+  badge: string;
+  description: string;
+  segments?: PresetSegmentItem[];
+  flatCriteria?: PresetCriteriaItem[];
+}
+
+const COMPETITION_PRESETS: CompetitionPreset[] = [
+  // --- STANDARD COLLEGIATE COMPETITIONS (NON-PAGEANTRY) ---
+  {
+    name: 'Vocal Solo / Singing Competition (Collegiate Standard)',
+    category: 'Performing Arts',
+    badge: 'Music & Vocals',
+    description: 'Vocal Quality & Tone (40%), Timing & Rhythm (20%), Diction & Interpretation (20%), Stage Presence & Poise (20%)',
+    flatCriteria: [
+      { name: 'Vocal Technique, Pitch & Tone Quality', max_score: 100, percentage: 40, description: 'Vocal clarity, pitch accuracy, breathing control, resonance, and range' },
+      { name: 'Timing, Rhythm & Precision', max_score: 100, percentage: 20, description: 'Synchronization with accompaniment, tempo control, and musical cadence' },
+      { name: 'Diction, Phrasing & Interpretation', max_score: 100, percentage: 20, description: 'Enunciation of lyrics, emotional connection, and dynamics' },
+      { name: 'Stage Presence, Bearing & Showmanship', max_score: 100, percentage: 20, description: 'Confidence, posture, charisma, and dynamic audience engagement' },
+    ],
+  },
+  {
+    name: 'Acoustic Band / Battle of the Bands Showcase',
+    category: 'Performing Arts',
+    badge: 'Live Band',
+    description: 'Musicality & Harmony (40%), Stage Performance & Energy (30%), Originality & Arrangement (20%), Audience Impact (10%)',
+    flatCriteria: [
+      { name: 'Musicality, Harmony & Tightness', max_score: 100, percentage: 40, description: 'Instrumental balance, vocal harmonies, timing, and group cohesion' },
+      { name: 'Stage Performance, Energy & Charisma', max_score: 100, percentage: 30, description: 'Showmanship, stage movement, audience connection, and professionalism' },
+      { name: 'Creative Arrangement & Originality', max_score: 100, percentage: 20, description: 'Musical creativity, unique stylistic interpretation, and transition execution' },
+      { name: 'Overall Audience Appeal & Stage Impact', max_score: 100, percentage: 10, description: 'Audience response, applause, and memorable stage impression' },
+    ],
+  },
+  {
+    name: 'Street Dance & Hip-Hop Championship',
+    category: 'Dance & Culture',
+    badge: 'Dance Crew',
+    description: 'Choreography & Style (35%), Execution & Synchronization (35%), Concept & Artistic Theme (15%), Stage Energy & Impact (15%)',
+    flatCriteria: [
+      { name: 'Choreography, Musicality & Style Variation', max_score: 100, percentage: 35, description: 'Originality of routine, variety of street styles, transitions, and musical accents' },
+      { name: 'Execution, Synchronization & Body Control', max_score: 100, percentage: 35, description: 'Precision of movement, group tightness, stamina, and rhythmic cleanliness' },
+      { name: 'Concept, Thematic Cohesion & Costume', max_score: 100, percentage: 15, description: 'Attire styling, thematic visual narrative, and creative formation storytelling' },
+      { name: 'Stage Energy, Projection & Audience Impact', max_score: 100, percentage: 15, description: 'Facial expressions, power, crowd connection, and stage dominance' },
+    ],
+  },
+  {
+    name: 'Folk & Indigenous Cultural Dance Competition',
+    category: 'Dance & Culture',
+    badge: 'Cultural Heritage',
+    description: 'Cultural Authenticity (35%), Mastery & Graceful Execution (35%), Rhythm & Synchronization (15%), Costume & Props (15%)',
+    flatCriteria: [
+      { name: 'Cultural Authenticity & Traditional Fidelity', max_score: 100, percentage: 35, description: 'Faithful adherence to documented ethnolinguistic origins and traditional steps' },
+      { name: 'Mastery of Figures & Graceful Execution', max_score: 100, percentage: 35, description: 'Poise, fluidity, footwork precision, and effortless execution of complex patterns' },
+      { name: 'Rhythm, Timing & Group Synchronization', max_score: 100, percentage: 15, description: 'Ensemble cohesion, cadence alignment with native percussion, and unison' },
+      { name: 'Authenticity of Costume, Accessories & Props', max_score: 100, percentage: 15, description: 'Proper traditional weaving, adornments, props handling, and cultural respect' },
+    ],
+  },
+  {
+    name: 'Extemporaneous Speech & Public Speaking',
+    category: 'Academic Competition',
+    badge: 'Oratory / Speech',
+    description: 'Substance & Relevance (40%), Delivery & Vocal Modulation (30%), Logical Organization (20%), Stage Poise & Eye Contact (10%)',
+    flatCriteria: [
+      { name: 'Substance, Depth & Topical Relevance', max_score: 100, percentage: 40, description: 'Insightful analysis, direct response to prompt, evidence, and critical thinking' },
+      { name: 'Delivery, Vocal Modulation & Enunciation', max_score: 100, percentage: 30, description: 'Voice projection, inflection, pacing, audibility, and articulation' },
+      { name: 'Logical Organization & Flow of Thought', max_score: 100, percentage: 20, description: 'Clear introduction, coherent supporting arguments, and compelling conclusion' },
+      { name: 'Stage Poise, Composure & Audience Connection', max_score: 100, percentage: 10, description: 'Eye contact, natural gestures, professional demeanor, and confidence' },
+    ],
+  },
+  {
+    name: 'Academic Research Defense & Colloquium',
+    category: 'Academic Competition',
+    badge: 'Research Defense',
+    description: 'Technical Substance (40%), Methodological Rigor (30%), Panel Defense (20%), Visual Presentation (10%)',
+    flatCriteria: [
+      { name: 'Technical Substance & Academic Contribution', max_score: 100, percentage: 40, description: 'Significance of study, theoretical grounding, novelty, and analytical depth' },
+      { name: 'Methodological Rigor & Data Integrity', max_score: 100, percentage: 30, description: 'Sound research design, valid data instruments, and robust statistical/thematic results' },
+      { name: 'Mastery of Q&A Panel Defense', max_score: 100, percentage: 20, description: 'Confidence, accuracy, intellectual honesty, and clarity under panel questioning' },
+      { name: 'Visual Presentation, Slides & Professionalism', max_score: 100, percentage: 10, description: 'Clear slide hierarchy, visual charts, time adherence, and scholarly etiquette' },
+    ],
+  },
+
+  // --- DEDICATED PAGEANTRY PROCEEDINGS PRESETS ---
   {
     name: 'Collegiate Mutya / Mr. & Ms. ASC Comprehensive (5 Segments)',
     category: 'Pageantry',
@@ -142,7 +245,7 @@ const COMPETITION_PRESETS = [
   },
   {
     name: 'Cultural Festival Queen Pageant (4 Segments)',
-    category: 'Cultural Pageantry',
+    category: 'Pageantry',
     badge: 'Cultural Royalty',
     description: 'Festival Streetdance & Costume (30%), Talent (25%), Filipiniana Gown (20%), Cultural Advocacy Q&A (25%)',
     segments: [
@@ -189,37 +292,8 @@ const COMPETITION_PRESETS = [
     ],
   },
   {
-    name: 'Two-Phase Elimination Pageant (Prelims 60% -> Finals 40%)',
-    category: 'Tournament Pageantry',
-    badge: 'Multi-Phase Cut',
-    description: 'Phase 1: Overall Preliminary (60%) -> Phase 2: Top 5 Clean-Slate Grand Finals (40%)',
-    segments: [
-      {
-        portion_name: 'Preliminary Overall Round (Decides Top 5 Cut)',
-        percentage: 60,
-        order_number: 1,
-        description: 'Aggregated preliminary round scores to determine the finalists',
-        criteria: [
-          { name: 'Preliminary Closed-Door Interview', max_score: 100, percentage: 40, description: 'Personality, intelligence, and communication skills' },
-          { name: 'Preliminary Swimwear Competition', max_score: 100, percentage: 30, description: 'Fitness, tone, and confidence on stage' },
-          { name: 'Preliminary Evening Gown Competition', max_score: 100, percentage: 30, description: 'Elegance, glamour, and couture fit' },
-        ],
-      },
-      {
-        portion_name: 'Top 5 Grand Final Q&A Deciding Round',
-        percentage: 40,
-        order_number: 2,
-        description: 'Final decider stage for the Top 5 finalists',
-        criteria: [
-          { name: 'Final Question Comprehension & Response', max_score: 100, percentage: 60, description: 'Wit, intellectual insight, and relevance of answer' },
-          { name: 'Spontaneity, Eloquence & Royal Bearing', max_score: 100, percentage: 40, description: 'Presence of mind, composure, and stage grace' },
-        ],
-      },
-    ],
-  },
-  {
     name: 'Pre-Pageant Talent Night + Grand Coronation (30% / 70%)',
-    category: 'Twin-Night Pageantry',
+    category: 'Pageantry',
     badge: 'Twin-Night System',
     description: 'Night 1: Pre-Pageant Talent Exhibition (30%) + Night 2: Coronation Night (70%)',
     segments: [
@@ -247,13 +321,13 @@ const COMPETITION_PRESETS = [
     ],
   },
   {
-    name: 'Academic Debate & Oratorical Symposium (3 Segments)',
+    name: 'Parliamentary Debate & Oratorical Proceedings (3 Segments)',
     category: 'Academic Competition',
-    badge: 'Debate / Speech',
+    badge: 'Debate Rounds',
     description: 'Constructive Speech (40%), Cross-Examination & Rebuttal (35%), Delivery & Poise (25%)',
     segments: [
       {
-        portion_name: 'Constructive Speech & Argumentation',
+        portion_name: 'Constructive Speech & Case Argumentation',
         percentage: 40,
         order_number: 1,
         description: 'Substantive case building and evidence delivery',
@@ -263,7 +337,7 @@ const COMPETITION_PRESETS = [
         ],
       },
       {
-        portion_name: 'Cross-Examination & Rebuttal Segment',
+        portion_name: 'Cross-Examination & Rebuttal Round',
         percentage: 35,
         order_number: 2,
         description: 'Interpellation, cross-questioning, and strategic response',
@@ -301,6 +375,12 @@ function CriteriaContent() {
 
   // Segmentation Mode override (for non-pageant events that want proceedings, or vice versa)
   const [forceMultiSegment, setForceMultiSegment] = useState<boolean | null>(null);
+
+  // System MessageBox modal state
+  const [msgBox, setMsgBox] = useState<MessageBoxOptions | null>(null);
+
+  // Category filter in Presets Studio
+  const [presetCategoryFilter, setPresetCategoryFilter] = useState<string>('All');
 
   // Modals
   const [showPortionModal, setShowPortionModal] = useState(false);
@@ -368,8 +448,9 @@ function CriteriaContent() {
 
   const selectedEvent = events.find((e) => String(e.id) === String(selectedEventId));
   const isInherentlyPageant = (selectedEvent?.type || '').toLowerCase().includes('pageant');
-  // If user explicitly toggles segmentation or if portions already exist, enable multi-segment mode
-  const isMultiSegment = forceMultiSegment !== null ? forceMultiSegment : (isInherentlyPageant || portions.length > 0);
+  // Dedicated Pageantry Architecture: Only pageant events get multi-segment proceedings by default;
+  // Non-pageant events default to direct single-stage criteria unless they explicitly have portions configured.
+  const isMultiSegment = forceMultiSegment !== null ? forceMultiSegment : (isInherentlyPageant ? true : portions.length > 0);
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setActionMessage({ text, type });
@@ -436,16 +517,23 @@ function CriteriaContent() {
     }
   };
 
-  const handleDeletePortion = async (portionId: number) => {
-    if (!confirm('Are you sure you want to delete this segment? All criteria rubrics inside this segment will also be deleted.')) return;
-    try {
-      await fetch(`/api/criteria?id=${portionId}&itemType=portion`, { method: 'DELETE' });
-      showFeedback('Segment and associated criteria deleted');
-      loadCriteria();
-    } catch (e) {
-      console.error(e);
-      showFeedback('Failed to delete segment', 'error');
-    }
+  const handleDeletePortion = (portionId: number) => {
+    setMsgBox({
+      title: 'Delete Competition Segment',
+      message: 'Are you sure you want to delete this segment? All criteria rubrics inside this segment will also be deleted.',
+      type: 'danger',
+      confirmText: 'Delete Segment',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/criteria?id=${portionId}&itemType=portion`, { method: 'DELETE' });
+          showFeedback('Segment and associated criteria deleted');
+          loadCriteria();
+        } catch (e) {
+          console.error(e);
+          showFeedback('Failed to delete segment', 'error');
+        }
+      },
+    });
   };
 
   const handleQuickStatusChange = async (portion: EventPortion, newStatus: 'Upcoming' | 'Ongoing' | 'Completed') => {
@@ -501,26 +589,32 @@ function CriteriaContent() {
   };
 
   // Auto Balance / Distribute All Segments Evenly to 100%
-  const handleBalanceAllSegments = async () => {
+  const handleBalanceAllSegments = () => {
     if (portions.length === 0) return;
-    if (!confirm(`Distribute weights evenly across all ${portions.length} pageant segments? Total will sum to exactly 100%.`)) return;
-
-    try {
-      const res = await fetch('/api/criteria', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemType: 'balance_portions',
-          event_id: Number(selectedEventId),
-        }),
-      });
-      if (res.ok) {
-        showFeedback('All segments balanced evenly to 100%');
-        loadCriteria();
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    setMsgBox({
+      title: 'Balance Segment Weights',
+      message: `Distribute weights evenly across all ${portions.length} segments? Total will sum to exactly 100%.`,
+      type: 'info',
+      confirmText: 'Distribute Evenly',
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/criteria', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              itemType: 'balance_portions',
+              event_id: Number(selectedEventId),
+            }),
+          });
+          if (res.ok) {
+            showFeedback('All segments balanced evenly to 100%');
+            loadCriteria();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -589,16 +683,23 @@ function CriteriaContent() {
     }
   };
 
-  const handleDeleteCriteria = async (criteriaId: number) => {
-    if (!confirm('Are you sure you want to delete this criteria item?')) return;
-    try {
-      await fetch(`/api/criteria?id=${criteriaId}&itemType=criteria`, { method: 'DELETE' });
-      showFeedback('Criteria item deleted');
-      loadCriteria();
-    } catch (e) {
-      console.error(e);
-      showFeedback('Failed to delete criteria', 'error');
-    }
+  const handleDeleteCriteria = (criteriaId: number) => {
+    setMsgBox({
+      title: 'Delete Criteria Rubric',
+      message: 'Are you sure you want to delete this criteria item? Any scores recorded under this rubric will be removed.',
+      type: 'danger',
+      confirmText: 'Delete Rubric',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/criteria?id=${criteriaId}&itemType=criteria`, { method: 'DELETE' });
+          showFeedback('Criteria item deleted');
+          loadCriteria();
+        } catch (e) {
+          console.error(e);
+          showFeedback('Failed to delete criteria', 'error');
+        }
+      },
+    });
   };
 
   const handleBalanceSegmentCriteria = async (portionId: number) => {
@@ -623,51 +724,78 @@ function CriteriaContent() {
   // ---------------------------------------------------------------------------
   // PRESET APPLICATION & RESET
   // ---------------------------------------------------------------------------
-  const handleApplyPreset = async (preset: typeof COMPETITION_PRESETS[0]) => {
+  const handleApplyPreset = (preset: CompetitionPreset) => {
     const confirmText = presetOverwrite
       ? `Replace existing criteria with "${preset.name}"? Current rubrics for this event will be replaced.`
-      : `Append "${preset.name}" to this event?`;
-    if (!confirm(confirmText)) return;
+      : `Append "${preset.name}" rubrics to this event?`;
 
-    setApplyingPreset(true);
-    try {
-      const res = await fetch('/api/criteria', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemType: 'preset',
-          event_id: Number(selectedEventId),
-          segments: preset.segments,
-          overwrite: presetOverwrite,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        alert(data.error || 'Failed to apply preset');
-      } else {
-        setShowPresetModal(false);
-        showFeedback(`Preset "${preset.name}" applied successfully`);
-        loadCriteria();
-      }
-    } catch (e) {
-      console.error('Error applying preset:', e);
-      alert('Error applying template');
-    } finally {
-      setApplyingPreset(false);
-    }
+    setMsgBox({
+      title: 'Apply Competition Preset',
+      message: confirmText,
+      type: presetOverwrite ? 'warning' : 'info',
+      confirmText: 'Apply Preset',
+      onConfirm: async () => {
+        setApplyingPreset(true);
+        try {
+          const res = await fetch('/api/criteria', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              itemType: 'preset',
+              event_id: Number(selectedEventId),
+              segments: preset.segments,
+              flatCriteria: preset.flatCriteria,
+              overwrite: presetOverwrite,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || data.error) {
+            setMsgBox({
+              title: 'Preset Error',
+              message: data.error || 'Failed to apply preset',
+              type: 'danger',
+              confirmText: 'OK',
+              cancelText: null,
+            });
+          } else {
+            setShowPresetModal(false);
+            showFeedback(`Preset "${preset.name}" applied successfully`);
+            loadCriteria();
+          }
+        } catch (e: any) {
+          console.error('Error applying preset:', e);
+          setMsgBox({
+            title: 'Error',
+            message: e?.message || 'Error applying template',
+            type: 'danger',
+            confirmText: 'OK',
+            cancelText: null,
+          });
+        } finally {
+          setApplyingPreset(false);
+        }
+      },
+    });
   };
 
-  const handleClearAll = async () => {
-    if (!confirm('Are you sure you want to clear ALL segments and criteria for this event? This action cannot be undone.')) return;
-    try {
-      const res = await fetch(`/api/criteria?itemType=clear_all&eventId=${selectedEventId}`, { method: 'DELETE' });
-      if (res.ok) {
-        showFeedback('All segments and criteria cleared for this event');
-        loadCriteria();
-      }
-    } catch (e) {
-      console.error(e);
-    }
+  const handleClearAll = () => {
+    setMsgBox({
+      title: 'Clear All Segments & Criteria',
+      message: 'Are you sure you want to clear ALL segments and criteria rubrics for this event? This action cannot be undone.',
+      type: 'danger',
+      confirmText: 'Clear All Rubrics',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/criteria?itemType=clear_all&eventId=${selectedEventId}`, { method: 'DELETE' });
+          if (res.ok) {
+            showFeedback('All segments and criteria cleared for this event');
+            loadCriteria();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -773,10 +901,10 @@ function CriteriaContent() {
             <button
               onClick={() => setShowPresetModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-xl border border-amber-200/80 transition-colors cursor-pointer shadow-xs"
-              title="Browse pre-built institutional pageant and competition rubrics"
+              title="Browse pre-built institutional rubrics and proceedings"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>Pageant Presets</span>
+              <span>{isInherentlyPageant ? 'Pageant Presets' : 'Rubrics Presets'}</span>
             </button>
 
             {/* Printable Official Rubric */}
@@ -1348,7 +1476,7 @@ function CriteriaContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* MODAL 1: PAGEANT PROCEEDINGS PRESETS STUDIO */}
+        {/* MODAL 1: COMPETITION PROCEEDINGS & RUBRICS PRESETS STUDIO */}
         {/* ========================================================================= */}
         {showPresetModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
@@ -1361,18 +1489,36 @@ function CriteriaContent() {
               </button>
 
               <div className="pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-slate-900">
-                      Pageantry Proceedings &amp; Rubrics Library
+                      Competition Rubrics &amp; Presets Library
                     </h2>
                     <p className="text-xs text-slate-500">
-                      Institutional templates customized for collegiate pageants, cultural queens, and multi-round formats.
+                      Standardized collegiate templates for cultural dance, singing, debates, academic colloquiums, and dedicated pageantry.
                     </p>
                   </div>
+                </div>
+
+                {/* Category Filter Pills */}
+                <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
+                  {(['All', 'Performing Arts', 'Dance & Culture', 'Academic Competition', 'Pageantry'] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setPresetCategoryFilter(cat)}
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${
+                        presetCategoryFilter === cat
+                          ? 'bg-yale-700 text-white border-yale-700 shadow-xs'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {cat === 'All' ? 'All Presets' : cat}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Overwrite or Append Toggle */}
@@ -1386,7 +1532,7 @@ function CriteriaContent() {
                       onChange={() => setPresetOverwrite(true)}
                       className="accent-yale-700"
                     />
-                    <span>Replace Existing</span>
+                    <span>Replace Existing Rubrics</span>
                   </label>
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input
@@ -1403,7 +1549,9 @@ function CriteriaContent() {
 
               {/* Presets List */}
               <div className="space-y-3 overflow-y-auto py-4 flex-1 pr-1">
-                {COMPETITION_PRESETS.map((preset, idx) => (
+                {COMPETITION_PRESETS.filter(
+                  (p) => presetCategoryFilter === 'All' || p.category === presetCategoryFilter
+                ).map((preset, idx) => (
                   <div
                     key={idx}
                     className="p-4 border border-slate-200 rounded-2xl hover:border-yale-600 hover:bg-slate-50/70 transition-all cursor-pointer group"
@@ -1423,11 +1571,16 @@ function CriteriaContent() {
 
                     <p className="text-[11px] text-slate-500 mt-1">{preset.description}</p>
 
-                    {/* Segments Preview */}
+                    {/* Rubrics Preview */}
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {preset.segments.map((s, sIdx) => (
-                        <span key={sIdx} className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
+                      {preset.segments?.map((s, sIdx) => (
+                        <span key={`seg-${sIdx}`} className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
                           #{s.order_number} {s.portion_name} <strong className="text-yale-700">({s.percentage}%)</strong>
+                        </span>
+                      ))}
+                      {preset.flatCriteria?.map((c, cIdx) => (
+                        <span key={`crit-${cIdx}`} className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
+                          {c.name} <strong className="text-yale-700">({c.percentage}%)</strong>
                         </span>
                       ))}
                     </div>
@@ -1817,6 +1970,8 @@ function CriteriaContent() {
             </div>
           </div>
         )}
+
+        <MessageBox isOpen={!!msgBox} options={msgBox} onClose={() => setMsgBox(null)} />
       </div>
     </AppLayout>
   );

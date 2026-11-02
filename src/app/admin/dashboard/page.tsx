@@ -174,231 +174,229 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 8 STATISTIC CARDS (MATCHING ASTS/admin/dashboard.php) */}
+        {/* 8 MINIMAL, SOFT INSTITUTIONAL STATISTIC CARDS */}
         {/* ========================================================================= */}
         {showStatsCards && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-200">
-          
-          {/* Card 1: Total Competitions */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#0A192F] to-[#172D4D] border border-amber-400/25 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Total Competitions</span>
-                <h2 className="text-3xl font-black mt-1 text-white">{stats.totalEvents}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 animate-in fade-in duration-200">
+            {/* Card 1: Total Competitions */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Competitions</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalEvents}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-600">
+                  <Calendar className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-white/10 shadow-sm">
-                <Calendar className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-slate-300 font-medium flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                All Categories
-              </span>
-              <Link
-                href="/admin/enlistment?tab=events"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-white/15 hover:bg-amber-400 hover:text-navy-950 transition-colors inline-flex items-center gap-1"
-              >
-                <span>View</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <Calendar className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
-
-          {/* Card 2: Live & Tabulating */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] border border-white/20 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-100">Live & Tabulating</span>
-                <h2 className="text-3xl font-black mt-1 text-white">{stats.activeEvents}</h2>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-white/10 shadow-sm">
-                <Activity className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-blue-100 font-medium flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  All Categories
                 </span>
-                Real-Time Live
-              </span>
-              <Link
-                href="/admin/tabulation"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-white/15 hover:bg-amber-400 hover:text-navy-950 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Monitor</span>
-                <span>&rarr;</span>
-              </Link>
+                <Link
+                  href="/admin/enlistment?tab=events"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-yale-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>View</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
             </div>
-            <Activity className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-          {/* Card 3: Enlisted Contenders */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#0F2744] to-[#1D4ED8] border border-white/20 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200">Enlisted Contenders</span>
-                <h2 className="text-3xl font-black mt-1 text-white">{stats.totalCandidates}</h2>
+            {/* Card 2: Live & Tabulating */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Live &amp; Tabulating</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.activeEvents}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
+                  <Activity className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-white/10 shadow-sm">
-                <Users className="w-5 h-5" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-emerald-700 text-[11px] font-medium flex items-center gap-1.5">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  </span>
+                  Active Now
+                </span>
+                <Link
+                  href="/admin/tabulation"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-emerald-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Monitor</span>
+                  <span>&rarr;</span>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-slate-200 font-medium flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                Candidate Registry
-              </span>
-              <Link
-                href="/admin/enlistment?tab=participants"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-white/15 hover:bg-amber-400 hover:text-navy-950 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Roster</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <Users className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-          {/* Card 4: Tabulated Scores */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#0369A1] to-[#0284C7] border border-white/20 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-sky-100">Tabulated Scores</span>
-                <h2 className="text-3xl font-black mt-1 text-white">{stats.totalScores}</h2>
+            {/* Card 3: Enlisted Contenders */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Enlisted Contenders</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalCandidates}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
+                  <Users className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-white/10 shadow-sm">
-                <Sliders className="w-5 h-5" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                  Candidate Roster
+                </span>
+                <Link
+                  href="/admin/enlistment?tab=participants"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-indigo-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Roster</span>
+                  <span>&rarr;</span>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-sky-100 font-medium flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                Verified Judgments
-              </span>
-              <Link
-                href="/admin/scores"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-white/15 hover:bg-amber-400 hover:text-navy-950 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Audit</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <Sliders className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-          {/* Card 5: Approved Evaluators */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-navy-950 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#FFBF00] to-[#D97706] border border-white/35 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-navy-900/90">Approved Evaluators</span>
-                <h2 className="text-3xl font-black mt-1 text-navy-950">{stats.totalJudges}</h2>
+            {/* Card 4: Tabulated Scores */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tabulated Scores</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalScores}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700">
+                  <Sliders className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-navy-950/15 backdrop-blur-sm flex items-center justify-center text-navy-950 border border-navy-950/10 shadow-sm">
-                <UserCheck className="w-5 h-5" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
+                  Logged Ballots
+                </span>
+                <Link
+                  href="/admin/scores"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-blue-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Audit</span>
+                  <span>&rarr;</span>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-navy-950/15">
-              <span className="text-navy-900 font-bold flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-navy-950" />
-                Accredited Roster
-              </span>
-              <Link
-                href="/admin/judges"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-navy-950 hover:bg-navy-900 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Manage</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <UserCheck className="absolute -right-2 -bottom-2 w-20 h-20 text-navy-950/10 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-          {/* Card 6: Pending Approvals */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#0A192F] to-[#1E293B] border-2 border-amber-400 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Pending Approvals</span>
-                <h2 className="text-3xl font-black mt-1 text-amber-400">{stats.pendingJudges}</h2>
+            {/* Card 5: Approved Evaluators */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approved Evaluators</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalJudges}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+                  <UserCheck className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-400/20 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-amber-400/30 shadow-sm">
-                <AlertCircle className="w-5 h-5" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                  Accredited
+                </span>
+                <Link
+                  href="/admin/judges"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-amber-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Manage</span>
+                  <span>&rarr;</span>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-amber-300 font-medium flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                Awaiting Verification
-              </span>
-              <Link
-                href="/admin/judges"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-navy-950 bg-amber-400 hover:bg-amber-300 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Review</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <AlertCircle className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-          {/* Card 7: Concluded Events */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#1E293B] to-[#1E3A5F] border border-white/20 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Concluded Events</span>
-                <h2 className="text-3xl font-black mt-1 text-white">{stats.completedEvents}</h2>
+            {/* Card 6: Pending Approvals */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pending Approvals</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">
+                    {stats.pendingJudges}
+                  </h2>
+                </div>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
+                  stats.pendingJudges > 0
+                    ? 'bg-amber-50 border-amber-200 text-amber-700'
+                    : 'bg-slate-50 border-slate-200/60 text-slate-400'
+                }`}>
+                  <AlertCircle className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-white/10 shadow-sm">
-                <Trophy className="w-5 h-5" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className={`text-[11px] font-medium flex items-center gap-1.5 ${
+                  stats.pendingJudges > 0 ? 'text-amber-700 font-semibold' : 'text-slate-400'
+                }`}>
+                  <Clock className="w-3.5 h-3.5" />
+                  {stats.pendingJudges > 0 ? 'Awaiting Review' : 'All Clear'}
+                </span>
+                <Link
+                  href="/admin/judges"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-yale-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Review</span>
+                  <span>&rarr;</span>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-slate-300 font-medium flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                Certified & Finalized
-              </span>
-              <Link
-                href="/admin/rankings"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-white/15 hover:bg-amber-400 hover:text-navy-950 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Certificates</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <Trophy className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-          {/* Card 8: Collegiate Programs */}
-          <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-[#1E40AF] to-[#3B82F6] border border-white/20 group">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-100">Collegiate Programs</span>
-                <h2 className="text-3xl font-black mt-1 text-white">{stats.totalDepartments}</h2>
+            {/* Card 7: Concluded Events */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Concluded Events</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.completedEvents}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700">
+                  <Trophy className="w-4 h-4" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-amber-400 border border-white/10 shadow-sm">
-                <Layers className="w-5 h-5" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-purple-600" />
+                  Finalized
+                </span>
+                <Link
+                  href="/admin/rankings"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-purple-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Certificates</span>
+                  <span>&rarr;</span>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs mt-4 pt-3 border-t border-white/10">
-              <span className="text-blue-100 font-medium flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                Active Colleges
-              </span>
-              <Link
-                href="/admin/enlistment"
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white bg-white/15 hover:bg-amber-400 hover:text-navy-950 transition-colors inline-flex items-center gap-1"
-              >
-                <span>Departments</span>
-                <span>&rarr;</span>
-              </Link>
-            </div>
-            <Layers className="absolute -right-2 -bottom-2 w-20 h-20 text-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
-          </div>
 
-        </div>
+            {/* Card 8: Collegiate Programs */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Collegiate Programs</span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalDepartments}</h2>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700">
+                  <Layers className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
+                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                  Departments
+                </span>
+                <Link
+                  href="/admin/enlistment"
+                  className="text-[11px] font-semibold text-slate-600 hover:text-teal-700 transition-colors inline-flex items-center gap-0.5"
+                >
+                  <span>Colleges</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* TOP 3-CARD PORTBOX-STYLE GRID */}
