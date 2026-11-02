@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { ParticipantRegistry, Department } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -46,22 +46,19 @@ export async function POST(req: NextRequest) {
 
     // Check if bulk insert (e.g. from CSV import)
     if (Array.isArray(body)) {
-      const existing = await getSheetRows<ParticipantRegistry>('participants_registry');
-      let maxId = existing.reduce((m, r) => Math.max(m, Number(r.id) || 0), 0);
-      const toAppend: any[] = [];
+      const added: any[] = [];
       for (const item of body) {
         if (item.name && item.name.trim()) {
-          toAppend.push({
-            id: ++maxId,
+          const row = await appendSheetRow<ParticipantRegistry>('participants_registry', {
             name: item.name.trim(),
             department: (item.department || item.course_name || '').trim(),
             year_level: item.year_level || '',
             image_path: item.image_path || '',
           });
+          added.push(row);
         }
       }
-      await setSheetRows('participants_registry', [...existing, ...toAppend]);
-      return NextResponse.json({ success: true, count: toAppend.length, participants: toAppend });
+      return NextResponse.json({ success: true, count: added.length, participants: added });
     }
 
     const { name, department, course_name, year_level, image_path } = body;

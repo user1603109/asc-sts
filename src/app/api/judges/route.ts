@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow, execute } from '@/lib/googleSheets';
 import { EventJudge, User } from '@/lib/types';
 import { getCurrentUser, hashPassword } from '@/lib/auth';
 
@@ -155,11 +155,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Judge ID is required' }, { status: 400 });
       }
       // Clean up event_judges assignments atomically
-      const eventJudges = await getSheetRows<EventJudge>('event_judges');
-      const remainingAssignments = eventJudges.filter((ej) => Number(ej.user_id) !== Number(judgeId));
-      if (remainingAssignments.length !== eventJudges.length) {
-        await setSheetRows('event_judges', remainingAssignments);
-      }
+      await execute('DELETE FROM event_judges WHERE user_id = ?', [Number(judgeId)]);
       // Delete user
       await deleteSheetRow('users', Number(judgeId));
       return NextResponse.json({ success: true, message: 'Judge removed successfully' });

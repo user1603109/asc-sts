@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow, execute } from '@/lib/googleSheets';
 import { Criteria, EventPortion } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -52,26 +52,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'event_id and segments are required' }, { status: 400 });
       }
 
-      const [existingPortions, existingCriteria] = await Promise.all([
-        getSheetRows<EventPortion>('event_portions'),
-        getSheetRows<Criteria>('criteria'),
-      ]);
-
-      let newPortions = existingPortions;
-      let newCriteria = existingCriteria;
-
       if (overwrite) {
-        newPortions = newPortions.filter((p) => Number(p.event_id) !== Number(event_id));
-        newCriteria = newCriteria.filter((c) => Number(c.event_id) !== Number(event_id));
+        await execute('DELETE FROM criteria WHERE event_id = ?', [Number(event_id)]);
+        await execute('DELETE FROM event_portions WHERE event_id = ?', [Number(event_id)]);
       }
 
-      let nextPortionId = newPortions.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0) + 1;
-      let nextCriteriaId = newCriteria.reduce((m, c) => Math.max(m, Number(c.id) || 0), 0) + 1;
-
       for (const seg of segments) {
-        const portionId = nextPortionId++;
-        newPortions.push({
-          id: portionId,
+        const newPortion = await appendSheetRow<EventPortion>('event_portions', {
           event_id: Number(event_id),
           portion_name: (seg.portion_name || '').trim(),
           percentage: Number(seg.percentage) || 0,
@@ -82,10 +69,9 @@ export async function POST(req: NextRequest) {
 
         if (Array.isArray(seg.criteria)) {
           for (const crit of seg.criteria) {
-            newCriteria.push({
-              id: nextCriteriaId++,
+            await appendSheetRow<Criteria>('criteria', {
               event_id: Number(event_id),
-              portion_id: portionId,
+              portion_id: newPortion?.id ? Number(newPortion.id) : null,
               name: (crit.name || '').trim(),
               max_score: Number(crit.max_score) || 100,
               percentage: Number(crit.percentage) || 100,
@@ -94,11 +80,6 @@ export async function POST(req: NextRequest) {
           }
         }
       }
-
-      await Promise.all([
-        setSheetRows('event_portions', newPortions),
-        setSheetRows('criteria', newCriteria),
-      ]);
 
       return NextResponse.json({ success: true, countPortions: segments.length });
     }
@@ -311,18 +292,8 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: 'eventId is required to clear all' }, { status: 400 });
       }
 
-      const [portions, criteriaList] = await Promise.all([
-        getSheetRows<EventPortion>('event_portions'),
-        getSheetRows<Criteria>('criteria'),
-      ]);
-
-      const remainingPortions = portions.filter((p) => Number(p.event_id) !== Number(eventId));
-      const remainingCriteria = criteriaList.filter((c) => Number(c.event_id) !== Number(eventId));
-
-      await Promise.all([
-        setSheetRows('event_portions', remainingPortions),
-        setSheetRows('criteria', remainingCriteria),
-      ]);
+      await execute('DELETE FROM criteria WHERE event_id = ?', [Number(eventId)]);
+      await execute('DELETE FROM event_portions WHERE event_id = ?', [Number(eventId)]);
 
       return NextResponse.json({ success: true, message: 'All segments and criteria cleared for event' });
     }

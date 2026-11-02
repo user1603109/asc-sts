@@ -34,6 +34,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'change_password') {
+      if (!currentPassword) {
+        return NextResponse.json(
+          { error: 'Current password is required to change password' },
+          { status: 400 }
+        );
+      }
+
       if (!newPassword || newPassword.length < 6) {
         return NextResponse.json(
           { error: 'New password must be at least 6 characters long' },
@@ -41,14 +48,12 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (currentPassword) {
-        const isCurrentValid = await verifyPassword(currentPassword, user.password || '');
-        if (!isCurrentValid) {
-          return NextResponse.json(
-            { error: 'Current password is incorrect' },
-            { status: 400 }
-          );
-        }
+      const isCurrentValid = await verifyPassword(currentPassword, user.password || '');
+      if (!isCurrentValid) {
+        return NextResponse.json(
+          { error: 'Current password is incorrect' },
+          { status: 400 }
+        );
       }
 
       const hashedPassword = await hashPassword(newPassword);

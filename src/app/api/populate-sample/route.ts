@@ -1,11 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { setSheetRows } from '@/lib/googleSheets';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Administrator access required to populate sample data' }, { status: 403 });
+    }
+
     const hashedAdminPw = await hashPassword('adminpassword123');
     const hashedJudgePw = await hashPassword('judge123');
 

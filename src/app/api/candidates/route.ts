@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { appendSheetRow, deleteSheetRow, getSheetRows, setSheetRows, updateSheetRow } from '@/lib/googleSheets';
+import { appendSheetRow, deleteSheetRow, getSheetRows, updateSheetRow } from '@/lib/googleSheets';
 import { Candidate, Department, ParticipantRegistry } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -71,21 +71,27 @@ export async function POST(req: NextRequest) {
       const keptCandidates = currentEventCandidates.filter(
         (c) => c.registry_id && registry_ids.map(Number).includes(Number(c.registry_id))
       );
+      const toRemove = currentEventCandidates.filter(
+        (c) => !c.registry_id || !registry_ids.map(Number).includes(Number(c.registry_id))
+      );
+
+      // Selectively delete only the removed candidates for this event
+      for (const rem of toRemove) {
+        await deleteSheetRow('candidates', Number(rem.id));
+      }
 
       const keptRegIds = keptCandidates.map((c) => Number(c.registry_id));
       const toAddIds = registry_ids.map(Number).filter((id) => !keptRegIds.includes(id));
 
-      let maxId = existingCandidates.reduce((m, c) => Math.max(m, Number(c.id) || 0), 0);
       let nextOrder = keptCandidates.length > 0 
         ? Math.max(...keptCandidates.map((c) => Number(c.order_number) || 0)) + 1 
         : 1;
 
-      const newCandidateRows: any[] = [];
+      // Selectively append newly selected candidates
       for (const regId of toAddIds) {
         const participant = registry.find((p) => Number(p.id) === regId);
         if (participant) {
-          newCandidateRows.push({
-            id: ++maxId,
+          await appendSheetRow<Candidate>('candidates', {
             event_id: Number(event_id),
             registry_id: participant.id,
             name: participant.name,
@@ -96,8 +102,6 @@ export async function POST(req: NextRequest) {
           });
         }
       }
-
-      await setSheetRows('candidates', [...otherEventCandidates, ...keptCandidates, ...newCandidateRows]);
 
       return NextResponse.json({ success: true, message: 'Roster synced successfully' });
     }

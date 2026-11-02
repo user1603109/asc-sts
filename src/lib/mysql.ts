@@ -118,13 +118,37 @@ export async function execute(sql: string, params: any[] = []): Promise<ResultSe
   }
 }
 
+export const VALID_TABLES = new Set([
+  'system_settings',
+  'users',
+  'event_types',
+  'departments',
+  'courses',
+  'organizers',
+  'events',
+  'event_judges',
+  'candidates',
+  'event_portions',
+  'criteria',
+  'scores',
+  'participants_registry',
+  'audit_logs',
+]);
+
+function assertValidTable(table: string): void {
+  if (!VALID_TABLES.has(table)) {
+    throw new Error(`Security Violation: Invalid or unauthorized table access: ${table}`);
+  }
+}
+
 /**
  * Read all rows from a given table
  */
 export async function getSheetRows<T = Record<string, any>>(table: string): Promise<T[]> {
+  assertValidTable(table);
   try {
     const p = getMySQLPool();
-    const [rows] = await p.query<RowDataPacket[]>(`SELECT * FROM ??`, [table]);
+    const [rows] = await p.query<RowDataPacket[]>(`SELECT * FROM \`${table}\``);
     return rows as T[];
   } catch (e: any) {
     console.warn(`MySQL getSheetRows fallback for ${table}:`, e.message);
@@ -137,9 +161,10 @@ export async function getSheetRows<T = Record<string, any>>(table: string): Prom
  * Fetch a single row by ID
  */
 export async function getRowById<T = Record<string, any>>(table: string, id: number): Promise<T | null> {
+  assertValidTable(table);
   try {
     const p = getMySQLPool();
-    const [rows] = await p.query<RowDataPacket[]>(`SELECT * FROM ?? WHERE id = ? LIMIT 1`, [table, Number(id)]);
+    const [rows] = await p.query<RowDataPacket[]>(`SELECT * FROM \`${table}\` WHERE id = ? LIMIT 1`, [Number(id)]);
     return (rows[0] as T) || null;
   } catch (e: any) {
     console.warn(`MySQL getRowById fallback for ${table}:`, e.message);
@@ -152,10 +177,12 @@ export async function getRowById<T = Record<string, any>>(table: string, id: num
  * Append/Insert a new row into table
  */
 export async function appendSheetRow<T extends Record<string, any>>(table: string, data: Partial<T>): Promise<T> {
+  assertValidTable(table);
   try {
     const allowedCols = SHEET_SCHEMAS[table];
     const filteredCols = Object.keys(data).filter(
-      (k) => (allowedCols ? allowedCols.includes(k) : true) && (k !== 'id' || (data.id !== undefined && data.id !== null))
+      (k) => (allowedCols ? allowedCols.includes(k) : /^[a-zA-Z0-9_]+$/.test(k)) &&
+             (k !== 'id' || (data.id !== undefined && data.id !== null))
     );
 
     if (filteredCols.length === 0) {
@@ -192,10 +219,11 @@ export async function updateSheetRow<T extends Record<string, any>>(
   id: number,
   data: Partial<T>
 ): Promise<boolean> {
+  assertValidTable(table);
   try {
     const allowedCols = SHEET_SCHEMAS[table];
     const filteredCols = Object.keys(data).filter(
-      (k) => (allowedCols ? allowedCols.includes(k) : true) && k !== 'id'
+      (k) => (allowedCols ? allowedCols.includes(k) : /^[a-zA-Z0-9_]+$/.test(k)) && k !== 'id'
     );
 
     if (filteredCols.length === 0) return true;
@@ -221,6 +249,7 @@ export async function updateSheetRow<T extends Record<string, any>>(
  * Delete a row by ID
  */
 export async function deleteSheetRow(table: string, id: number): Promise<boolean> {
+  assertValidTable(table);
   try {
     const p = getMySQLPool();
     await p.execute(`DELETE FROM \`${table}\` WHERE id = ?`, [Number(id)]);
@@ -237,20 +266,22 @@ export async function deleteSheetRow(table: string, id: number): Promise<boolean
 }
 
 /**
- * Overwrite all rows in a table safely
+ * Overwrite all rows in a table safely with foreign key protection
  */
 export async function setSheetRows<T extends Record<string, any>>(table: string, rows: T[]): Promise<boolean> {
+  assertValidTable(table);
   try {
     const p = getMySQLPool();
     const conn = await p.getConnection();
     try {
       await conn.beginTransaction();
+      await conn.query('SET FOREIGN_KEY_CHECKS = 0');
       await conn.query(`DELETE FROM \`${table}\``);
 
       const allowedCols = SHEET_SCHEMAS[table];
       for (const r of rows) {
         const filteredCols = Object.keys(r).filter(
-          (k) => (allowedCols ? allowedCols.includes(k) : true)
+          (k) => (allowedCols ? allowedCols.includes(k) : /^[a-zA-Z0-9_]+$/.test(k))
         );
         if (filteredCols.length === 0) continue;
 
@@ -258,6 +289,50 @@ export async function setSheetRows<T extends Record<string, any>>(table: string,
         const placeholders = filteredCols.map(() => '?').join(', ');
         const values = filteredCols.map((k) => (r as any)[k]);
 
+        await conn.execute(`INSERT INTO \`${table}\` (${colsStr}) VALUES (${placeholders})`, values);
+      }
+      await conn.query('SET FOREIGN_KEY_CHECKS = 1');
+      await conn.commit();
+      return true;
+    } catch (txErr) {
+      await conn.query('SET FOREIGN_KEY_CHECKS = 1');
+      await conn.rollback();
+      throw txErr;
+    } finally {
+      conn.release();
+    }
+  } catch (e: any) {
+    console.warn(`MySQL setSheetRows fallback for ${table}:`, e.message);
+    const store = getMemoryStore();
+    store[table] = rows.map((r, i) => ({ ...r, id: r.id || i + 1 }));
+    return true;
+  }
+}
+
+/**
+ * Batch insert multiple rows into a table without table-wiping
+ */
+export async function insertRowsBatch<T extends Record<string, any>>(
+  table: string,
+  rows: Partial<T>[]
+): Promise<boolean> {
+  if (!rows || rows.length === 0) return true;
+  assertValidTable(table);
+  try {
+    const p = getMySQLPool();
+    const conn = await p.getConnection();
+    try {
+      await conn.beginTransaction();
+      const allowedCols = SHEET_SCHEMAS[table];
+      for (const r of rows) {
+        const filteredCols = Object.keys(r).filter(
+          (k) => (allowedCols ? allowedCols.includes(k) : /^[a-zA-Z0-9_]+$/.test(k)) &&
+                 (k !== 'id' || (r.id !== undefined && r.id !== null))
+        );
+        if (filteredCols.length === 0) continue;
+        const colsStr = filteredCols.map((c) => `\`${c}\``).join(', ');
+        const placeholders = filteredCols.map(() => '?').join(', ');
+        const values = filteredCols.map((k) => (r as any)[k]);
         await conn.execute(`INSERT INTO \`${table}\` (${colsStr}) VALUES (${placeholders})`, values);
       }
       await conn.commit();
@@ -269,9 +344,10 @@ export async function setSheetRows<T extends Record<string, any>>(table: string,
       conn.release();
     }
   } catch (e: any) {
-    console.warn(`MySQL setSheetRows fallback for ${table}:`, e.message);
-    const store = getMemoryStore();
-    store[table] = rows.map((r, i) => ({ ...r, id: r.id || i + 1 }));
+    console.warn(`MySQL insertRowsBatch fallback for ${table}:`, e.message);
+    for (const r of rows) {
+      await appendSheetRow(table, r);
+    }
     return true;
   }
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetRows, upsertScoresBatch } from '@/lib/googleSheets';
-import { Score } from '@/lib/types';
+import { Score, EventJudge, Criteria } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +8,7 @@ export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const { searchParams } = new URL(req.url);
     const eventId = searchParams.get('eventId');
     const judgeId = searchParams.get('judgeId');
@@ -19,9 +20,14 @@ export async function GET(req: NextRequest) {
     if (eventId) {
       filtered = filtered.filter((s) => Number(s.event_id) === Number(eventId));
     }
-    if (judgeId) {
+
+    // Security: Non-admin judges may only view their own submitted scores
+    if (user && user.role === 'judge') {
+      filtered = filtered.filter((s) => Number(s.judge_id) === Number(user.userId));
+    } else if (judgeId) {
       filtered = filtered.filter((s) => Number(s.judge_id) === Number(judgeId));
     }
+
     if (candidateId) {
       filtered = filtered.filter((s) => Number(s.candidate_id) === Number(candidateId));
     }
@@ -41,7 +47,6 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    // Body can be a single score or an array of scores (batch submission)
     const scoreItems: {
       event_id: number;
       candidate_id: number;
@@ -50,14 +55,65 @@ export async function POST(req: NextRequest) {
       judge_id?: number;
     }[] = Array.isArray(body) ? body : [body];
 
+    if (scoreItems.length === 0) {
+      return NextResponse.json({ error: 'No score records provided' }, { status: 400 });
+    }
+
+    const targetEventId = Number(scoreItems[0].event_id);
+
+    // If caller is a judge, enforce assignment verification
+    if (user.role !== 'admin') {
+      const assignments = await getSheetRows<EventJudge>('event_judges');
+      const isAssigned = assignments.some(
+        (ej) => Number(ej.event_id) === targetEventId && Number(ej.user_id) === Number(user.userId)
+      );
+
+      if (!isAssigned) {
+        return NextResponse.json(
+          { error: 'Forbidden: You are not an assigned evaluator for this competition' },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Validate score values against criteria bounds
+    const criteriaList = await getSheetRows<Criteria>('criteria');
+    const critMap = new Map(criteriaList.map((c) => [Number(c.id), c]));
+
     const fallbackJudgeId = user.userId;
-    const itemsToUpsert = scoreItems.map((item) => ({
-      event_id: Number(item.event_id),
-      judge_id: (user.role === 'admin' && item.judge_id) ? Number(item.judge_id) : Number(fallbackJudgeId),
-      candidate_id: Number(item.candidate_id),
-      criteria_id: Number(item.criteria_id),
-      score: Number(item.score),
-    }));
+    const itemsToUpsert = [];
+
+    for (const item of scoreItems) {
+      const eventId = Number(item.event_id);
+      const candId = Number(item.candidate_id);
+      const critId = Number(item.criteria_id);
+      const rawScore = Number(item.score);
+
+      if (!eventId || !candId || !critId || isNaN(rawScore)) {
+        return NextResponse.json(
+          { error: 'Invalid score item: event_id, candidate_id, criteria_id, and numeric score are required' },
+          { status: 400 }
+        );
+      }
+
+      const crit = critMap.get(critId);
+      const maxScore = crit ? Number(crit.max_score) || 100 : 100;
+
+      if (rawScore < 0 || rawScore > maxScore) {
+        return NextResponse.json(
+          { error: `Score ${rawScore} is out of allowable range (0 - ${maxScore})` },
+          { status: 400 }
+        );
+      }
+
+      itemsToUpsert.push({
+        event_id: eventId,
+        judge_id: (user.role === 'admin' && item.judge_id) ? Number(item.judge_id) : Number(fallbackJudgeId),
+        candidate_id: candId,
+        criteria_id: critId,
+        score: Math.round(rawScore * 100) / 100, // round to 2 decimal places
+      });
+    }
 
     await upsertScoresBatch(itemsToUpsert);
 

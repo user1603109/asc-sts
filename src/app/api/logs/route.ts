@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetRows, setSheetRows } from '@/lib/googleSheets';
+import { getSheetRows, execute } from '@/lib/googleSheets';
 import { Score, Event, Candidate, Criteria, User } from '@/lib/types';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -71,7 +71,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Reset scores table
-    await setSheetRows('scores', []);
+    await execute('DELETE FROM scores');
 
     return NextResponse.json({
       success: true,
