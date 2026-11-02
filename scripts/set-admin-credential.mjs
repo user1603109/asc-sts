@@ -43,6 +43,7 @@ async function setAdmin() {
     user,
     password,
     database,
+    connectTimeout: 30000,
     ...(isCloud ? { ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true } } : {}),
   });
 
@@ -77,3 +78,4 @@ setAdmin().catch((err) => {
   console.error('❌ Error setting admin credential:', err.message);
   process.exit(1);
 });
+
