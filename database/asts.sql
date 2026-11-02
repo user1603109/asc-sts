@@ -54,7 +54,7 @@ CREATE TABLE users (
 
 -- Bcrypt hash for 'adminpassword123'
 INSERT INTO users (username, password, full_name, role, approval_status) VALUES
-('admin', '$2a$10$U61k9s0.9xLp1F6aW6zT.OSyZ3J4W1t8V3T6O.vG1qK3.M9mF6i/S', 'ASC Administrator', 'admin', 'approved');
+('admin', '$2a$10$/LWeGkw46Ov0CFT5S2ZO1.BDSn5HzCXECSq7RT9NeIMrYRFj36NWa', 'ASC Administrator', 'admin', 'approved');
 
 -- --------------------------------------------------------------------------------------
 -- 3. EVENT TYPES & CATEGORIES
