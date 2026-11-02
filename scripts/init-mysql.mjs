@@ -35,6 +35,7 @@ console.log(`🔌 [ASC-STS] Connecting to MySQL at ${host}:${port} as ${user}...
 async function main() {
   let connection;
   try {
+    const isCloud = host !== 'localhost' && host !== '127.0.0.1';
     // Connect without database first to ensure DB exists
     connection = await mysql.createConnection({
       host,
@@ -42,6 +43,7 @@ async function main() {
       user,
       password,
       multipleStatements: true,
+      ...(isCloud ? { ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true } } : {}),
     });
 
     console.log(`🔨 Ensuring database "${database}" exists...`);
