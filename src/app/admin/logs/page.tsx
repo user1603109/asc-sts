@@ -256,7 +256,7 @@ export default function AdminLogsPage() {
                 <span>Clear &amp; Reset Scores</span>
               </h2>
               <p className="text-xs text-slate-600 mb-4">
-                Are you sure you want to clear and reset all judge score submissions? This will remove all score records in Google Sheets. Events, criteria, and contestants will remain untouched.
+                Are you sure you want to clear and reset all judge score submissions? This will remove all score records in the database. Events, criteria, and contestants will remain untouched.
               </p>
 
               {clearSuccess && (

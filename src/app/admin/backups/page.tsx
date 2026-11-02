@@ -32,7 +32,7 @@ export default function AdminBackupsPage() {
                 Institutional Database Export
               </h2>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Generate an immediate snapshot containing all 13 relational worksheets (Events, Candidates, Criteria, Scores, Judges, Departments, Courses, Organizers, Portions, and System Settings).
+                Generate an immediate snapshot containing all 13 relational database tables (Events, Candidates, Criteria, Scores, Judges, Departments, Courses, Organizers, Portions, and System Settings).
               </p>
 
               <div className="mt-5 flex flex-wrap gap-3">
@@ -53,7 +53,7 @@ export default function AdminBackupsPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-4 flex items-center gap-2">
             <FileJson className="w-4 h-4 text-yale-700" />
-            <span>Worksheet Tables Included in Backup ({tables.length})</span>
+            <span>Relational Database Tables Included in Backup ({tables.length})</span>
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">

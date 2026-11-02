@@ -179,7 +179,7 @@ function TabulationContent() {
         {loading ? (
           <div className="p-16 text-center text-slate-400 bg-white rounded-xl border border-slate-200 shadow-card">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto text-yale-700 mb-2" />
-            <p className="text-xs font-semibold">Calculating rankings from Google Sheets...</p>
+            <p className="text-xs font-semibold">Calculating rankings from database...</p>
           </div>
         ) : !tabData || tabData.tabulations.length === 0 ? (
           <div className="p-16 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-card">

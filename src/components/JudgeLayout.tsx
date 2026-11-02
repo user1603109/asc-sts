@@ -323,7 +323,7 @@ export default function JudgeLayout({
                 <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
                   <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                     <Wifi className="w-3.5 h-3.5" />
-                    <span>Sheets Connected</span>
+                    <span>Database Connected</span>
                   </span>
                   <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">v2.0</span>
                 </div>
@@ -332,7 +332,7 @@ export default function JudgeLayout({
                 </div>
               </div>
             ) : (
-              <div className="flex justify-center" title="Connected to Google Sheets Database">
+              <div className="flex justify-center" title="Connected to Database">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
             )}

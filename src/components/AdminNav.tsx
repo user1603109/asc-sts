@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { label: 'Criteria & Portions', href: '/admin/criteria', icon: Sliders },
   { label: 'Judges Roster & Assignment', href: '/admin/judges', icon: UserCheck },
   { label: 'Official Reports', href: '/admin/reports', icon: Printer },
-  { label: 'Settings & Sheets', href: '/admin/settings', icon: Settings },
+  { label: 'System Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export default function AdminNav() {

@@ -14,7 +14,7 @@ export default function PhotoUploader({
   value,
   onChange,
   label = 'Official Profile Photo',
-  folderLabel = 'ASTS/Profiles (Google Drive)',
+  folderLabel = 'ASTS Media Storage',
 }: PhotoUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -177,7 +177,7 @@ export default function PhotoUploader({
                 Click or drag &amp; drop photo
               </p>
               <p className="text-[10px] text-slate-400">
-                Saves directly to Google Drive <span className="font-semibold text-slate-600">ASTS/Profiles</span>
+                Saves directly to secure cloud storage
               </p>
             </div>
           )}

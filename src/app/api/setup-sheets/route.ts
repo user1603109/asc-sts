@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const conn = await testMySQLConnection();
   return NextResponse.json({
-    googleConfigured: false,
+    databaseConfigured: true,
     mysqlConfigured: true,
     connected: conn.success,
     message: conn.message,

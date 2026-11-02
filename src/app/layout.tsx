@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'ASC-ASTS | Apayao State College Tabulation Suite',
-  description: 'Apayao State College ASC-ASTS Tabulation System with Google Sheets & Drive Integration',
+  description: 'Apayao State College ASC-ASTS Automated Scoring & Tabulation System',
 };
 
 export default function RootLayout({

@@ -48,7 +48,6 @@ interface AppLayoutProps {
     fullName: string;
     role: 'admin' | 'judge';
   } | null;
-  googleConfigured?: boolean;
   pageTitle?: string;
   pageSubtitle?: string;
 }
@@ -56,7 +55,6 @@ interface AppLayoutProps {
 export default function AppLayout({
   children,
   user,
-  googleConfigured = false,
   pageTitle,
   pageSubtitle,
 }: AppLayoutProps) {
@@ -140,7 +138,7 @@ export default function AppLayout({
         { label: 'Official Reports', href: '/admin/reports', icon: Printer, badge: null },
         { label: 'System Logs', href: '/admin/logs', icon: Layers, badge: null },
         { label: 'Database Backups', href: '/admin/backups', icon: Database, badge: null },
-        { label: 'Settings & Sheets', href: '/admin/settings', icon: Settings, badge: null },
+        { label: 'System Settings', href: '/admin/settings', icon: Settings, badge: null },
       ],
     },
   ];

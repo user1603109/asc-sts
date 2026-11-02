@@ -161,7 +161,7 @@ export default function AdminSettingsPage() {
   return (
     <AppLayout
       pageTitle="System Settings & Infrastructure"
-      pageSubtitle="Configure institutional identity, academic period, admin credentials, and Google Sheets database sync"
+      pageSubtitle="Configure institutional identity, academic period, admin credentials, and database settings"
     >
       <div className="space-y-6 max-w-4xl">
         {/* 1. GENERAL SYSTEM SETTINGS MATCHING ASTS/admin/settings.php */}

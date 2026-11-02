@@ -113,10 +113,10 @@ export default function HomePage() {
 
             {/* Subtitle / Description */}
             <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-xl font-normal leading-relaxed">
-              High-precision digital tabulation engine powered by Google Workspace and deployed on Vercel. Engineered for collegiate pageants, cultural competitions, academic debates, and athletic tournaments.
+              High-precision digital tabulation engine engineered for collegiate pageants, cultural competitions, academic debates, and athletic tournaments.
             </p>
 
-            {/* Feature Highlights Pills - Updated Content */}
+            {/* Feature Highlights Pills - Main System Features */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-xl w-full">
               <div className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 shadow-xs hover:border-yale-300 transition-colors">
                 <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
@@ -132,7 +132,7 @@ export default function HomePage() {
               </div>
               <div className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 shadow-xs hover:border-yale-300 transition-colors">
                 <Layers className="w-4 h-4 text-blue-600 shrink-0" />
-                <span>Google Drive Cloud Storage (ASTS/Profiles)</span>
+                <span>Instant Auto-Rankings &amp; Tie-Breaking</span>
               </div>
               <div className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 shadow-xs hover:border-yale-300 transition-colors">
                 <Lock className="w-4 h-4 text-rose-600 shrink-0" />

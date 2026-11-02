@@ -43,7 +43,7 @@ export default function AdminDashboardPage() {
   });
   const [events, setEvents] = useState<any[]>([]);
   const [pendingJudges, setPendingJudges] = useState<any[]>([]);
-  const [googleStatus, setGoogleStatus] = useState<any>(null);
+  const [dbStatus, setDbStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -67,7 +67,7 @@ export default function AdminDashboardPage() {
       const deptsData = await deptsRes.json();
       const statusData = await sheetsStatusRes.json();
 
-      setGoogleStatus(statusData);
+      setDbStatus(statusData);
 
       const evList = Array.isArray(eventsData) ? eventsData : [];
       const jList = Array.isArray(judgesData) ? judgesData : [];
@@ -146,7 +146,6 @@ export default function AdminDashboardPage() {
   return (
     <AppLayout
       pageTitle="Manage collegiate events, criteria weightings, and real-time tabulation in one place"
-      googleConfigured={googleStatus?.googleConfigured}
     >
       <div className="space-y-6">
         {/* SUBHEADER CONTROLS (Your stack at a glance) */}
@@ -590,7 +589,7 @@ export default function AdminDashboardPage() {
               </div>
               {showCard3 && (
                 <>
-                  <p className="text-[11px] text-slate-400 mt-1">Hostinger MySQL schema density & tables</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Cloud MySQL schema density &amp; tables</p>
 
               {/* 3 mini stat blocks */}
               <div className="grid grid-cols-3 gap-2 mt-3 pt-2 text-center">
@@ -616,7 +615,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Hosting Target:</span>
-                  <span className="font-mono text-[11px] text-emerald-700 font-bold">Hostinger cPanel / hPanel</span>
+                  <span className="font-mono text-[11px] text-emerald-700 font-bold">Cloud Serverless / Vercel</span>
                 </div>
               </div>
                 </>
@@ -684,11 +683,11 @@ export default function AdminDashboardPage() {
               <Layers className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Schema Density</p>
-              <p className="text-sm font-black text-slate-900">13 Sheets • 0 SQL</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database Tables</p>
+              <p className="text-sm font-black text-slate-900">13 Relational Tables</p>
             </div>
             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 border border-purple-200 shrink-0">
-              Cloud
+              MySQL
             </span>
           </div>
         </div>

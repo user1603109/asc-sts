@@ -653,7 +653,7 @@ export default function JudgeScoringSheetPage() {
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] flex items-start gap-2">
                   <Lock className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                   <span>
-                    Once submitted, your score will be securely logged and synchronized in real-time to the Official Tabulation Master Sheet.
+                    Once submitted, your score will be securely logged and synchronized in real-time to the Official Tabulation Master Board.
                   </span>
                 </div>
 
