@@ -259,6 +259,23 @@ export async function initTursoTables(): Promise<boolean> {
     await executeTurso(sql);
   }
 
+  // Safe schema migrations for existing database tables
+  try {
+    await executeTurso('ALTER TABLE organizers ADD COLUMN first_name TEXT');
+  } catch (_) {}
+  try {
+    await executeTurso('ALTER TABLE organizers ADD COLUMN middle_name TEXT');
+  } catch (_) {}
+  try {
+    await executeTurso('ALTER TABLE organizers ADD COLUMN surname TEXT');
+  } catch (_) {}
+  try {
+    await executeTurso('ALTER TABLE candidates ADD COLUMN department TEXT');
+  } catch (_) {}
+  try {
+    await executeTurso('ALTER TABLE participants_registry ADD COLUMN department TEXT');
+  } catch (_) {}
+
   // Seed default admin and tables if empty
   await seedTursoIfEmpty();
   return true;
@@ -294,22 +311,20 @@ async function seedTursoIfEmpty() {
         await executeTurso('INSERT OR IGNORE INTO event_types (type_name) VALUES (?)', [t.type_name]);
       }
 
-      // Seed courses
-      for (const c of SEED_DATA.courses) {
-        await executeTurso('INSERT OR IGNORE INTO courses (course_name) VALUES (?)', [c.course_name]);
-      }
-
       // Seed departments
       for (const d of SEED_DATA.departments) {
         await executeTurso(
-          'INSERT OR IGNORE INTO departments (department_name, department_code) VALUES (?, ?)',
-          [d.department_name, d.department_code]
+          'INSERT OR IGNORE INTO departments (department_name) VALUES (?)',
+          [d.department_name]
         );
       }
 
       // Seed organizers
       for (const o of SEED_DATA.organizers) {
-        await executeTurso('INSERT OR IGNORE INTO organizers (organizer_name) VALUES (?)', [o.organizer_name]);
+        await executeTurso(
+          'INSERT OR IGNORE INTO organizers (first_name, middle_name, surname, organizer_name) VALUES (?, ?, ?, ?)',
+          [o.first_name, o.middle_name || '', o.surname, o.organizer_name]
+        );
       }
     }
   } catch (err) {

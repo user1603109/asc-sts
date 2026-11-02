@@ -122,12 +122,15 @@ export async function getRowById<T = Record<string, any>>(sheetName: string, id:
 export async function appendSheetRow<T extends Record<string, any>>(sheetName: string, data: Partial<T>): Promise<T> {
   if (isTursoConfigured()) {
     try {
-      const cols = Object.keys(data).filter((k) => k !== 'id' || (data.id !== undefined && data.id !== null));
+      const allowedCols = SHEET_SCHEMAS[sheetName];
+      const cols = Object.keys(data).filter(
+        (k) => (allowedCols ? allowedCols.includes(k) : true) && (k !== 'id' || (data.id !== undefined && data.id !== null))
+      );
       const placeholders = cols.map(() => '?').join(', ');
       const values = cols.map((k) => (data as any)[k]);
       const sql = `INSERT INTO ${sheetName} (${cols.join(', ')}) VALUES (${placeholders})`;
       const res = await executeTurso(sql, values);
-      return { ...data, id: res.lastInsertRowid || (data as any).id } as T;
+      return ({ ...data, id: res.lastInsertRowid || (data as any).id } as unknown) as T;
     } catch (e) {
       console.error(`Turso appendSheetRow error for ${sheetName}:`, e);
     }
@@ -183,7 +186,10 @@ export async function updateSheetRow<T extends Record<string, any>>(
 ): Promise<boolean> {
   if (isTursoConfigured()) {
     try {
-      const cols = Object.keys(data).filter((k) => k !== 'id');
+      const allowedCols = SHEET_SCHEMAS[sheetName];
+      const cols = Object.keys(data).filter(
+        (k) => (allowedCols ? allowedCols.includes(k) : true) && k !== 'id'
+      );
       if (cols.length === 0) return true;
       const setClause = cols.map((k) => `${k} = ?`).join(', ');
       const values = [...cols.map((k) => (data as any)[k]), Number(id)];
@@ -482,8 +488,12 @@ export async function setSheetRows<T extends Record<string, any>>(
       const stmts: Array<{ sql: string; args?: any[] }> = [
         { sql: `DELETE FROM ${sheetName}` },
       ];
+      const allowedCols = SHEET_SCHEMAS[sheetName];
       for (const r of rows) {
-        const cols = Object.keys(r);
+        const cols = Object.keys(r).filter(
+          (k) => (allowedCols ? allowedCols.includes(k) : true)
+        );
+        if (cols.length === 0) continue;
         const placeholders = cols.map(() => '?').join(', ');
         const values = cols.map((k) => (r as any)[k]);
         stmts.push({
@@ -609,6 +619,26 @@ export async function ensureAllSheets(): Promise<{
       });
 
       createdTabs.push(tabName);
+    } else {
+      // Ensure headers are set if tab exists but row 1 is empty or out of sync
+      try {
+        const headerRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${tabName}!1:1`,
+        });
+        const currentHeaders = headerRes.data.values?.[0] as string[] | undefined;
+        const targetHeaders = SHEET_SCHEMAS[tabName];
+        if (!currentHeaders || currentHeaders.length === 0) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${tabName}!A1`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: { values: [targetHeaders] },
+          });
+        }
+      } catch (hdrErr) {
+        console.warn(`Could not sync headers for tab ${tabName}:`, hdrErr);
+      }
     }
   }
 

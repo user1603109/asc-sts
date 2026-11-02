@@ -141,21 +141,17 @@ export default function AdminReportsPage() {
           String(t.rank),
           `#${t.candidate.order_number}`,
           t.candidate.name,
-          t.candidate.course_name || '',
+          t.candidate.department || t.candidate.course_name || '',
           t.totalScore.toFixed(2),
         ]);
       });
     } else if (activeReportTab === 'engagement') {
-      rows.push(['Department Name', 'Code', 'Total Events', 'Completed Events', 'Total Candidates Fielded']);
+      rows.push(['Department Name', 'Total Events', 'Completed Events', 'Total Candidates Fielded']);
       departments.forEach((d) => {
         const deptEvents = events.filter((e) => e.department?.toLowerCase() === d.department_name.toLowerCase());
-        const deptCandidates = candidates.filter((c) => {
-          const course = courses.find((co) => Number(co.id) === Number(c.course_id));
-          return course && course.course_name.toLowerCase().includes((d.department_code || '').toLowerCase());
-        });
+        const deptCandidates = candidates.filter((c) => (c.department || '').toLowerCase() === d.department_name.toLowerCase());
         rows.push([
           d.department_name,
-          d.department_code || '',
           String(deptEvents.length),
           String(deptEvents.filter((e) => e.status === 'Completed').length),
           String(deptCandidates.length),
@@ -576,7 +572,6 @@ export default function AdminReportsPage() {
                     <tr>
                       <th className="py-2.5 px-3 border border-slate-700 w-14 text-center">Rank</th>
                       <th className="py-2.5 px-3 border border-slate-700">Academic Department</th>
-                      <th className="py-2.5 px-3 border border-slate-700 w-24 text-center">Code</th>
                       <th className="py-2.5 px-3 border border-slate-700 text-center">Events Organized</th>
                       <th className="py-2.5 px-3 border border-slate-700 text-center">Completed Events</th>
                       <th className="py-2.5 px-3 border border-slate-700 text-center">Contenders Fielded</th>
@@ -589,14 +584,9 @@ export default function AdminReportsPage() {
                         (e) => (e.department || '').toLowerCase() === dept.department_name.toLowerCase()
                       );
                       const completedCount = deptEvents.filter((e) => e.status === 'Completed').length;
-                      const deptCandidates = candidates.filter((c) => {
-                        const course = courses.find((co) => Number(co.id) === Number(c.course_id));
-                        return (
-                          course &&
-                          dept.department_code &&
-                          course.course_name.toLowerCase().includes(dept.department_code.toLowerCase())
-                        );
-                      });
+                      const deptCandidates = candidates.filter(
+                        (c) => (c.department || '').toLowerCase() === dept.department_name.toLowerCase()
+                      );
 
                       return (
                         <tr key={dept.id} className="hover:bg-slate-50">
@@ -605,9 +595,6 @@ export default function AdminReportsPage() {
                           </td>
                           <td className="py-2.5 px-3 border border-slate-200 font-bold text-slate-900">
                             {dept.department_name}
-                          </td>
-                          <td className="py-2.5 px-3 border border-slate-200 text-center font-mono font-semibold text-slate-600">
-                            {dept.department_code || 'DEPT'}
                           </td>
                           <td className="py-2.5 px-3 border border-slate-200 text-center font-mono font-bold text-slate-800">
                             {deptEvents.length}

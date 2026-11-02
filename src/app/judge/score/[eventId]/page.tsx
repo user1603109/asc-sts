@@ -17,6 +17,7 @@ import {
   Sparkles,
   Minus,
   Plus,
+  ShieldCheck,
 } from 'lucide-react';
 import { Candidate, Criteria, Event, EventPortion, Score } from '@/lib/types';
 

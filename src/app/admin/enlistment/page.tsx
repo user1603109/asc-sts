@@ -753,7 +753,7 @@ function EnlistmentContent() {
                                     setEditingCandidate(null);
                                     setCandidateForm({
                                       name: '',
-                                      course_id: courses[0]?.id ? String(courses[0].id) : '',
+                                      department: departments[0]?.department_name || '',
                                       year_level: '1st Year',
                                       order_number: candCount + 1,
                                       image_path: '',
@@ -777,7 +777,7 @@ function EnlistmentContent() {
                                       setEditingCandidate(null);
                                       setCandidateForm({
                                         name: '',
-                                        course_id: courses[0]?.id ? String(courses[0].id) : '',
+                                        department: departments[0]?.department_name || '',
                                         year_level: '1st Year',
                                         order_number: candCount + 1,
                                         image_path: '',
@@ -1596,7 +1596,6 @@ function EnlistmentContent() {
                     .filter((c) => Number(c.event_id) === Number(candidateTargetEventId))
                     .sort((a, b) => (Number(a.order_number) || 0) - (Number(b.order_number) || 0))
                     .map((cand) => {
-                      const courseObj = courses.find((c) => Number(c.id) === Number(cand.course_id));
                       return (
                         <div
                           key={cand.id}
