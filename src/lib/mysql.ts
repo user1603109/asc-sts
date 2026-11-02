@@ -38,6 +38,12 @@ export function isMySQLConfigured(): boolean {
 
 export function getMySQLPool(): Pool {
   if (!pool) {
+    const isCloudHost = Boolean(
+      process.env.MYSQL_HOST?.includes('tidbcloud.com') ||
+      process.env.MYSQL_SSL === 'true' ||
+      (process.env.MYSQL_HOST && process.env.MYSQL_HOST !== 'localhost' && process.env.MYSQL_HOST !== '127.0.0.1')
+    );
+
     const config: PoolOptions = {
       host: process.env.MYSQL_HOST || 'localhost',
       port: Number(process.env.MYSQL_PORT) || 3306,
@@ -51,6 +57,7 @@ export function getMySQLPool(): Pool {
       queueLimit: 0,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
+      ...(isCloudHost ? { ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true } } : {}),
     };
 
     if (process.env.DATABASE_URL) {
