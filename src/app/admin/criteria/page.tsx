@@ -375,9 +375,6 @@ function CriteriaContent() {
   const [loading, setLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Segmentation Mode override (for non-pageant events that want proceedings, or vice versa)
-  const [forceMultiSegment, setForceMultiSegment] = useState<boolean | null>(null);
-
   // System MessageBox modal state
   const [msgBox, setMsgBox] = useState<MessageBoxOptions | null>(null);
 
@@ -443,16 +440,29 @@ function CriteriaContent() {
     }
   };
 
+  const selectedEvent = events.find((e) => String(e.id) === String(selectedEventId));
+  const isInherentlyPageant = (selectedEvent?.type || '').trim().toLowerCase().includes('pageant');
+
+  // ONLY Pageant Type Events receive the Multi-Segment Proceedings configuration!
+  // All other event types (Academic, Cultural, Sports, etc.) strictly use the Direct Single-Stage Criteria config.
+  const isMultiSegment = isInherentlyPageant;
+
   useEffect(() => {
     loadCriteria();
-    setForceMultiSegment(null); // Reset manual override on event switch
+    // Intelligently pre-filter the presets library based on the selected event's category
+    const evtType = (selectedEvent?.type || '').toLowerCase();
+    if (evtType.includes('pageant')) {
+      setPresetCategoryFilter('Pageantry');
+    } else if (evtType.includes('academic') || evtType.includes('debate') || evtType.includes('speech')) {
+      setPresetCategoryFilter('Academic Competition');
+    } else if (evtType.includes('dance') || evtType.includes('cultural') || evtType.includes('folk')) {
+      setPresetCategoryFilter('Dance & Culture');
+    } else if (evtType.includes('sing') || evtType.includes('music') || evtType.includes('band')) {
+      setPresetCategoryFilter('Performing Arts');
+    } else {
+      setPresetCategoryFilter('All');
+    }
   }, [selectedEventId]);
-
-  const selectedEvent = events.find((e) => String(e.id) === String(selectedEventId));
-  const isInherentlyPageant = (selectedEvent?.type || '').toLowerCase().includes('pageant');
-  // Dedicated Pageantry Architecture: Only pageant events get multi-segment proceedings by default;
-  // Non-pageant events default to direct single-stage criteria unless they explicitly have portions configured.
-  const isMultiSegment = forceMultiSegment !== null ? forceMultiSegment : (isInherentlyPageant ? true : portions.length > 0);
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setActionMessage({ text, type });
@@ -723,6 +733,34 @@ function CriteriaContent() {
     }
   };
 
+  const handleBalanceFlatCriteria = async () => {
+    if (criteriaList.length === 0) return;
+    setMsgBox({
+      title: 'Balance Criteria Weights',
+      message: `Distribute weights evenly across all ${criteriaList.length} criteria rubrics? Total will sum to exactly 100%.`,
+      type: 'info',
+      confirmText: 'Distribute Evenly',
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/criteria', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              itemType: 'balance_criteria',
+              event_id: Number(selectedEventId),
+            }),
+          });
+          if (res.ok) {
+            showFeedback('All criteria weights balanced evenly to 100%');
+            loadCriteria();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
+  };
+
   // ---------------------------------------------------------------------------
   // PRESET APPLICATION & RESET
   // ---------------------------------------------------------------------------
@@ -826,9 +864,9 @@ function CriteriaContent() {
     <AppLayout
       pageTitle="Criteria & Weighting Studio"
       pageSubtitle={
-        isMultiSegment
+        isInherentlyPageant
           ? 'Pageantry multi-segment proceedings, phase percentages, and criteria rubrics'
-          : 'Standard competition criteria, point limits, and percentage weightings'
+          : `${selectedEvent?.type || 'Standard'} competition direct scoring rubrics, point limits, and percentage weightings`
       }
     >
       <div className="space-y-6">
@@ -930,18 +968,25 @@ function CriteriaContent() {
               <span className="hidden xl:inline">Criteria Guide</span>
             </Link>
 
-            {/* Architecture Mode Toggle (Multi-Segment vs Flat Criteria) */}
-            <button
-              onClick={() => setForceMultiSegment(!isMultiSegment)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
-              title={isMultiSegment ? 'Switch to Single-Stage Criteria' : 'Switch to Multi-Segment Proceedings Architecture'}
+            {/* Architecture Mode Status Badge */}
+            <div
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border ${
+                isInherentlyPageant
+                  ? 'bg-amber-50 text-amber-900 border-amber-200'
+                  : 'bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+              title={
+                isInherentlyPageant
+                  ? 'Pageant event: Dedicated Multi-Segment Proceedings active'
+                  : 'Standard event: Direct Single-Stage Criteria Rubrics active'
+              }
             >
-              <Layers className="w-3.5 h-3.5 text-yale-600" />
-              <span className="hidden md:inline">Mode:</span>
-              <span className="font-bold text-slate-800">
-                {isMultiSegment ? 'Multi-Segment' : 'Single-Stage'}
+              <Layers className={`w-3.5 h-3.5 ${isInherentlyPageant ? 'text-amber-600' : 'text-yale-600'}`} />
+              <span className="hidden md:inline text-slate-500">Architecture:</span>
+              <span className="font-bold">
+                {isInherentlyPageant ? 'Pageant Proceedings' : `${selectedEvent?.type || 'Standard'} Single-Stage`}
               </span>
-            </button>
+            </div>
 
             {/* Add Segment or Add Criteria */}
             {isMultiSegment ? (
@@ -1391,11 +1436,21 @@ function CriteriaContent() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-right self-start sm:self-auto min-w-[170px]">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-right self-start sm:self-auto min-w-[170px] space-y-1">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Criteria Weight</span>
-                <span className={`text-xl font-black font-mono ${totalFlatCriteriaWeight === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                <span className={`text-xl font-black font-mono block ${totalFlatCriteriaWeight === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
                   {totalFlatCriteriaWeight}% / 100%
                 </span>
+                {totalFlatCriteriaWeight !== 100 && criteriaList.length > 1 && (
+                  <button
+                    onClick={handleBalanceFlatCriteria}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition-colors cursor-pointer"
+                    title="Auto balance criteria weights evenly to sum 100%"
+                  >
+                    <Scale className="w-3 h-3 text-amber-600" />
+                    <span>Auto-Balance</span>
+                  </button>
+                )}
               </div>
             </div>
 
