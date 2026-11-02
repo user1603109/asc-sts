@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Shield,
   Loader2,
+  BookOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -136,6 +137,7 @@ export default function AppLayout({
       group: 'REPORTS & AUDIT',
       items: [
         { label: 'Official Reports', href: '/admin/reports', icon: Printer, badge: null },
+        { label: 'Operations Guide', href: '/admin/guide', icon: BookOpen, badge: null },
         { label: 'System Logs', href: '/admin/logs', icon: Layers, badge: null },
         { label: 'Database Backups', href: '/admin/backups', icon: Database, badge: null },
         { label: 'System Settings', href: '/admin/settings', icon: Settings, badge: null },

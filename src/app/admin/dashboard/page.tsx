@@ -164,11 +164,11 @@ export default function AdminDashboardPage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/admin/enlistment"
+              href="/admin/guide"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yale-50 text-yale-700 hover:bg-yale-100 border border-yale-200 text-xs font-semibold transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5 text-yale-700" />
-              <span>Event Operations Guide</span>
+              <span>System Operations Manual</span>
             </Link>
           </div>
         </div>

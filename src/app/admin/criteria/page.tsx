@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState, useMemo, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import MessageBox, { MessageBoxOptions } from '@/components/MessageBox';
@@ -33,6 +34,7 @@ import {
   Music,
   Mic,
   Award,
+  BookOpen,
 } from 'lucide-react';
 import { Criteria, Event, EventPortion } from '@/lib/types';
 
@@ -917,6 +919,16 @@ function CriteriaContent() {
               <Printer className="w-3.5 h-3.5 text-slate-600" />
               <span className="hidden sm:inline">Official Sheet</span>
             </button>
+
+            {/* Operations Guide Link */}
+            <Link
+              href="/admin/guide"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 font-semibold text-xs rounded-xl border border-slate-200 transition-colors"
+              title="Open System Operations Manual & Criteria Guidelines"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-yale-700" />
+              <span className="hidden xl:inline">Criteria Guide</span>
+            </Link>
 
             {/* Architecture Mode Toggle (Multi-Segment vs Flat Criteria) */}
             <button
