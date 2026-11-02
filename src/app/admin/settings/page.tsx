@@ -6,14 +6,10 @@ import { Settings, Database, RefreshCw, CheckCircle2, AlertCircle, FileSpreadshe
 import { SHEET_SCHEMAS } from '@/lib/schemas';
 
 export default function AdminSettingsPage() {
-  const [googleStatus, setGoogleStatus] = useState<any>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<any>(null);
-
-  // Turso Database state
-  const [tursoStatus, setTursoStatus] = useState<any>(null);
-  const [syncingTurso, setSyncingTurso] = useState(false);
-  const [tursoMessage, setTursoMessage] = useState('');
+  // MySQL Database state
+  const [mysqlStatus, setMysqlStatus] = useState<any>(null);
+  const [syncingMysql, setSyncingMysql] = useState(false);
+  const [mysqlMessage, setMysqlMessage] = useState('');
 
   // Wipe database state
   const [wiping, setWiping] = useState(false);
@@ -40,13 +36,9 @@ export default function AdminSettingsPage() {
   const [profileMessage, setProfileMessage] = useState('');
 
   useEffect(() => {
-    fetch('/api/setup-sheets')
+    fetch('/api/setup-mysql')
       .then((res) => res.json())
-      .then((data) => setGoogleStatus(data));
-
-    fetch('/api/setup-turso')
-      .then((res) => res.json())
-      .then((data) => setTursoStatus(data))
+      .then((data) => setMysqlStatus(data))
       .catch((err) => console.error(err));
 
     fetch('/api/settings')
@@ -58,36 +50,21 @@ export default function AdminSettingsPage() {
       });
   }, []);
 
-  const handleSync = async () => {
-    setSyncing(true);
-    setSyncResult(null);
+  const handleInitMysql = async () => {
+    setSyncingMysql(true);
+    setMysqlMessage('');
     try {
-      const res = await fetch('/api/setup-sheets', { method: 'POST' });
+      const res = await fetch('/api/setup-mysql', { method: 'POST' });
       const data = await res.json();
-      setSyncResult(data);
-    } catch (e: any) {
-      setSyncResult({ success: false, error: e.message });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleInitTurso = async () => {
-    setSyncingTurso(true);
-    setTursoMessage('');
-    try {
-      const res = await fetch('/api/setup-turso', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to initialize Turso');
-      setTursoMessage(data.message || 'Turso database initialized successfully!');
-      // refresh status
-      const checkRes = await fetch('/api/setup-turso');
+      if (!res.ok) throw new Error(data.error || 'Failed to initialize MySQL');
+      setMysqlMessage(data.message || 'MySQL database initialized successfully!');
+      const checkRes = await fetch('/api/setup-mysql');
       const checkData = await checkRes.json();
-      setTursoStatus(checkData);
+      setMysqlStatus(checkData);
     } catch (e: any) {
-      setTursoMessage(`Error: ${e.message}`);
+      setMysqlMessage(`Error: ${e.message}`);
     } finally {
-      setSyncingTurso(false);
+      setSyncingMysql(false);
     }
   };
 
@@ -108,8 +85,7 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to wipe database');
       setWipeMessage(data.message || 'Database successfully wiped clean!');
-      fetch('/api/setup-turso').then((r) => r.json()).then((d) => setTursoStatus(d)).catch(() => {});
-      fetch('/api/setup-sheets').then((r) => r.json()).then((d) => setGoogleStatus(d)).catch(() => {});
+      fetch('/api/setup-mysql').then((r) => r.json()).then((d) => setMysqlStatus(d)).catch(() => {});
     } catch (e: any) {
       setWipeMessage(`Error: ${e.message}`);
     } finally {
@@ -335,7 +311,7 @@ export default function AdminSettingsPage() {
           </form>
         </div>
 
-        {/* 3. TURSO 9GB LIBSQL HIGH-SPEED CLOUD DATABASE */}
+        {/* 3. NATIVE MYSQL DATABASE ENGINE (HOSTINGER / CPANEL) */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -344,104 +320,52 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold text-slate-900">Turso 9GB Cloud Database (High-Speed LibSQL)</h2>
-                  {tursoStatus?.configured ? (
+                  <h2 className="text-sm font-bold text-slate-900">Native MySQL Database Engine (Hostinger / cPanel)</h2>
+                  {mysqlStatus?.connected ? (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      Active (Sub-20ms)
+                      Connected (Sub-millisecond)
                     </span>
                   ) : (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                      Awaiting Credentials
+                      Standby / Local Memory
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {tursoStatus?.configured
-                    ? `Connected to Turso Cloud. Verified ${tursoStatus.tablesCount || 13} tables.`
-                    : 'Add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Vercel or .env.local to enable 9GB ultra-fast database.'}
+                  {mysqlStatus?.connected
+                    ? `Host: ${mysqlStatus.host} | DB: ${mysqlStatus.database} | ${mysqlStatus.message || 'Connected'}`
+                    : 'Configure MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, and MYSQL_DATABASE in Hostinger environment variables.'}
                 </p>
               </div>
             </div>
 
             <button
-              onClick={handleInitTurso}
-              disabled={syncingTurso || !tursoStatus?.configured}
+              onClick={handleInitMysql}
+              disabled={syncingMysql}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncingTurso ? 'animate-spin' : ''}`} />
-              <span>{syncingTurso ? 'Initializing...' : 'Initialize / Seed 13 Tables'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingMysql ? 'animate-spin' : ''}`} />
+              <span>{syncingMysql ? 'Initializing...' : 'Verify / Seed 13 MySQL Tables'}</span>
             </button>
           </div>
 
-          {tursoMessage && (
+          {mysqlMessage && (
             <div
               className={`p-3.5 rounded-lg border text-xs flex items-center gap-2.5 ${
-                tursoMessage.startsWith('Error')
+                mysqlMessage.startsWith('Error')
                   ? 'bg-rose-50 border-rose-200 text-rose-800'
-                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold'
               }`}
             >
-              {tursoMessage.startsWith('Error') ? <AlertCircle className="w-4 h-4 text-rose-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-              <span>{tursoMessage}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 4. GOOGLE SHEETS CLOUD DATABASE CONNECTION (FALLBACK) */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-                <FileSpreadsheet className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-slate-900">Google Sheets Database Connection</h2>
-                <p className="text-xs text-slate-500">
-                  {googleStatus?.googleConfigured
-                    ? 'Connected and synchronized with Google Cloud Service Account.'
-                    : 'Currently in local in-memory demo mode. Add environment variables for cloud sync.'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-yale-700 hover:bg-yale-800 text-white font-bold text-xs rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-              <span>{syncing ? 'Verifying...' : 'Verify & Sync All Tables'}</span>
-            </button>
-          </div>
-
-          {syncResult && (
-            <div
-              className={`p-3.5 rounded-lg border text-xs flex items-start gap-2.5 ${
-                syncResult.success
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  : 'bg-rose-50 border-rose-200 text-rose-800'
-              }`}
-            >
-              {syncResult.success ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              )}
-              <div className="flex-1">
-                <p className="font-semibold">{syncResult.message || syncResult.error}</p>
-                {syncResult.createdTabs && syncResult.createdTabs.length > 0 && (
-                  <p className="text-[11px] mt-1 text-emerald-700">
-                    Created tabs: {syncResult.createdTabs.join(', ')}
-                  </p>
-                )}
-              </div>
+              {mysqlMessage.startsWith('Error') ? <AlertCircle className="w-4 h-4 text-rose-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              <span>{mysqlMessage}</span>
             </div>
           )}
 
           {/* Table Schemas Summary */}
           <div className="pt-4 border-t border-slate-100">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
-              Relational Tables Mapped to Google Sheets (13 Tabs)
+              Relational Tables in MySQL Database (13 Tables)
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {Object.keys(SHEET_SCHEMAS).map((name) => (

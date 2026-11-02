@@ -35,4 +35,7 @@ connections/
 # TypeScript
 *.tsbuildinfo
 
+# Deployment Archives
+*.zip
+
 .vercel

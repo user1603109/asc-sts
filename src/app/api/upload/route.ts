@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isGoogleDriveConfigured, uploadImageToDrive } from '@/lib/googleDrive';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -19,48 +18,29 @@ export async function POST(req: NextRequest) {
     const fileName = file.name || 'profile.jpg';
     const mimeType = file.type || 'image/jpeg';
 
-    // 1. Try Google Drive (ASTS/Profiles)
-    if (isGoogleDriveConfigured()) {
-      try {
-        const driveUrl = await uploadImageToDrive(fileName, mimeType, buffer);
-        return NextResponse.json({
-          success: true,
-          url: driveUrl,
-          source: 'gdrive',
-          message: 'Uploaded to Google Drive (ASTS/Profiles)',
-        });
-      } catch (driveErr: any) {
-        console.warn('Google Drive upload failed, falling back to local storage:', driveErr);
-      }
+    // 1. Hostinger / Node.js Local Disk Storage
+    // Saves directly to public/uploads/ so files are immediately served via HTTP
+    try {
+      const ext = path.extname(fileName) || '.jpg';
+      const cleanBase = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safeName = `cand_${Date.now()}_${cleanBase}${ext}`;
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, safeName);
+      await writeFile(filePath, buffer);
+
+      const localUrl = `/uploads/${safeName}`;
+      return NextResponse.json({
+        success: true,
+        url: localUrl,
+        source: 'local',
+        message: 'Photo stored safely on Hostinger public storage',
+      });
+    } catch (fsErr) {
+      console.warn('Local disk write failed, switching to resilient Data URI fallback:', fsErr);
     }
 
-    // 2. Safe storage fallback:
-    // On Vercel or serverless environments, the filesystem is read-only (EROFS).
-    // In local dev, try writing to /public/uploads/. If that fails or if running on Vercel,
-    // safely return a self-contained Base64 Data URI that renders everywhere seamlessly.
-    const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
-
-    if (!isVercel) {
-      try {
-        const safeName = `profile_${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-        await mkdir(uploadDir, { recursive: true });
-        const filePath = path.join(uploadDir, safeName);
-        await writeFile(filePath, buffer);
-
-        const localUrl = `/uploads/${safeName}`;
-        return NextResponse.json({
-          success: true,
-          url: localUrl,
-          source: 'local',
-          message: 'Uploaded to local storage',
-        });
-      } catch (fsErr) {
-        console.warn('Local disk write failed, switching to Data URI fallback:', fsErr);
-      }
-    }
-
-    // 3. Resilient Base64 Data URI Fallback (Zero disk dependencies, 100% Vercel compatible)
+    // 2. Resilient Base64 Data URI Fallback
     const base64Data = buffer.toString('base64');
     const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
@@ -68,7 +48,7 @@ export async function POST(req: NextRequest) {
       success: true,
       url: dataUrl,
       source: 'data-uri',
-      message: 'Photo stored safely via inline Data URI (Serverless optimized)',
+      message: 'Photo stored safely via inline Data URI',
     });
   } catch (error: any) {
     console.error('File upload error:', error);

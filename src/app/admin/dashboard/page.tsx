@@ -129,10 +129,10 @@ export default function AdminDashboardPage() {
     setSyncing(true);
     setSyncMessage('');
     try {
-      const res = await fetch('/api/setup-sheets', { method: 'POST' });
+      const res = await fetch('/api/setup-mysql', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to sync');
-      setSyncMessage('Google Sheets connection and all 13 tables verified successfully!');
+      setSyncMessage('MySQL database connection and all 13 tables verified successfully!');
       loadData();
     } catch (err: any) {
       setSyncMessage(`Error: ${err.message}`);
@@ -570,7 +570,7 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* CARD 3: Database Studio Metrics (Google Sheets) */}
+          {/* CARD 3: Database Studio Metrics (MySQL Engine) */}
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card flex flex-col justify-between space-y-4">
             <div>
               {/* Header */}
@@ -590,13 +590,13 @@ export default function AdminDashboardPage() {
               </div>
               {showCard3 && (
                 <>
-                  <p className="text-[11px] text-slate-400 mt-1">Google Sheets schema density & tables</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Hostinger MySQL schema density & tables</p>
 
               {/* 3 mini stat blocks */}
               <div className="grid grid-cols-3 gap-2 mt-3 pt-2 text-center">
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
-                  <p className="text-[10px] uppercase font-bold text-slate-400">DATABASES</p>
-                  <p className="text-lg font-black text-slate-800">1</p>
+                  <p className="text-[10px] uppercase font-bold text-slate-400">DATABASE</p>
+                  <p className="text-lg font-black text-slate-800">MySQL</p>
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
                   <p className="text-[10px] uppercase font-bold text-slate-400">TABLES</p>
@@ -604,7 +604,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
                   <p className="text-[10px] uppercase font-bold text-slate-400">STATUS</p>
-                  <p className="text-xs font-black text-emerald-600 mt-1">SYNCED</p>
+                  <p className="text-xs font-black text-emerald-600 mt-1">ONLINE</p>
                 </div>
               </div>
 
@@ -612,11 +612,11 @@ export default function AdminDashboardPage() {
               <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Backend Engine:</span>
-                  <span className="font-mono text-[11px] text-yale-700 font-bold">Google Sheets API</span>
+                  <span className="font-mono text-[11px] text-yale-700 font-bold">MySQL (InnoDB)</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">Cloud Storage:</span>
-                  <span className="font-mono text-[11px] text-slate-700">5TB Google Drive</span>
+                  <span className="font-semibold">Hosting Target:</span>
+                  <span className="font-mono text-[11px] text-emerald-700 font-bold">Hostinger cPanel / hPanel</span>
                 </div>
               </div>
                 </>

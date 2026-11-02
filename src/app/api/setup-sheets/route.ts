@@ -1,41 +1,28 @@
 import { NextResponse } from 'next/server';
-import { ensureAllSheets, isGoogleConfigured } from '@/lib/googleSheets';
+import { testMySQLConnection, initMySQLTables } from '@/lib/mysql';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const configured = isGoogleConfigured();
+  const conn = await testMySQLConnection();
   return NextResponse.json({
-    googleConfigured: configured,
-    message: configured
-      ? 'Google Sheets credentials detected.'
-      : 'Google Sheets credentials missing in environment variables. Currently running in local demo memory mode.',
+    googleConfigured: false,
+    mysqlConfigured: true,
+    connected: conn.success,
+    message: conn.message,
   });
 }
 
 export async function POST() {
   try {
-    if (!isGoogleConfigured()) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'Google Sheets credentials not found. Please provide GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_SHEET_ID in your .env.local file or Vercel Environment Variables.',
-        },
-        { status: 400 }
-      );
-    }
-
-    const result = await ensureAllSheets();
+    await initMySQLTables();
     return NextResponse.json({
       success: true,
-      message: 'All 13 relational sheets and default schemas verified successfully.',
-      ...result,
+      message: 'MySQL tables verified and initialized successfully.',
     });
   } catch (error: any) {
-    console.error('Setup sheets error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to setup sheets' },
+      { success: false, error: error.message || 'Failed to initialize database' },
       { status: 500 }
     );
   }
