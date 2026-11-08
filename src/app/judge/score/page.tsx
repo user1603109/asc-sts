@@ -14,15 +14,15 @@ export default function JudgeScoreIndexPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadData(silent: boolean = false) {
       try {
-        setLoading(true);
+        if (!silent) setLoading(true);
         const meRes = await fetch('/api/auth/me');
         if (!meRes.ok) return;
         const me = await meRes.json();
         if (me.authenticated) {
           setUser(me.user);
-          const evtsRes = await fetch(`/api/events?judgeId=${me.user.userId}`);
+          const evtsRes = await fetch(`/api/events?judgeId=${me.user.userId}`, { cache: 'no-store' });
           const evts = evtsRes.ok ? await evtsRes.json() : [];
           if (Array.isArray(evts)) {
             // If only 1 active/ongoing event, automatically redirect to it for quick judging!
@@ -40,10 +40,23 @@ export default function JudgeScoreIndexPage() {
       } catch (e) {
         console.error(e);
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     }
-    loadData();
+
+    loadData(false);
+
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 5000);
+
+    const handleFocus = () => loadData(true);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [router]);
 
   return (
@@ -96,7 +109,7 @@ export default function JudgeScoreIndexPage() {
                         <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-[#0F4C81]/10 text-[#0F4C81]">
                           {evt.type}
                         </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                           {evt.status}
                         </span>
                       </div>

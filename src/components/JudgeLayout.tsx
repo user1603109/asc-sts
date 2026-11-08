@@ -115,7 +115,7 @@ export default function JudgeLayout({
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen h-screen w-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
-        <div className="w-14 h-14 rounded-2xl bg-[#0F4C81] flex items-center justify-center text-white mb-3 shadow-lg animate-pulse">
+        <div className="w-14 h-14 rounded-2xl bg-[#0F4C81] flex items-center justify-center text-white mb-3 shadow-md">
           <Shield className="w-7 h-7" />
         </div>
         <div className="flex items-center gap-2 text-slate-800 font-extrabold text-sm">
@@ -196,12 +196,6 @@ export default function JudgeLayout({
 
         {/* Right side: Judge Profile info & Logout */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Status Live Indicator */}
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Live Portal</span>
-          </div>
-
           {/* Judge Account Pill */}
           <Link
             href="/judge/profile"
@@ -264,8 +258,7 @@ export default function JudgeLayout({
                       {user?.fullName || 'Accredited Judge'}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
                         Official Judge
                       </span>
                     </div>
@@ -321,9 +314,9 @@ export default function JudgeLayout({
             {!sidebarCollapsed ? (
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
-                  <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                    <Wifi className="w-3.5 h-3.5" />
-                    <span>Database Connected</span>
+                  <span className="flex items-center gap-1.5 text-slate-400 font-semibold">
+                    <Wifi className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Connected</span>
                   </span>
                   <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">v2.0</span>
                 </div>
@@ -333,7 +326,7 @@ export default function JudgeLayout({
               </div>
             ) : (
               <div className="flex justify-center" title="Connected to Database">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-slate-500" />
               </div>
             )}
           </div>

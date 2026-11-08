@@ -49,9 +49,9 @@ function TabulationContent() {
       });
   }, []);
 
-  const fetchTabulation = async () => {
+  const fetchTabulation = async (silent = false) => {
     if (!selectedEventId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`/api/tabulation?eventId=${selectedEventId}`);
       const data = await res.json();
@@ -61,12 +61,26 @@ function TabulationContent() {
     } catch (e) {
       console.error('Error fetching tabulation:', e);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTabulation();
+    if (!selectedEventId) return;
+    fetchTabulation(false);
+
+    // Auto-refresh tabulation grid every 5 seconds for real-time synchronization with judges
+    const interval = setInterval(() => {
+      fetchTabulation(true);
+    }, 5000);
+
+    const onFocus = () => fetchTabulation(true);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [selectedEventId]);
 
   const filteredEvents = events.filter((evt) =>
@@ -114,7 +128,7 @@ function TabulationContent() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchTabulation}
+              onClick={() => fetchTabulation(false)}
               disabled={loading}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-lg shadow-sm transition-colors cursor-pointer"
             >

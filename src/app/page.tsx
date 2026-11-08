@@ -127,8 +127,8 @@ export default function HomePage() {
                 <span>Pageant Multi-Segment Scoring</span>
               </div>
               <div className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 shadow-xs hover:border-yale-300 transition-colors">
-                <Printer className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Certified Official Reports &amp; Signatories</span>
+                <Printer className="w-4 h-4 text-[#0F4C81] shrink-0" />
+                <span>Certified Tabulation Reports &amp; Audit</span>
               </div>
               <div className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 shadow-xs hover:border-yale-300 transition-colors">
                 <Layers className="w-4 h-4 text-blue-600 shrink-0" />

@@ -26,21 +26,27 @@ export default function JudgeDashboardPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Ongoing' | 'Upcoming' | 'Completed'>('All');
   const [showAllEventsMode, setShowAllEventsMode] = useState(false);
 
-  const loadDashboardData = async (forceAll: boolean = false) => {
+  const loadDashboardData = async (forceAll: boolean = false, silent: boolean = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
+      else setIsSyncing(true);
+
       const meRes = await fetch('/api/auth/me');
       if (!meRes.ok) {
-        setLoading(false);
+        if (!silent) setLoading(false);
+        setIsSyncing(false);
         return;
       }
       const userData = await meRes.json();
       if (!userData.authenticated || !userData.user) {
-        setLoading(false);
+        if (!silent) setLoading(false);
+        setIsSyncing(false);
         return;
       }
 
@@ -54,8 +60,8 @@ export default function JudgeDashboardPage() {
         : `/api/events?judgeId=${judgeId}`;
 
       const [eventsRes, scoresRes] = await Promise.all([
-        fetch(eventsUrl),
-        fetch(`/api/scores?judgeId=${judgeId}`),
+        fetch(eventsUrl, { cache: 'no-store' }),
+        fetch(`/api/scores?judgeId=${judgeId}`, { cache: 'no-store' }),
       ]);
 
       const eventsData = eventsRes.ok ? await eventsRes.json() : [];
@@ -64,7 +70,7 @@ export default function JudgeDashboardPage() {
       if (Array.isArray(eventsData)) {
         // If assigned events are 0 and user is admin, auto-fallback to all events
         if (eventsData.length === 0 && isAdmin && !forceAll) {
-          const allEvtRes = await fetch('/api/events');
+          const allEvtRes = await fetch('/api/events', { cache: 'no-store' });
           if (allEvtRes.ok) {
             const allEvts = await allEvtRes.json();
             if (Array.isArray(allEvts) && allEvts.length > 0) {
@@ -82,15 +88,32 @@ export default function JudgeDashboardPage() {
       if (Array.isArray(scoresData)) {
         setScores(scoresData);
       }
+      setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (e) {
       console.error('Failed to load judge dashboard data:', e);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      setIsSyncing(false);
     }
   };
 
   useEffect(() => {
     loadDashboardData();
+
+    // Real-time synchronization interval with admin console every 5 seconds
+    const interval = setInterval(() => {
+      loadDashboardData(false, true);
+    }, 5000);
+
+    const handleFocus = () => {
+      loadDashboardData(false, true);
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [showAllEventsMode]);
 
   // Compute scoring progress per event
@@ -139,7 +162,7 @@ export default function JudgeDashboardPage() {
     <JudgeLayout
       user={user}
       pageTitle="Judge Competition Dashboard"
-      pageSubtitle="Official scoring portal • Access your assigned competitions and record live scores"
+      pageSubtitle="Official scoring portal • Access your assigned competitions and record scores"
     >
       <div className="space-y-5">
         {/* Welcome Stat Cards Header */}
@@ -154,7 +177,7 @@ export default function JudgeDashboardPage() {
                 Welcome, {user?.fullName || 'Judge Panel'}
               </h1>
               <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                Your evaluations are recorded in real-time and synchronized directly with the Tabulation Committee. Tap on any assigned competition below to enter the live touchscreen scoring sheet.
+                Your evaluations are synchronized directly with the Tabulation Committee in real time. Tap on any assigned competition below to enter your touchscreen scoring sheet.
               </p>
             </div>
 
@@ -166,7 +189,7 @@ export default function JudgeDashboardPage() {
               </div>
               <div className="bg-white/10 backdrop-blur-xs border border-white/15 px-3 py-2 rounded-xl text-center min-w-[80px]">
                 <div className="text-[10px] text-slate-300 font-bold uppercase">Ongoing</div>
-                <div className="text-lg font-black text-emerald-300">{ongoingCount}</div>
+                <div className="text-lg font-black text-white">{ongoingCount}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-xs border border-white/15 px-3 py-2 rounded-xl text-center min-w-[80px]">
                 <div className="text-[10px] text-slate-300 font-bold uppercase">Scored</div>
@@ -191,7 +214,7 @@ export default function JudgeDashboardPage() {
               />
             </div>
 
-            {/* Status Tabs */}
+            {/* Status Tabs & Sync indicator */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
               {(['All', 'Ongoing', 'Upcoming', 'Completed'] as const).map((st) => (
                 <button
@@ -207,14 +230,17 @@ export default function JudgeDashboardPage() {
                 </button>
               ))}
 
-              {/* Refresh button */}
+              {/* Real-time server sync button */}
               <button
-                onClick={() => loadDashboardData()}
-                disabled={loading}
-                title="Refresh events from server"
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors shrink-0"
+                onClick={() => loadDashboardData(false, false)}
+                disabled={loading || isSyncing}
+                title="Synchronize with admin console"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors shrink-0 cursor-pointer"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#0F4C81]' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading || isSyncing ? 'animate-spin text-[#0F4C81]' : 'text-slate-500'}`} />
+                <span className="hidden md:inline text-[11px]">
+                  {isSyncing ? 'Syncing...' : lastSynced ? `Synced ${lastSynced}` : 'Sync'}
+                </span>
               </button>
             </div>
           </div>
@@ -304,15 +330,14 @@ export default function JudgeDashboardPage() {
                         </div>
 
                         <span
-                          className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                          className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md border ${
                             isOngoing
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              ? 'bg-slate-100 text-slate-800 border-slate-300'
                               : isCompleted
-                              ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              ? 'bg-slate-50 text-slate-600 border-slate-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
-                          {isOngoing && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                           {isCompleted && <CheckCircle2 className="w-3 h-3 text-slate-500" />}
                           <span>{evt.status}</span>
                         </span>
@@ -356,16 +381,14 @@ export default function JudgeDashboardPage() {
                       <div className="flex-1 max-w-sm">
                         <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 mb-1">
                           <span>Your Scoring Progress:</span>
-                          <span className={evt.isCompleted ? 'text-emerald-700 font-bold' : 'text-[#0F4C81]'}>
+                          <span className="text-[#0F4C81] font-bold">
                             {evt.scoredCount} / {evt.candidatesCount || 0} Contestants ({evt.progressPercent}%)
                           </span>
                         </div>
                         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/70">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
-                              evt.isCompleted
-                                ? 'bg-emerald-500'
-                                : evt.progressPercent > 0
+                              evt.progressPercent > 0
                                 ? 'bg-[#0F4C81]'
                                 : 'bg-slate-300'
                             }`}
@@ -377,13 +400,7 @@ export default function JudgeDashboardPage() {
                       {/* Primary Touch Scoring Button */}
                       <Link
                         href={`/judge/score/${evt.id}`}
-                        className={`w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all ${
-                          evt.isCompleted
-                            ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                            : isOngoing
-                            ? 'bg-[#0F4C81] hover:bg-[#0A3258] text-white'
-                            : 'bg-slate-800 hover:bg-slate-900 text-white'
-                        }`}
+                        className="w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all bg-[#0F4C81] hover:bg-[#0A3258] text-white"
                       >
                         <PlayCircle className="w-4 h-4 text-amber-400" />
                         <span>{evt.isCompleted ? 'Review Submitted Scores' : 'Open Touch Scoring Sheet'}</span>

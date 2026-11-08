@@ -60,6 +60,9 @@ export default function JudgeScoringSheetPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Connectivity monitor
   useEffect(() => {
@@ -75,7 +78,49 @@ export default function JudgeScoringSheetPage() {
     };
   }, []);
 
-  // Initial Data Load
+  // Silent background synchronization with admin
+  const syncBackground = async (silent = true) => {
+    if (!eventId) return;
+    try {
+      if (!silent) setIsSyncing(true);
+      const [evtData, candData, critData, scoresData] = await Promise.all([
+        safeFetchJson<any>(`/api/events/${eventId}`, undefined, null),
+        safeFetchJson<Candidate[]>(`/api/candidates?eventId=${eventId}`, undefined, []),
+        safeFetchJson<{ portions: EventPortion[]; criteria: Criteria[] }>(
+          `/api/criteria?eventId=${eventId}`,
+          undefined,
+          { portions: [], criteria: [] }
+        ),
+        safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}`, undefined, []),
+      ]);
+
+      if (evtData) setEvent(evtData);
+      if (Array.isArray(candData) && candData.length > 0) {
+        candData.sort((a, b) => (Number(a.order_number) || 0) - (Number(b.order_number) || 0));
+        setCandidates(candData);
+      }
+
+      const prts = Array.isArray(critData?.portions) ? critData.portions : [];
+      const crts = Array.isArray(critData?.criteria) ? critData.criteria : [];
+      if (prts.length > 0) {
+        setPortions(prts);
+      }
+      if (crts.length > 0) {
+        setCriteriaList(crts);
+      }
+
+      if (Array.isArray(scoresData)) {
+        setExistingScores(scoresData);
+      }
+      setLastSynced(new Date());
+    } catch (err) {
+      console.warn('Background sync error:', err);
+    } finally {
+      if (!silent) setIsSyncing(false);
+    }
+  };
+
+  // Initial Data Load & 5s Polling
   useEffect(() => {
     async function loadData() {
       if (!eventId) return;
@@ -83,8 +128,12 @@ export default function JudgeScoringSheetPage() {
         setLoading(true);
         setErrorMessage('');
 
-        const [meData, evtData, candData, critData, scoresData] = await Promise.all([
-          safeFetchJson<any>('/api/auth/me', undefined, { authenticated: false }),
+        const meData = await safeFetchJson<any>('/api/auth/me', undefined, { authenticated: false });
+        if (meData.authenticated && meData.user) {
+          setUser(meData.user);
+        }
+
+        const [evtData, candData, critData, scoresData] = await Promise.all([
           safeFetchJson<any>(`/api/events/${eventId}`, undefined, null),
           safeFetchJson<Candidate[]>(`/api/candidates?eventId=${eventId}`, undefined, []),
           safeFetchJson<{ portions: EventPortion[]; criteria: Criteria[] }>(
@@ -95,13 +144,8 @@ export default function JudgeScoringSheetPage() {
           safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}`, undefined, []),
         ]);
 
-        if (meData.authenticated && meData.user) {
-          setUser(meData.user);
-        }
-
         if (evtData) setEvent(evtData);
         if (Array.isArray(candData)) {
-          // Sort candidates by order number
           candData.sort((a, b) => (Number(a.order_number) || 0) - (Number(b.order_number) || 0));
           setCandidates(candData);
         }
@@ -118,6 +162,7 @@ export default function JudgeScoringSheetPage() {
         if (Array.isArray(scoresData)) {
           setExistingScores(scoresData);
         }
+        setLastSynced(new Date());
       } catch (err: any) {
         console.error('Error loading score sheet:', err);
         setErrorMessage(err.message || 'Failed to load scoring sheet data');
@@ -127,6 +172,19 @@ export default function JudgeScoringSheetPage() {
     }
 
     loadData();
+
+    // Auto-sync polling every 5 seconds
+    const interval = setInterval(() => {
+      syncBackground(true);
+    }, 5000);
+
+    const onFocus = () => syncBackground(true);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [eventId]);
 
   const currentCandidate = candidates[selectedCandidateIndex] || null;
@@ -159,11 +217,13 @@ export default function JudgeScoringSheetPage() {
     });
 
     setCurrentScores(initial);
+    setIsDirty(false);
     setSubmitSuccess(false);
     setErrorMessage('');
-  }, [selectedCandidateIndex, activePortionId, existingScores, user, activeCriteria]);
+  }, [selectedCandidateIndex, activePortionId, user, activeCriteria]);
 
   const handleScoreChange = (criteriaId: number, val: number, maxScore: number) => {
+    setIsDirty(true);
     let cleanVal = Number(val);
     if (isNaN(cleanVal)) cleanVal = 0;
     if (cleanVal < 0) cleanVal = 0;
@@ -216,12 +276,10 @@ export default function JudgeScoringSheetPage() {
       }
 
       setSubmitSuccess(true);
+      setIsDirty(false);
 
       // Refresh scores silently
-      const updatedScores = await safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}`, undefined, []);
-      if (Array.isArray(updatedScores)) {
-        setExistingScores(updatedScores);
-      }
+      await syncBackground(true);
 
       // Auto advance to next candidate if not at the end
       setTimeout(() => {
@@ -280,12 +338,12 @@ export default function JudgeScoringSheetPage() {
     <JudgeLayout
       user={user}
       pageTitle={event?.name || 'Touch Scoring Arena'}
-      pageSubtitle={`${event?.type || 'Competition'} • Official Live Touchscreen Scorecard`}
+      pageSubtitle={`${event?.type || 'Competition'} • Official Touchscreen Scorecard`}
     >
       <div className="space-y-4 max-w-4xl mx-auto pb-12">
         {/* Offline Warning Alert */}
         {!isOnline && (
-          <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2.5 rounded-2xl flex items-center justify-between shadow-md animate-pulse">
+          <div className="bg-rose-600 text-white text-xs font-bold px-4 py-2.5 rounded-2xl flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-white" />
               <span>Offline Warning: Internet connection lost. Please reconnect to submit scores.</span>
@@ -296,21 +354,38 @@ export default function JudgeScoringSheetPage() {
           </div>
         )}
 
-        {/* Navigation Breadcrumb & Back Bar */}
-        <div className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl shadow-xs flex items-center justify-between gap-3">
-          <button
-            onClick={() => router.push('/judge/dashboard')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors shrink-0"
-          >
-            <ChevronLeft className="w-4 h-4 text-[#0F4C81]" />
-            <span>Return to Dashboard</span>
-          </button>
+        {/* Navigation Breadcrumb & Back Bar with Realtime Sync Status */}
+        <div className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl shadow-xs flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/judge/dashboard')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors shrink-0"
+            >
+              <ChevronLeft className="w-4 h-4 text-[#0F4C81]" />
+              <span>Return to Dashboard</span>
+            </button>
 
-          <div className="text-right">
+            <button
+              onClick={() => syncBackground(false)}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs transition-all"
+              title="Force sync scorecard with admin server"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#0F4C81] ${isSyncing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+            </button>
+          </div>
+
+          <div className="text-right flex items-center gap-2">
+            {lastSynced && (
+              <span className="text-[11px] font-medium text-slate-400 hidden md:inline">
+                Synced {lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
             <span className="text-[10px] font-black uppercase tracking-wider text-[#0F4C81] bg-[#0F4C81]/10 px-2 py-0.5 rounded">
-              {event?.type || 'Pageant'}
+              {event?.type || 'Competition'}
             </span>
-            <div className="text-xs font-bold text-slate-700 hidden sm:block mt-0.5">
+            <div className="text-xs font-bold text-slate-700 hidden sm:block">
               AY {event?.academic_year || '2025-2026'}
             </div>
           </div>
@@ -351,7 +426,7 @@ export default function JudgeScoringSheetPage() {
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
             <span className="flex items-center gap-1.5">
               <span>EVALUATED</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
+              <span className="px-1.5 py-0.5 rounded-full bg-slate-100 text-[#0F4C81] border border-slate-200 font-extrabold text-[10px]">
                 {scoredCount} of {candidates.length}
               </span>
               <span>CONTESTANTS</span>
@@ -382,7 +457,7 @@ export default function JudgeScoringSheetPage() {
                   }`}
                 >
                   {isScored && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] text-white shadow-xs">
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#0F4C81] flex items-center justify-center text-[10px] text-white shadow-xs">
                       ✓
                     </span>
                   )}
@@ -423,8 +498,8 @@ export default function JudgeScoringSheetPage() {
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-black text-slate-900">{currentCandidate.name}</h2>
                     {isCurrentCandidateScored && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                        <CheckCircle2 className="w-3 h-3 text-[#0F4C81]" />
                         <span>Scored</span>
                       </span>
                     )}
@@ -452,8 +527,8 @@ export default function JudgeScoringSheetPage() {
             )}
 
             {submitSuccess && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-800 text-xs flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0F4C81]" />
                 <span className="font-bold">Score recorded and locked successfully! Loading next contestant...</span>
               </div>
             )}
@@ -673,7 +748,7 @@ export default function JudgeScoringSheetPage() {
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-[#0F4C81] hover:bg-[#0A3258] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <CheckCircle2 className="w-4 h-4 text-white" />
                     <span>Confirm &amp; Submit</span>
                   </button>
                 </div>

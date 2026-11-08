@@ -23,49 +23,65 @@ export default function JudgeHistoryPage() {
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const loadHistory = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      else setIsSyncing(true);
+
+      const meRes = await fetch('/api/auth/me');
+      if (!meRes.ok) return;
+      const meData = await meRes.json();
+      if (meData.authenticated && meData.user) {
+        setCurrentUser(meData.user);
+
+        const [eventsRes, scoresRes] = await Promise.all([
+          fetch('/api/events'),
+          fetch(`/api/scores?judgeId=${meData.user.userId}`),
+        ]);
+
+        const eventsData = eventsRes.ok ? await eventsRes.json() : [];
+        const scoresData = scoresRes.ok ? await scoresRes.json() : [];
+
+        if (Array.isArray(eventsData)) {
+          // Include completed, tabulating or any event where the judge submitted scores
+          const scoredEventIds = new Set(scoresData.map((s: Score) => Number(s.event_id)));
+          const historical = eventsData.filter(
+            (e: Event) =>
+              e.status === 'Completed' ||
+              e.status === 'Tabulating' ||
+              scoredEventIds.has(Number(e.id))
+          );
+          setEvents(historical);
+        }
+
+        if (Array.isArray(scoresData)) {
+          setScores(scoresData);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load history:', e);
+    } finally {
+      if (!silent) setLoading(false);
+      else setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadHistory() {
-      try {
-        setLoading(true);
-        const meRes = await fetch('/api/auth/me');
-        if (!meRes.ok) return;
-        const meData = await meRes.json();
-        if (meData.authenticated && meData.user) {
-          setCurrentUser(meData.user);
+    loadHistory(false);
 
-          const [eventsRes, scoresRes] = await Promise.all([
-            fetch('/api/events'),
-            fetch(`/api/scores?judgeId=${meData.user.userId}`),
-          ]);
+    const interval = setInterval(() => {
+      loadHistory(true);
+    }, 5000);
 
-          const eventsData = eventsRes.ok ? await eventsRes.json() : [];
-          const scoresData = scoresRes.ok ? await scoresRes.json() : [];
+    const onFocus = () => loadHistory(true);
+    window.addEventListener('focus', onFocus);
 
-          if (Array.isArray(eventsData)) {
-            // Include completed, tabulating or any event where the judge submitted scores
-            const scoredEventIds = new Set(scoresData.map((s: Score) => Number(s.event_id)));
-            const historical = eventsData.filter(
-              (e: Event) =>
-                e.status === 'Completed' ||
-                e.status === 'Tabulating' ||
-                scoredEventIds.has(Number(e.id))
-            );
-            setEvents(historical);
-          }
-
-          if (Array.isArray(scoresData)) {
-            setScores(scoresData);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load history:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadHistory();
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const filteredEvents = events.filter((e) =>
@@ -130,8 +146,8 @@ export default function JudgeHistoryPage() {
                       <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                         {evt.type || 'Competition'}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                        <CheckCircle2 className="w-3 h-3 text-[#0F4C81]" />
                         <span>{evt.status}</span>
                       </span>
                     </div>
@@ -166,9 +182,9 @@ export default function JudgeHistoryPage() {
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Scores Locked & Synced</span>
+                    <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0F4C81]" />
+                      <span>Scores Finalized & Tabulated</span>
                     </span>
 
                     <Link

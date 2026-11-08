@@ -104,14 +104,14 @@ export default function JudgeProfilePage() {
       <div className="space-y-5 max-w-3xl mx-auto">
         {/* Status Banner */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-[#0F4C81]/10 border border-[#0F4C81]/20 text-[#0F4C81] flex items-center justify-center shrink-0">
             <BadgeCheck className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-slate-900">Accredited Official Judge Status</h2>
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                Active
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-[#0F4C81] border border-slate-200">
+                Verified
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -125,12 +125,12 @@ export default function JudgeProfilePage() {
           <div
             className={`p-4 rounded-2xl flex items-center gap-2.5 text-xs font-semibold ${
               message.type === 'success'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                ? 'bg-slate-50 text-slate-800 border border-slate-300'
                 : 'bg-rose-50 text-rose-700 border border-rose-200'
             }`}
           >
             {message.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0F4C81]" />
             ) : (
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
             )}
