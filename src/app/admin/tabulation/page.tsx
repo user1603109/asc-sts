@@ -37,13 +37,18 @@ function TabulationContent() {
   const [expandedCandidate, setExpandedCandidate] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/events')
+    fetch('/api/events?_t=' + Date.now())
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setEvents(data);
-          if (!selectedEventId && data.length > 0) {
-            setSelectedEventId(String(data[0].id));
+          if (!selectedEventId) {
+            // Pick ongoing event or event with candidates/scores (like 30001) or first event
+            const activeEvt =
+              data.find((e: any) => e.status === 'Ongoing') ||
+              data.find((e: any) => Number(e.id) === 30001) ||
+              data[0];
+            setSelectedEventId(String(activeEvt.id));
           }
         }
       });
@@ -53,7 +58,10 @@ function TabulationContent() {
     if (!selectedEventId) return;
     if (!silent) setLoading(true);
     try {
-      const res = await fetch(`/api/tabulation?eventId=${selectedEventId}`);
+      const res = await fetch(`/api/tabulation?eventId=${selectedEventId}&_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
       const data = await res.json();
       if (res.ok) {
         setTabData(data);
@@ -206,147 +214,158 @@ function TabulationContent() {
         ) : (
           <>
             {/* TAB 1: MASTER TABULATION PANE */}
-            {activeTab === 'tabulation' && (
-              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-card">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-slate-50 text-slate-600 uppercase tracking-wider font-semibold border-b border-slate-200">
-                        <th className="py-3 px-4 w-16 text-center">Rank</th>
-                        <th className="py-3 px-4 w-16 text-center">No.</th>
-                        <th className="py-3 px-4">Contestant Name</th>
-                        {tabData.portions.map((p) => (
-                          <th key={p.id} className="py-3 px-4 text-center">
-                            {p.portion_name} <span className="text-[10px] text-yale-600">({p.percentage}%)</span>
-                          </th>
-                        ))}
-                        <th className="py-3 px-4 text-right">Total Score</th>
-                        <th className="py-3 px-4 text-center w-24">Breakdown</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {tabData.tabulations.map((res) => {
-                        const isRank1 = res.rank === 1;
-                        const isRank2 = res.rank === 2;
-                        const isRank3 = res.rank === 3;
-                        const isExpanded = expandedCandidate === res.candidate.id;
+            {activeTab === 'tabulation' && (() => {
+              const displayPortions =
+                tabData.portions && tabData.portions.length > 0
+                  ? tabData.portions
+                  : tabData.tabulations[0]?.portionBreakdown?.map((pb) => ({
+                      id: pb.portionId,
+                      portion_name: pb.portionName,
+                      percentage: pb.portionPercentage,
+                    })) || [];
 
-                        return (
-                          <Fragment key={res.candidate.id}>
-                            <tr
-                              className={`hover:bg-slate-50 transition-colors ${
-                                isRank1 ? 'bg-amber-50/50' : ''
-                              }`}
-                            >
-                              {/* Rank badge */}
-                              <td className="py-3 px-4 text-center">
-                                <span
-                                  className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-black text-xs ${
-                                    isRank1
-                                      ? 'bg-amber-400 text-navy-950 shadow-sm'
-                                      : isRank2
-                                      ? 'bg-slate-200 text-slate-800'
-                                      : isRank3
-                                      ? 'bg-amber-800 text-white'
-                                      : 'text-slate-500 border border-slate-200'
-                                  }`}
-                                >
-                                  {res.rank}
-                                </span>
-                              </td>
+              return (
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-card">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-600 uppercase tracking-wider font-semibold border-b border-slate-200">
+                          <th className="py-3 px-4 w-16 text-center">Rank</th>
+                          <th className="py-3 px-4 w-16 text-center">No.</th>
+                          <th className="py-3 px-4">Contestant Name</th>
+                          {displayPortions.map((p: any) => (
+                            <th key={p.id} className="py-3 px-4 text-center">
+                              {p.portion_name} <span className="text-[10px] text-yale-600">({p.percentage}%)</span>
+                            </th>
+                          ))}
+                          <th className="py-3 px-4 text-right">Total Score</th>
+                          <th className="py-3 px-4 text-center w-24">Breakdown</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {tabData.tabulations.map((res) => {
+                          const isRank1 = res.rank === 1;
+                          const isRank2 = res.rank === 2;
+                          const isRank3 = res.rank === 3;
+                          const isExpanded = expandedCandidate === res.candidate.id;
 
-                              {/* Contestant Number */}
-                              <td className="py-3 px-4 text-center font-bold text-slate-500">
-                                #{res.candidate.order_number}
-                              </td>
-
-                              {/* Name & Year */}
-                              <td className="py-3 px-4 font-bold text-slate-900">
-                                {res.candidate.name}
-                                <span className="block text-[11px] font-normal text-slate-400">
-                                  {res.candidate.department || res.candidate.course_name || res.candidate.year_level || 'Contender'}
-                                </span>
-                              </td>
-
-                              {/* Portion scores */}
-                              {(res.portionBreakdown || []).map((pb) => (
-                                <td key={pb.portionId} className="py-3 px-4 text-center font-semibold text-slate-700">
-                                  {pb.portionTotal.toFixed(2)}
+                          return (
+                            <Fragment key={res.candidate.id}>
+                              <tr
+                                className={`hover:bg-slate-50 transition-colors ${
+                                  isRank1 ? 'bg-amber-50/50' : ''
+                                }`}
+                              >
+                                {/* Rank badge */}
+                                <td className="py-3 px-4 text-center">
+                                  <span
+                                    className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-black text-xs ${
+                                      isRank1
+                                        ? 'bg-amber-400 text-navy-950 shadow-sm'
+                                        : isRank2
+                                        ? 'bg-slate-200 text-slate-800'
+                                        : isRank3
+                                        ? 'bg-amber-800 text-white'
+                                        : 'text-slate-500 border border-slate-200'
+                                    }`}
+                                  >
+                                    {res.rank}
+                                  </span>
                                 </td>
-                              ))}
 
-                              {/* Total Score */}
-                              <td className="py-3 px-4 text-right font-black text-yale-700 text-sm">
-                                {res.totalScore.toFixed(2)}%
-                              </td>
+                                {/* Contestant Number */}
+                                <td className="py-3 px-4 text-center font-bold text-slate-500">
+                                  #{res.candidate.order_number}
+                                </td>
 
-                              {/* Expand Details */}
-                              <td className="py-3 px-4 text-center">
-                                <button
-                                  onClick={() => setExpandedCandidate(isExpanded ? null : res.candidate.id)}
-                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-yale-700 hover:bg-yale-50 px-2.5 py-1 rounded-md transition-colors"
-                                >
-                                  <span>{isExpanded ? 'Hide' : 'View'}</span>
-                                  {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                                </button>
-                              </td>
-                            </tr>
+                                {/* Name & Year */}
+                                <td className="py-3 px-4 font-bold text-slate-900">
+                                  {res.candidate.name}
+                                  <span className="block text-[11px] font-normal text-slate-400">
+                                    {res.candidate.department || res.candidate.course_name || res.candidate.year_level || 'Contender'}
+                                  </span>
+                                </td>
 
-                            {/* EXPANDED CRITERIA BREAKDOWN */}
-                            {isExpanded && (
-                              <tr className="bg-slate-50/80">
-                                <td colSpan={5 + tabData.portions.length} className="p-4">
-                                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
-                                    <div className="flex items-center justify-between border-b pb-2">
-                                      <span className="text-xs font-bold text-slate-800">
-                                        Detailed Criteria Breakdown for #{res.candidate.order_number} {res.candidate.name}
-                                      </span>
-                                      <span className="text-xs text-slate-500 font-mono">
-                                        Judges Submitted: {res.judgeScoresCount} / {res.expectedJudgesCount}
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                      {res.portionBreakdown.map((pb) => (
-                                        <div key={pb.portionId} className="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
-                                          <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-bold text-slate-800">{pb.portionName}</span>
-                                            <span className="text-xs font-mono font-bold text-yale-700">{pb.portionTotal.toFixed(2)}%</span>
-                                          </div>
-                                          <div className="space-y-1.5">
-                                            {pb.criteriaBreakdown.map((cb) => (
-                                              <div key={cb.criteriaId} className="flex justify-between items-center text-[11px] text-slate-600">
-                                                <span className="truncate pr-2">{cb.criteriaName} ({cb.percentage}%)</span>
-                                                <span className="font-mono font-semibold">{cb.weightedScore.toFixed(2)}</span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
+                                {/* Portion scores */}
+                                {(res.portionBreakdown || []).map((pb) => (
+                                  <td key={pb.portionId} className="py-3 px-4 text-center font-semibold text-slate-700 font-mono">
+                                    {pb.portionTotal.toFixed(2)}%
+                                  </td>
+                                ))}
+
+                                {/* Total Score */}
+                                <td className="py-3 px-4 text-right font-black text-yale-700 text-sm font-mono">
+                                  {res.totalScore.toFixed(2)}%
+                                </td>
+
+                                {/* Expand Details */}
+                                <td className="py-3 px-4 text-center">
+                                  <button
+                                    onClick={() => setExpandedCandidate(isExpanded ? null : res.candidate.id)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-yale-700 hover:bg-yale-50 px-2.5 py-1 rounded-md transition-colors"
+                                  >
+                                    <span>{isExpanded ? 'Hide' : 'View'}</span>
+                                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                  </button>
                                 </td>
                               </tr>
-                            )}
-                          </Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
 
-            {/* TAB 2: LIVE CRITERIA & SCORES MATRIX PANE */}
+                              {/* EXPANDED CRITERIA BREAKDOWN */}
+                              {isExpanded && (
+                                <tr className="bg-slate-50/80">
+                                  <td colSpan={5 + displayPortions.length} className="p-4">
+                                    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+                                      <div className="flex items-center justify-between border-b pb-2">
+                                        <span className="text-xs font-bold text-slate-800">
+                                          Detailed Criteria Breakdown for #{res.candidate.order_number} {res.candidate.name}
+                                        </span>
+                                        <span className="text-xs text-slate-500 font-mono">
+                                          Judges Submitted: {res.judgeScoresCount} / {res.expectedJudgesCount}
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {res.portionBreakdown.map((pb) => (
+                                          <div key={pb.portionId} className="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+                                            <div className="flex justify-between items-center mb-2">
+                                              <span className="text-xs font-bold text-slate-800">{pb.portionName}</span>
+                                              <span className="text-xs font-mono font-bold text-yale-700">{pb.portionTotal.toFixed(2)}%</span>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                              {pb.criteriaBreakdown.map((cb) => (
+                                                <div key={cb.criteriaId} className="flex justify-between items-center text-[11px] text-slate-600">
+                                                  <span className="truncate pr-2">{cb.criteriaName} ({cb.percentage}%)</span>
+                                                  <span className="font-mono font-semibold">{cb.weightedScore.toFixed(2)}</span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* TAB 2: LIVE CRITERIA & SCORES MATRIX PANE WITH DEDICATED JUDGE COLUMNS */}
             {activeTab === 'scores' && (
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-card">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="w-4 h-4 text-yale-700" />
                     <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Live Score Evaluation Grid ({tabData.tabulations.length} Contenders • {tabData.judges.length} Judges)
+                      Live Judge Scorecard Evaluation Matrix ({tabData.tabulations.length} Contenders • {tabData.judges.length} Assigned Judges)
                     </h2>
                   </div>
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
                     Category: {tabData.event.type}
                   </span>
                 </div>
@@ -354,42 +373,62 @@ function TabulationContent() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                        <th className="py-3 px-4 w-16 text-center">No.</th>
-                        <th className="py-3 px-4">Contestant</th>
-                        <th className="py-3 px-4">Course Program</th>
-                        {tabData.portions.map((p) => (
-                          <th key={p.id} className="py-3 px-4 text-right">
-                            {p.portion_name} ({p.percentage}%)
+                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-3 w-14 text-center">No.</th>
+                        <th className="py-3 px-4 min-w-[160px]">Contestant Name</th>
+                        <th className="py-3 px-4 min-w-[140px]">Department / Program</th>
+                        {tabData.judges.map((judge) => (
+                          <th key={judge.id} className="py-3 px-3 text-center min-w-[130px]">
+                            <div className="font-extrabold text-slate-800 truncate">{judge.full_name || judge.username}</div>
+                            <div className="text-[10px] text-slate-400 font-medium lowercase font-mono">@{judge.username}</div>
                           </th>
                         ))}
-                        <th className="py-3 px-4 text-right font-black">Composite Average</th>
+                        <th className="py-3 px-4 text-center min-w-[110px]">Judges Sync</th>
+                        <th className="py-3 px-4 text-right font-black text-yale-900 min-w-[120px]">Final Average</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {tabData.tabulations.map((res) => (
-                        <tr key={res.candidate.id} className="hover:bg-slate-50/60 transition-colors">
-                          <td className="py-3 px-4 text-center font-bold text-slate-500">
+                        <tr key={res.candidate.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3 px-3 text-center font-bold text-slate-500">
                             #{res.candidate.order_number}
                           </td>
                           <td className="py-3 px-4 font-bold text-slate-900">
                             {res.candidate.name}
                           </td>
-                          <td className="py-3 px-4 text-slate-600">
-                            {res.candidate.course_name || 'General Program'}
+                          <td className="py-3 px-4 text-slate-600 text-xs truncate max-w-[180px]">
+                            {res.candidate.department || res.candidate.course_name || 'General Program'}
                           </td>
-                          {tabData.portions.map((p) => {
-                            const pScore = (res.portionScores || res.portionBreakdown || []).find(
-                              (ps: any) => Number(ps.portionId) === Number(p.id)
-                            );
+                          {tabData.judges.map((judge) => {
+                            const jb = (res.judgeBreakdown || []).find((j) => Number(j.judgeId) === Number(judge.id));
                             return (
-                              <td key={p.id} className="py-3 px-4 text-right font-mono font-semibold text-slate-700">
-                                {pScore ? Number(pScore.weightedScore ?? pScore.portionTotal ?? 0).toFixed(2) : '0.00'}
+                              <td key={judge.id} className="py-3 px-3 text-center">
+                                {jb && jb.hasSubmitted && jb.totalScore !== null ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#0F4C81]/10 text-[#0F4C81] border border-[#0F4C81]/20 font-mono font-bold text-xs">
+                                    <CheckCircle2 className="w-3 h-3 text-[#0F4C81]" />
+                                    <span>{jb.totalScore.toFixed(2)}%</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-50 border border-slate-200">
+                                    Pending
+                                  </span>
+                                )}
                               </td>
                             );
                           })}
-                          <td className="py-3 px-4 text-right font-black font-mono text-sm text-yale-800 bg-yale-50/40">
-                            {res.totalScore.toFixed(2)}
+                          <td className="py-3 px-4 text-center">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                                res.judgeScoresCount >= tabData.judges.length && tabData.judges.length > 0
+                                  ? 'bg-slate-100 text-[#0F4C81] border border-slate-200'
+                                  : 'bg-amber-50 text-amber-800 border border-amber-200'
+                              }`}
+                            >
+                              {res.judgeScoresCount} / {tabData.judges.length} Submitted
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right font-black font-mono text-sm text-[#0F4C81] bg-slate-50/60">
+                            {res.totalScore.toFixed(2)}%
                           </td>
                         </tr>
                       ))}

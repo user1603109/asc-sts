@@ -83,15 +83,16 @@ export default function JudgeScoringSheetPage() {
     if (!eventId) return;
     try {
       if (!silent) setIsSyncing(true);
+      const t = Date.now();
       const [evtData, candData, critData, scoresData] = await Promise.all([
-        safeFetchJson<any>(`/api/events/${eventId}`, undefined, null),
-        safeFetchJson<Candidate[]>(`/api/candidates?eventId=${eventId}`, undefined, []),
+        safeFetchJson<any>(`/api/events/${eventId}?_t=${t}`, { cache: 'no-store' }, null),
+        safeFetchJson<Candidate[]>(`/api/candidates?eventId=${eventId}&_t=${t}`, { cache: 'no-store' }, []),
         safeFetchJson<{ portions: EventPortion[]; criteria: Criteria[] }>(
-          `/api/criteria?eventId=${eventId}`,
-          undefined,
+          `/api/criteria?eventId=${eventId}&_t=${t}`,
+          { cache: 'no-store' },
           { portions: [], criteria: [] }
         ),
-        safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}`, undefined, []),
+        safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}&_t=${t}`, { cache: 'no-store' }, []),
       ]);
 
       if (evtData) setEvent(evtData);
@@ -133,15 +134,16 @@ export default function JudgeScoringSheetPage() {
           setUser(meData.user);
         }
 
+        const t = Date.now();
         const [evtData, candData, critData, scoresData] = await Promise.all([
-          safeFetchJson<any>(`/api/events/${eventId}`, undefined, null),
-          safeFetchJson<Candidate[]>(`/api/candidates?eventId=${eventId}`, undefined, []),
+          safeFetchJson<any>(`/api/events/${eventId}?_t=${t}`, { cache: 'no-store' }, null),
+          safeFetchJson<Candidate[]>(`/api/candidates?eventId=${eventId}&_t=${t}`, { cache: 'no-store' }, []),
           safeFetchJson<{ portions: EventPortion[]; criteria: Criteria[] }>(
-            `/api/criteria?eventId=${eventId}`,
-            undefined,
+            `/api/criteria?eventId=${eventId}&_t=${t}`,
+            { cache: 'no-store' },
             { portions: [], criteria: [] }
           ),
-          safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}`, undefined, []),
+          safeFetchJson<Score[]>(`/api/scores?eventId=${eventId}&_t=${t}`, { cache: 'no-store' }, []),
         ]);
 
         if (evtData) setEvent(evtData);
