@@ -174,29 +174,30 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 8 MINIMAL, SOFT INSTITUTIONAL STATISTIC CARDS */}
+        {/* 8 COLORFUL, VIBRANT & SLEEK INSTITUTIONAL STATISTIC CARDS */}
         {/* ========================================================================= */}
         {showStatsCards && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 animate-in fade-in duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in duration-200">
             {/* Card 1: Total Competitions */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30 border border-blue-200/90 hover:border-blue-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Competitions</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalEvents}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">Total Competitions</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.totalEvents}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-600">
-                  <Calendar className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Calendar className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-blue-100/70">
+                <span className="text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full text-[11px] font-bold border border-blue-200/70 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                   All Categories
                 </span>
                 <Link
                   href="/admin/enlistment?tab=events"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-yale-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-blue-700 hover:text-blue-900 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>View</span>
                   <span>&rarr;</span>
@@ -205,27 +206,28 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 2: Live & Tabulating */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 border border-emerald-200/90 hover:border-emerald-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Live &amp; Tabulating</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.activeEvents}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Live &amp; Tabulating</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.activeEvents}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
-                  <Activity className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Activity className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-emerald-700 text-[11px] font-medium flex items-center gap-1.5">
-                  <span className="relative flex h-1.5 w-1.5">
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-emerald-100/70">
+                <span className="text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-emerald-300/80 flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
                   </span>
                   Active Now
                 </span>
                 <Link
                   href="/admin/tabulation"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-emerald-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>Monitor</span>
                   <span>&rarr;</span>
@@ -234,24 +236,25 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 3: Enlisted Contenders */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/30 border border-indigo-200/90 hover:border-indigo-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Enlisted Contenders</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalCandidates}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800">Enlisted Contenders</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.totalCandidates}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
-                  <Users className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Users className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-indigo-100/70">
+                <span className="text-indigo-800 bg-indigo-100/80 px-2 py-0.5 rounded-full text-[11px] font-bold border border-indigo-200/70 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
                   Candidate Roster
                 </span>
                 <Link
                   href="/admin/enlistment?tab=participants"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-indigo-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>Roster</span>
                   <span>&rarr;</span>
@@ -260,24 +263,25 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 4: Tabulated Scores */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-sky-50/80 via-white to-sky-50/30 border border-sky-200/90 hover:border-sky-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tabulated Scores</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalScores}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-800">Tabulated Scores</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.totalScores}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700">
-                  <Sliders className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-sky-600 text-white shadow-md shadow-sky-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Sliders className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-sky-100/70">
+                <span className="text-sky-800 bg-sky-100/80 px-2 py-0.5 rounded-full text-[11px] font-bold border border-sky-200/70 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />
                   Logged Ballots
                 </span>
                 <Link
                   href="/admin/scores"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-blue-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-sky-700 hover:text-sky-900 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>Audit</span>
                   <span>&rarr;</span>
@@ -286,24 +290,25 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 5: Approved Evaluators */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-amber-50/80 via-white to-amber-50/30 border border-amber-200/90 hover:border-amber-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approved Evaluators</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalJudges}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900">Approved Evaluators</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.totalJudges}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-                  <UserCheck className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-amber-600 text-white shadow-md shadow-amber-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <UserCheck className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-amber-100/70">
+                <span className="text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full text-[11px] font-bold border border-amber-200/70 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
                   Accredited
                 </span>
                 <Link
                   href="/admin/judges"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-amber-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-amber-800 hover:text-amber-950 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>Manage</span>
                   <span>&rarr;</span>
@@ -312,32 +317,47 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 6: Pending Approvals */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className={`bg-gradient-to-br ${
+              stats.pendingJudges > 0
+                ? 'from-rose-50/80 via-white to-rose-50/30 border-rose-200/90 hover:border-rose-300'
+                : 'from-slate-50/80 via-white to-slate-50/30 border-slate-200/90 hover:border-slate-300'
+            } border rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group`}>
+              <div className={`absolute top-0 left-0 right-0 h-1 ${
+                stats.pendingJudges > 0 ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-400' : 'bg-slate-300'
+              }`} />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pending Approvals</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                    stats.pendingJudges > 0 ? 'text-rose-800' : 'text-slate-600'
+                  }`}>Pending Approvals</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">
                     {stats.pendingJudges}
                   </h2>
                 </div>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
+                <div className={`w-10 h-10 rounded-xl ${
                   stats.pendingJudges > 0
-                    ? 'bg-amber-50 border-amber-200 text-amber-700'
-                    : 'bg-slate-50 border-slate-200/60 text-slate-400'
-                }`}>
-                  <AlertCircle className="w-4 h-4" />
+                    ? 'bg-rose-600 text-white shadow-md shadow-rose-500/25'
+                    : 'bg-slate-200 text-slate-600'
+                } flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                  <AlertCircle className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className={`text-[11px] font-medium flex items-center gap-1.5 ${
-                  stats.pendingJudges > 0 ? 'text-amber-700 font-semibold' : 'text-slate-400'
+              <div className={`flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t ${
+                stats.pendingJudges > 0 ? 'border-rose-100/70' : 'border-slate-100'
+              }`}>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${
+                  stats.pendingJudges > 0
+                    ? 'text-rose-800 bg-rose-100/80 border border-rose-200/70'
+                    : 'text-slate-600 bg-slate-100 border border-slate-200'
                 }`}>
                   <Clock className="w-3.5 h-3.5" />
                   {stats.pendingJudges > 0 ? 'Awaiting Review' : 'All Clear'}
                 </span>
                 <Link
                   href="/admin/judges"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-yale-700 transition-colors inline-flex items-center gap-0.5"
+                  className={`text-[11px] font-bold ${
+                    stats.pendingJudges > 0 ? 'text-rose-700 hover:text-rose-900' : 'text-slate-600 hover:text-slate-900'
+                  } transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform`}
                 >
                   <span>Review</span>
                   <span>&rarr;</span>
@@ -346,24 +366,25 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 7: Concluded Events */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-purple-200/90 hover:border-purple-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Concluded Events</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.completedEvents}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-purple-900">Concluded Events</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.completedEvents}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700">
-                  <Trophy className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-purple-600 text-white shadow-md shadow-purple-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Trophy className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-purple-100/70">
+                <span className="text-purple-900 bg-purple-100/80 px-2 py-0.5 rounded-full text-[11px] font-bold border border-purple-200/70 flex items-center gap-1.5">
                   <Trophy className="w-3.5 h-3.5 text-purple-600" />
                   Finalized
                 </span>
                 <Link
                   href="/admin/rankings"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-purple-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-purple-700 hover:text-purple-900 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>Certificates</span>
                   <span>&rarr;</span>
@@ -372,24 +393,25 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Card 8: Collegiate Programs */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+            <div className="bg-gradient-to-br from-teal-50/80 via-white to-teal-50/30 border border-teal-200/90 hover:border-teal-300 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-400" />
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Collegiate Programs</span>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-slate-900 tracking-tight">{stats.totalDepartments}</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-teal-900">Collegiate Programs</span>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1 text-slate-900 tracking-tight">{stats.totalDepartments}</h2>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700">
-                  <Layers className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-teal-600 text-white shadow-md shadow-teal-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Layers className="w-5 h-5" />
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-slate-100">
-                <span className="text-slate-500 text-[11px] font-medium flex items-center gap-1.5">
+              <div className="flex items-center justify-between text-xs mt-3.5 pt-2.5 border-t border-teal-100/70">
+                <span className="text-teal-900 bg-teal-100/80 px-2 py-0.5 rounded-full text-[11px] font-bold border border-teal-200/70 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
                   Departments
                 </span>
                 <Link
                   href="/admin/enlistment"
-                  className="text-[11px] font-semibold text-slate-600 hover:text-teal-700 transition-colors inline-flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-teal-700 hover:text-teal-900 transition-colors inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
                   <span>Colleges</span>
                   <span>&rarr;</span>
@@ -402,13 +424,16 @@ export default function AdminDashboardPage() {
         {/* TOP 3-CARD PORTBOX-STYLE GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* CARD 1: Events Breakdown */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card flex flex-col justify-between space-y-4">
+          <div className="bg-white border border-slate-200/90 hover:border-emerald-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400" />
             <div>
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-yale-600" />
-                  <h3 className="font-bold text-xs text-slate-800">Event services breakdown</h3>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-xs text-slate-800">Event Services Breakdown</h3>
                 </div>
                 <button
                   type="button"
@@ -451,7 +476,7 @@ export default function AdminDashboardPage() {
                               ? 'bg-emerald-500 animate-pulse'
                               : evt.status === 'Completed'
                               ? 'bg-slate-400'
-                              : 'bg-gold-500'
+                              : 'bg-amber-500'
                           }`}
                         />
                         <span className="font-semibold text-slate-700 truncate max-w-[140px]">
@@ -490,13 +515,16 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* CARD 2: Tabulation Resource Telemetry */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card flex flex-col justify-between space-y-4">
+          <div className="bg-white border border-slate-200/90 hover:border-amber-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400" />
             <div>
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-gold-600" />
-                  <h3 className="font-bold text-xs text-slate-800">Scoring & tabulation telemetry</h3>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-xs text-slate-800">Scoring & Tabulation Telemetry</h3>
                 </div>
                 <button
                   type="button"
@@ -517,24 +545,24 @@ export default function AdminDashboardPage() {
                   <span className="text-2xl font-black text-slate-900">{stats.totalCandidates}</span>
                   <span className="text-xs text-slate-400 font-semibold">Contestants</span>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yale-50 text-yale-700 border border-yale-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                   ~100% Real-Time
                 </span>
               </div>
 
               {/* Mock waveform visually like the PortBox telemetry waveform */}
-              <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                <div className="flex justify-between text-[10px] text-slate-400 font-semibold mb-2">
+              <div className="mt-4 p-3 bg-amber-50/40 border border-amber-100 rounded-xl">
+                <div className="flex justify-between text-[10px] text-slate-500 font-semibold mb-2">
                   <span>Real-Time Tabulation Accuracy</span>
-                  <span className="text-yale-600 font-bold">100% Verified</span>
+                  <span className="text-amber-700 font-bold">100% Verified</span>
                 </div>
                 <div className="h-6 w-full flex items-end gap-1">
-                  <div className="h-3 w-full bg-yale-200 rounded-t" />
-                  <div className="h-4 w-full bg-yale-300 rounded-t" />
-                  <div className="h-5 w-full bg-yale-400 rounded-t" />
-                  <div className="h-6 w-full bg-yale-600 rounded-t" />
-                  <div className="h-5 w-full bg-yale-500 rounded-t" />
-                  <div className="h-6 w-full bg-yale-700 rounded-t" />
+                  <div className="h-3 w-full bg-amber-200 rounded-t" />
+                  <div className="h-4 w-full bg-amber-300 rounded-t" />
+                  <div className="h-5 w-full bg-amber-400 rounded-t" />
+                  <div className="h-6 w-full bg-amber-500 rounded-t" />
+                  <div className="h-5 w-full bg-amber-600 rounded-t" />
+                  <div className="h-6 w-full bg-amber-700 rounded-t" />
                 </div>
               </div>
 
@@ -545,7 +573,7 @@ export default function AdminDashboardPage() {
                   <span className="font-bold text-slate-800">{stats.totalJudges} judges</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-1.5">
-                  <div className="bg-yale-600 h-1.5 rounded-full w-full" />
+                  <div className="bg-amber-500 h-1.5 rounded-full w-full" />
                 </div>
               </div>
             </>
@@ -557,7 +585,7 @@ export default function AdminDashboardPage() {
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                 <Link
                   href="/admin/tabulation"
-                  className="inline-flex items-center gap-1.5 text-yale-700 hover:text-yale-800 font-bold"
+                  className="inline-flex items-center gap-1.5 text-amber-700 hover:text-amber-800 font-bold"
                 >
                   <Activity className="w-3.5 h-3.5" />
                   <span>View Tabulation Report</span>
@@ -568,13 +596,16 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* CARD 3: Database Studio Metrics (MySQL Engine) */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card flex flex-col justify-between space-y-4">
+          <div className="bg-white border border-slate-200/90 hover:border-blue-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-400" />
             <div>
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-yale-700" />
-                  <h3 className="font-bold text-xs text-slate-800">Database Studio metrics</h3>
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-xs text-slate-800">Database Studio Metrics</h3>
                 </div>
                 <button
                   type="button"
@@ -591,25 +622,25 @@ export default function AdminDashboardPage() {
 
               {/* 3 mini stat blocks */}
               <div className="grid grid-cols-3 gap-2 mt-3 pt-2 text-center">
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
-                  <p className="text-[10px] uppercase font-bold text-slate-400">DATABASE</p>
-                  <p className="text-lg font-black text-slate-800">MySQL</p>
+                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-2">
+                  <p className="text-[10px] uppercase font-bold text-blue-700">DATABASE</p>
+                  <p className="text-lg font-black text-slate-900">MySQL</p>
                 </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
-                  <p className="text-[10px] uppercase font-bold text-slate-400">TABLES</p>
-                  <p className="text-lg font-black text-slate-800">13</p>
+                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-2">
+                  <p className="text-[10px] uppercase font-bold text-blue-700">TABLES</p>
+                  <p className="text-lg font-black text-slate-900">13</p>
                 </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2">
-                  <p className="text-[10px] uppercase font-bold text-slate-400">STATUS</p>
-                  <p className="text-xs font-black text-emerald-600 mt-1">ONLINE</p>
+                <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-2">
+                  <p className="text-[10px] uppercase font-bold text-emerald-700">STATUS</p>
+                  <p className="text-xs font-black text-emerald-700 mt-1">ONLINE</p>
                 </div>
               </div>
 
               {/* Status Box */}
-              <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 space-y-1">
+              <div className="mt-4 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-600 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Backend Engine:</span>
-                  <span className="font-mono text-[11px] text-yale-700 font-bold">MySQL (InnoDB)</span>
+                  <span className="font-mono text-[11px] text-blue-800 font-bold">MySQL (InnoDB)</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Hosting Target:</span>
@@ -625,7 +656,7 @@ export default function AdminDashboardPage() {
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <Link
                   href="/admin/settings"
-                  className="w-full text-center py-2 px-3 rounded-lg bg-yale-700 hover:bg-yale-800 text-white font-bold text-xs shadow-sm transition-colors"
+                  className="w-full text-center py-2 px-3 rounded-lg bg-[#0F4C81] hover:bg-[#0A3258] text-white font-bold text-xs shadow-sm transition-colors"
                 >
                   Manage Database Studio Pro
                 </Link>
