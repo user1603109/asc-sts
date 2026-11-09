@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     const targetEventId = Number(scoreItems[0].event_id);
 
-    // If caller is a judge, enforce assignment verification
+    // If caller is a judge, enforce assignment verification & locking
     if (user.role !== 'admin') {
       const assignments = await getSheetRows<EventJudge>('event_judges');
       const isAssigned = assignments.some(
@@ -72,6 +72,29 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           { error: 'Forbidden: You are not an assigned evaluator for this competition' },
           { status: 403 }
+        );
+      }
+
+      // Check if scores have already been officially submitted for this contestant
+      const existingScores = await getSheetRows<Score>('scores');
+      const judgeId = Number(user.userId);
+      const isAlreadySubmitted = scoreItems.some((item) =>
+        existingScores.some(
+          (s) =>
+            Number(s.event_id) === Number(item.event_id) &&
+            Number(s.judge_id) === judgeId &&
+            Number(s.candidate_id) === Number(item.candidate_id) &&
+            Number(s.criteria_id) === Number(item.criteria_id)
+        )
+      );
+
+      if (isAlreadySubmitted) {
+        return NextResponse.json(
+          {
+            error: 'Official score is locked. You have already submitted your official evaluation for this contestant. If a revision is authorized, please contact the Tabulation Administrator.',
+            locked: true,
+          },
+          { status: 409 }
         );
       }
     }
