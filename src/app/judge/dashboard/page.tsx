@@ -37,7 +37,7 @@ export default function JudgeDashboardPage() {
       if (!silent) setLoading(true);
       else setIsSyncing(true);
 
-      const meRes = await fetch('/api/auth/me');
+      const meRes = await fetch('/api/auth/me?role=judge');
       if (!meRes.ok) {
         if (!silent) setLoading(false);
         setIsSyncing(false);

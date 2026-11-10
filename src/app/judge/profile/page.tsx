@@ -25,7 +25,7 @@ export default function JudgeProfilePage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch('/api/auth/me?role=judge')
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated && data.user) {

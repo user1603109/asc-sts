@@ -71,7 +71,7 @@ export default function AppLayout({
   // Authenticate administrator session on client mount
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/auth/me')
+    fetch('/api/auth/me?role=admin')
       .then((res) => {
         if (!res.ok) throw new Error('Unauthorized');
         return res.json();

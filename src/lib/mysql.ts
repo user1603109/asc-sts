@@ -634,4 +634,73 @@ export async function initMySQLTables(): Promise<void> {
   }
 }
 
+/**
+ * Track failed login attempts persistently across serverless lambdas
+ */
+export async function getFailedLoginCount(username: string): Promise<number> {
+  const normalized = username.trim().toLowerCase();
+  try {
+    const p = getMySQLPool();
+    const [rows] = await p.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as cnt FROM audit_logs 
+       WHERE action = 'FAILED_LOGIN' AND details = ? AND created_at >= NOW() - INTERVAL 5 MINUTE`,
+      [normalized]
+    );
+    return Number(rows[0]?.cnt || 0);
+  } catch (err: any) {
+    console.warn('getFailedLoginCount fallback:', err.message);
+    const store = getMemoryStore();
+    const logs = store['audit_logs'] || [];
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    return logs.filter(
+      (l: any) =>
+        l.action === 'FAILED_LOGIN' &&
+        l.details === normalized &&
+        new Date(l.created_at || 0).getTime() >= fiveMinutesAgo
+    ).length;
+  }
+}
+
+export async function recordFailedLogin(username: string, ip: string = '127.0.0.1'): Promise<number> {
+  const normalized = username.trim().toLowerCase();
+  try {
+    const p = getMySQLPool();
+    await p.execute(
+      `INSERT INTO audit_logs (action, details, ip_address) VALUES ('FAILED_LOGIN', ?, ?)`,
+      [normalized, ip || '']
+    );
+    return await getFailedLoginCount(normalized);
+  } catch (err: any) {
+    console.warn('recordFailedLogin fallback:', err.message);
+    const store = getMemoryStore();
+    if (!store['audit_logs']) store['audit_logs'] = [];
+    store['audit_logs'].push({
+      action: 'FAILED_LOGIN',
+      details: normalized,
+      ip_address: ip,
+      created_at: new Date().toISOString(),
+    });
+    return await getFailedLoginCount(normalized);
+  }
+}
+
+export async function clearFailedLogins(username: string): Promise<void> {
+  const normalized = username.trim().toLowerCase();
+  try {
+    const p = getMySQLPool();
+    await p.execute(
+      `DELETE FROM audit_logs WHERE action = 'FAILED_LOGIN' AND details = ?`,
+      [normalized]
+    );
+  } catch (err: any) {
+    console.warn('clearFailedLogins fallback:', err.message);
+    const store = getMemoryStore();
+    if (store['audit_logs']) {
+      store['audit_logs'] = store['audit_logs'].filter(
+        (l: any) => !(l.action === 'FAILED_LOGIN' && l.details === normalized)
+      );
+    }
+  }
+}
+
 export default getMySQLPool;

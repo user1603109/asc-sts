@@ -170,22 +170,37 @@ function EnlistmentContent() {
   const handleSaveEvent = async (e: FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...eventForm,
+        participation_mode: eventForm.participation_mode === 'Group / Team' ? 'Team' : eventForm.participation_mode,
+      };
+
       if (editingEvent) {
-        await fetch('/api/events', {
+        const res = await fetch('/api/events', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingEvent.id, ...eventForm }),
+          body: JSON.stringify({ id: editingEvent.id, ...payload }),
         });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || 'Failed to update event');
+          return;
+        }
       } else {
         const res = await fetch('/api/events', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(eventForm),
+          body: JSON.stringify(payload),
         });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || 'Failed to create event');
+          return;
+        }
         const created = await res.json();
 
-        // If pageant preset checked, auto-create the 4 standard portions
-        if (eventForm.setup_pageant_preset && created.event?.id) {
+        // If pageant preset checked, auto-create the 4 standard portions (pageant events only)
+        if (eventForm.setup_pageant_preset && created.event?.id && String(eventForm.type).toLowerCase().includes('pageant')) {
           const presets = [
             { portion_name: 'Personal Interview', percentage: 25, order_number: 1 },
             { portion_name: 'Swimsuit / Fitness Attire', percentage: 25, order_number: 2 },
@@ -202,8 +217,9 @@ function EnlistmentContent() {
       setShowEventModal(false);
       setEditingEvent(null);
       loadAllData();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert(e.message || 'Error saving event');
     }
   };
 
@@ -1137,7 +1153,7 @@ function EnlistmentContent() {
                       className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-yale-600 focus:bg-white"
                     >
                       <option value="Individual">Individual</option>
-                      <option value="Group / Team">Group / Team</option>
+                      <option value="Team">Group / Team</option>
                     </select>
                   </div>
                 </div>

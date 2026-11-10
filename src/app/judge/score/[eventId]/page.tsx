@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import JudgeLayout from '@/components/JudgeLayout';
 import {
@@ -104,10 +104,10 @@ export default function JudgeScoringSheetPage() {
       const prts = Array.isArray(critData?.portions) ? critData.portions : [];
       const crts = Array.isArray(critData?.criteria) ? critData.criteria : [];
       if (prts.length > 0) {
-        setPortions(prts);
+        setPortions((prev) => (JSON.stringify(prev) !== JSON.stringify(prts) ? prts : prev));
       }
       if (crts.length > 0) {
-        setCriteriaList(crts);
+        setCriteriaList((prev) => (JSON.stringify(prev) !== JSON.stringify(crts) ? crts : prev));
       }
 
       if (Array.isArray(scoresData)) {
@@ -129,7 +129,7 @@ export default function JudgeScoringSheetPage() {
         setLoading(true);
         setErrorMessage('');
 
-        const meData = await safeFetchJson<any>('/api/auth/me', undefined, { authenticated: false });
+        const meData = await safeFetchJson<any>('/api/auth/me?role=judge', undefined, { authenticated: false });
         if (meData.authenticated && meData.user) {
           setUser(meData.user);
         }
@@ -201,10 +201,64 @@ export default function JudgeScoringSheetPage() {
     return criteriaList;
   }, [criteriaList, portions, activePortionId]);
 
+  // Check if current candidate has been scored by this judge
+  const isCurrentCandidateScored = useMemo(() => {
+    if (!currentCandidate || !user || activeCriteria.length === 0) return false;
+    return activeCriteria.every((crit) =>
+      existingScores.some(
+        (s) =>
+          Number(s.candidate_id) === Number(currentCandidate.id) &&
+          Number(s.criteria_id) === Number(crit.id) &&
+          Number(s.judge_id) === Number(user.userId)
+      )
+    );
+  }, [currentCandidate, user, activeCriteria, existingScores]);
+
+  // Count of candidates fully scored by this judge
+  const scoredCount = useMemo(() => {
+    if (!user || candidates.length === 0 || activeCriteria.length === 0) return 0;
+    return candidates.filter((cand) =>
+      activeCriteria.every((crit) =>
+        existingScores.some(
+          (s) =>
+            Number(s.candidate_id) === Number(cand.id) &&
+            Number(s.criteria_id) === Number(crit.id) &&
+            Number(s.judge_id) === Number(user.userId)
+        )
+      )
+    ).length;
+  }, [candidates, activeCriteria, existingScores, user]);
+
+  // Track candidate-portion key so we only initialize when switching to a different contestant or portion
+  const activeCandidatePortionKey = `${currentCandidate?.id || 0}_${activePortionId}_${user?.userId || 0}`;
+  const lastInitializedKeyRef = useRef<string>('');
+
   // When candidate or portion changes, initialize scores from existing records or defaults
   useEffect(() => {
     if (!currentCandidate || !user) return;
 
+    // If still on the same candidate and portion, NEVER wipe out scores the judge is entering!
+    if (lastInitializedKeyRef.current === activeCandidatePortionKey) {
+      if (isCurrentCandidateScored && !isDirty) {
+        const synced: Record<number, number> = {};
+        activeCriteria.forEach((crit) => {
+          const match = existingScores.find(
+            (s) =>
+              Number(s.candidate_id) === Number(currentCandidate.id) &&
+              Number(s.criteria_id) === Number(crit.id) &&
+              Number(s.judge_id) === Number(user.userId)
+          );
+          if (match) synced[crit.id] = Number(match.score);
+        });
+        if (Object.keys(synced).length > 0) {
+          setCurrentScores((prev) => ({ ...prev, ...synced }));
+        }
+      }
+      return;
+    }
+
+    // New candidate or portion selected: initialize scores
+    lastInitializedKeyRef.current = activeCandidatePortionKey;
     const initial: Record<number, number> = {};
     activeCriteria.forEach((crit) => {
       const match = existingScores.find(
@@ -213,7 +267,7 @@ export default function JudgeScoringSheetPage() {
           Number(s.criteria_id) === Number(crit.id) &&
           Number(s.judge_id) === Number(user.userId)
       );
-      // Default to 80% if not previously scored
+      // Default to 85% if not previously scored
       const defaultScore = Math.round(Number(crit.max_score) * 0.85 * 10) / 10;
       initial[crit.id] = match ? Number(match.score) : defaultScore;
     });
@@ -222,7 +276,7 @@ export default function JudgeScoringSheetPage() {
     setIsDirty(false);
     setSubmitSuccess(false);
     setErrorMessage('');
-  }, [selectedCandidateIndex, activePortionId, user, activeCriteria]);
+  }, [activeCandidatePortionKey, isCurrentCandidateScored, isDirty, activeCriteria, existingScores]);
 
   const handleScoreChange = (criteriaId: number, val: number, maxScore: number) => {
     if (isCurrentCandidateScored) return;
@@ -309,34 +363,6 @@ export default function JudgeScoringSheetPage() {
       return acc + (max > 0 ? (raw / max) * pct : 0);
     }, 0);
   }, [activeCriteria, currentScores]);
-
-  // Check if current candidate has been scored by this judge
-  const isCurrentCandidateScored = useMemo(() => {
-    if (!currentCandidate || !user || activeCriteria.length === 0) return false;
-    return activeCriteria.every((crit) =>
-      existingScores.some(
-        (s) =>
-          Number(s.candidate_id) === Number(currentCandidate.id) &&
-          Number(s.criteria_id) === Number(crit.id) &&
-          Number(s.judge_id) === Number(user.userId)
-      )
-    );
-  }, [currentCandidate, user, activeCriteria, existingScores]);
-
-  // Count of candidates fully scored by this judge
-  const scoredCount = useMemo(() => {
-    if (!user || candidates.length === 0 || activeCriteria.length === 0) return 0;
-    return candidates.filter((cand) =>
-      activeCriteria.every((crit) =>
-        existingScores.some(
-          (s) =>
-            Number(s.candidate_id) === Number(cand.id) &&
-            Number(s.criteria_id) === Number(crit.id) &&
-            Number(s.judge_id) === Number(user.userId)
-        )
-      )
-    ).length;
-  }, [candidates, activeCriteria, existingScores, user]);
 
   return (
     <JudgeLayout

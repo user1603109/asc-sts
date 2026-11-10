@@ -30,7 +30,7 @@ export default function JudgeHistoryPage() {
       if (!silent) setLoading(true);
       else setIsSyncing(true);
 
-      const meRes = await fetch('/api/auth/me');
+      const meRes = await fetch('/api/auth/me?role=judge');
       if (!meRes.ok) return;
       const meData = await meRes.json();
       if (meData.authenticated && meData.user) {

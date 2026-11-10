@@ -22,48 +22,55 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = req.cookies.get('asc_session_token')?.value;
-
   // 2. Protect ALL /admin/* routes (e.g. /admin/settings, /admin/dashboard, etc.)
   if (pathname.startsWith('/admin')) {
-    if (!token) {
+    // Check role-specific admin token first, fallback to general session token
+    const adminToken = req.cookies.get('asc_admin_token')?.value || req.cookies.get('asc_session_token')?.value;
+
+    if (!adminToken) {
       const loginUrl = new URL('/admin/login', req.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     try {
-      const { payload } = await jwtVerify(token, encodedKey, {
+      const { payload } = await jwtVerify(adminToken, encodedKey, {
         algorithms: ['HS256'],
       });
 
       // Role authorization: only admin accounts can access /admin routes
       if (payload.role !== 'admin') {
-        const redirectUrl = new URL('/judge/dashboard', req.url);
-        return NextResponse.redirect(redirectUrl);
+        const loginUrl = new URL('/admin/login', req.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
       }
 
       return NextResponse.next();
     } catch (err) {
-      // Invalid, expired, or tampered token: clear cookie and redirect
       const loginUrl = new URL('/admin/login', req.url);
       loginUrl.searchParams.set('redirect', pathname);
       const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete('asc_session_token');
+      response.cookies.delete('asc_admin_token');
       return response;
     }
   }
 
   // 3. Protect ALL /judge/* routes (e.g. /judge/score, /judge/dashboard, etc.)
   if (pathname.startsWith('/judge')) {
-    if (!token) {
+    // Check role-specific judge token first, fallback to session token, then admin preview token
+    const judgeToken =
+      req.cookies.get('asc_judge_token')?.value ||
+      req.cookies.get('asc_session_token')?.value ||
+      req.cookies.get('asc_admin_token')?.value;
+
+    if (!judgeToken) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     try {
-      const { payload } = await jwtVerify(token, encodedKey, {
+      const { payload } = await jwtVerify(judgeToken, encodedKey, {
         algorithms: ['HS256'],
       });
 
@@ -78,7 +85,7 @@ export async function middleware(req: NextRequest) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('redirect', pathname);
       const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete('asc_session_token');
+      response.cookies.delete('asc_judge_token');
       return response;
     }
   }

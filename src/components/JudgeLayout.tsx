@@ -54,7 +54,7 @@ export default function JudgeLayout({
   // Authenticate judge session on client mount
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/auth/me')
+    fetch('/api/auth/me?role=judge')
       .then((res) => {
         if (!res.ok) throw new Error('Unauthorized');
         return res.json();

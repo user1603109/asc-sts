@@ -17,7 +17,7 @@ export default function JudgeScoreIndexPage() {
     async function loadData(silent: boolean = false) {
       try {
         if (!silent) setLoading(true);
-        const meRes = await fetch('/api/auth/me');
+        const meRes = await fetch('/api/auth/me?role=judge');
         if (!meRes.ok) return;
         const me = await meRes.json();
         if (me.authenticated) {

@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { User, UserRole } from './types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'asc-asts-super-secret-key-2026-secure';
@@ -55,9 +55,64 @@ export async function verifySessionToken(token: string): Promise<TokenPayload | 
   }
 }
 
-export async function getCurrentUser(): Promise<TokenPayload | null> {
+export async function getCurrentUser(rolePreference?: 'admin' | 'judge'): Promise<TokenPayload | null> {
   const cookieStore = cookies();
-  const token = cookieStore.get('asc_session_token')?.value;
-  if (!token) return null;
-  return verifySessionToken(token);
+
+  // If no role preference is explicitly passed, deduce from referer header
+  if (!rolePreference) {
+    try {
+      const referer = headers().get('referer') || '';
+      if (referer.includes('/admin')) rolePreference = 'admin';
+      else if (referer.includes('/judge')) rolePreference = 'judge';
+    } catch {
+      // In isolated test/build environments headers() may not be available
+    }
+  }
+
+  // 1. Direct role-preference lookup
+  if (rolePreference === 'admin') {
+    const adminToken = cookieStore.get('asc_admin_token')?.value;
+    if (adminToken) {
+      const payload = await verifySessionToken(adminToken);
+      if (payload && payload.role === 'admin') return payload;
+    }
+  }
+
+  if (rolePreference === 'judge') {
+    const judgeToken = cookieStore.get('asc_judge_token')?.value;
+    if (judgeToken) {
+      const payload = await verifySessionToken(judgeToken);
+      if (payload && payload.role === 'judge') return payload;
+    }
+  }
+
+  // 2. Fallback cascade based on role preference
+  const tokenNames = rolePreference === 'admin'
+    ? ['asc_admin_token', 'asc_session_token', 'asc_judge_token']
+    : rolePreference === 'judge'
+    ? ['asc_judge_token', 'asc_session_token', 'asc_admin_token']
+    : ['asc_admin_token', 'asc_judge_token', 'asc_session_token'];
+
+  for (const name of tokenNames) {
+    const token = cookieStore.get(name)?.value;
+    if (token) {
+      const payload = await verifySessionToken(token);
+      if (payload) {
+        if (!rolePreference || payload.role === rolePreference) {
+          return payload;
+        }
+      }
+    }
+  }
+
+  // 3. Ultimate fallback: any valid verified session
+  for (const name of ['asc_session_token', 'asc_admin_token', 'asc_judge_token']) {
+    const token = cookieStore.get(name)?.value;
+    if (token) {
+      const payload = await verifySessionToken(token);
+      if (payload) return payload;
+    }
+  }
+
+  return null;
 }
