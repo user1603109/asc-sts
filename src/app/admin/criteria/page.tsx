@@ -869,7 +869,7 @@ function CriteriaContent() {
           : `${selectedEvent?.type || 'Standard'} competition direct scoring rubrics, point limits, and percentage weightings`
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-6 criteria-screen-content">
         {/* Notification Toast */}
         {actionMessage && (
           <div
@@ -1897,149 +1897,256 @@ function CriteriaContent() {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* MODAL 4: PRINTABLE OFFICIAL CRITERIA RUBRICS SHEET */}
-        {/* ========================================================================= */}
-        {showPrintModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-            <div className="bg-white rounded-3xl w-full max-w-3xl p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto">
-              <button
-                onClick={() => setShowPrintModal(false)}
-                className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1"
-              >
-                <X className="w-5 h-5" />
-              </button>
+      </div>
 
-              {/* Printable Header */}
-              <div className="text-center pb-4 border-b border-slate-200 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Apayao State College • Tabulation &amp; Scoring System
-                </span>
-                <h1 className="text-lg font-black text-slate-900 uppercase tracking-tight">
-                  Official Criteria &amp; Scoring Rubrics Sheet
-                </h1>
-                <p className="text-xs font-bold text-yale-700">
-                  {selectedEvent?.name} [{selectedEvent?.type || 'Competition'}] • AY {selectedEvent?.academic_year || '2025-2026'}
-                </p>
-              </div>
+      {/* ========================================================================= */}
+      {/* MODAL 4: PRINTABLE OFFICIAL CRITERIA RUBRICS SHEET */}
+      {/* ========================================================================= */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 print-modal-overlay">
+          <div className="bg-white rounded-3xl w-full max-w-3xl p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto print-modal-sheet" id="official-rubrics-sheet">
+            <button
+              onClick={() => setShowPrintModal(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 no-print"
+              title="Close Preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-              {/* Printable Body */}
-              <div className="py-5 space-y-5">
-                {isMultiSegment ? (
-                  portions.map((portion) => {
-                    const portionCriteria = criteriaList.filter(
-                      (c) => Number(c.portion_id) === Number(portion.id)
-                    );
-                    return (
-                      <div key={portion.id} className="border border-slate-200 rounded-xl p-4 space-y-2.5">
-                        <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg">
-                          <div>
-                            <span className="text-xs font-black text-slate-900">
-                              Segment #{portion.order_number}: {portion.portion_name}
-                            </span>
-                            {portion.description && (
-                              <p className="text-[11px] text-slate-500">{portion.description}</p>
-                            )}
-                          </div>
-                          <span className="text-xs font-black text-yale-800 bg-yale-50 px-2.5 py-1 rounded-md border border-yale-200">
-                            Weight: {portion.percentage}% of Grand Total
-                          </span>
-                        </div>
-
-                        <table className="w-full text-xs text-left">
-                          <thead>
-                            <tr className="border-b border-slate-200 text-slate-400 text-[10px] uppercase font-bold">
-                              <th className="py-1.5">Rubric Title &amp; Guidelines</th>
-                              <th className="py-1.5 text-center">Max Score</th>
-                              <th className="py-1.5 text-right">Internal Weight</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {portionCriteria.map((c) => (
-                              <tr key={c.id}>
-                                <td className="py-2 pr-3">
-                                  <strong className="text-slate-900">{c.name}</strong>
-                                  {c.description && (
-                                    <p className="text-[11px] text-slate-500 mt-0.5">{c.description}</p>
-                                  )}
-                                </td>
-                                <td className="py-2 text-center font-mono font-bold text-slate-700">{c.max_score} pts</td>
-                                <td className="py-2 text-right font-mono font-bold text-yale-700">{c.percentage}%</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <table className="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] uppercase font-bold">
-                      <tr>
-                        <th className="p-3">Rubric Title &amp; Guidelines</th>
-                        <th className="p-3 text-center">Max Points</th>
-                        <th className="p-3 text-right">Percentage Weight</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {criteriaList.map((c) => (
-                        <tr key={c.id}>
-                          <td className="p-3">
-                            <strong className="text-slate-900">{c.name}</strong>
-                            {c.description && <p className="text-[11px] text-slate-500 mt-0.5">{c.description}</p>}
-                          </td>
-                          <td className="p-3 text-center font-mono font-bold text-slate-700">{c.max_score} pts</td>
-                          <td className="p-3 text-right font-mono font-bold text-yale-700">{c.percentage}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-
-                {/* Signatory Footers */}
-                <div className="grid grid-cols-3 gap-6 pt-8 mt-6 border-t border-slate-200 text-center text-xs">
-                  <div>
-                    <div className="border-b border-slate-400 pb-8 mb-1"></div>
-                    <span className="font-bold text-slate-800 block">Event Organizer</span>
-                    <span className="text-[10px] text-slate-500">Prepared by</span>
-                  </div>
-                  <div>
-                    <div className="border-b border-slate-400 pb-8 mb-1"></div>
-                    <span className="font-bold text-slate-800 block">Board of Tabulators</span>
-                    <span className="text-[10px] text-slate-500">Audited &amp; Verified</span>
-                  </div>
-                  <div>
-                    <div className="border-b border-slate-400 pb-8 mb-1"></div>
-                    <span className="font-bold text-slate-800 block">Chief Judge / Chairman</span>
-                    <span className="text-[10px] text-slate-500">Official Approval</span>
-                  </div>
+            {/* Official Printable Institutional Header with Dual Logos */}
+            <div className="pb-4 mb-4 border-b-2 border-slate-900 text-center">
+              <div className="flex items-center justify-between w-full max-w-2xl mx-auto px-2 pb-2">
+                <div className="w-16 h-16 flex items-center justify-center shrink-0">
+                  <img
+                    src="/api/logo?name=astslogo&v=2"
+                    alt="ASTS Logo"
+                    className="w-14 h-14 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/img/astslogo.png';
+                    }}
+                  />
+                </div>
+                <div className="text-center px-4 flex-1">
+                  <p className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                    Republic of the Philippines
+                  </p>
+                  <h1 className="text-base sm:text-xl font-black text-slate-900 uppercase tracking-tight leading-tight">
+                    Apayao State College
+                  </h1>
+                  <p className="text-[10px] text-slate-600 font-medium">
+                    Conner &amp; Luna Campuses • Cordillera Administrative Region
+                  </p>
+                  <p className="text-[9px] font-bold text-yale-700 uppercase tracking-widest mt-0.5">
+                    Automated Scoring &amp; Tabulation System (ASC-ASTS)
+                  </p>
+                </div>
+                <div className="w-16 h-16 flex items-center justify-center shrink-0">
+                  <img
+                    src="/api/logo?name=asclogo&v=2"
+                    alt="ASC Logo"
+                    className="w-14 h-14 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/img/asclogo.png';
+                    }}
+                  />
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowPrintModal(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-xl shadow-xs"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Document</span>
-                </button>
+              <div className="mt-2 pt-2 border-t border-slate-200">
+                <h2 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-tight">
+                  Official Criteria &amp; Scoring Rubrics Sheet
+                </h2>
+                <p className="text-xs font-bold text-yale-800 mt-0.5">
+                  {selectedEvent?.name} [{selectedEvent?.type || 'Competition'}] • AY {selectedEvent?.academic_year || '2025-2026'}
+                </p>
               </div>
             </div>
-          </div>
-        )}
 
-        <MessageBox isOpen={!!msgBox} options={msgBox} onClose={() => setMsgBox(null)} />
-      </div>
+            {/* Printable Body */}
+            <div className="py-2 space-y-4">
+              {isMultiSegment ? (
+                portions.map((portion) => {
+                  const portionCriteria = criteriaList.filter(
+                    (c) => Number(c.portion_id) === Number(portion.id)
+                  );
+                  return (
+                    <div key={portion.id} className="border border-slate-300 rounded-xl p-3.5 space-y-2">
+                      <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200">
+                        <div>
+                          <span className="text-xs font-black text-slate-900">
+                            Segment #{portion.order_number}: {portion.portion_name}
+                          </span>
+                          {portion.description && (
+                            <p className="text-[11px] text-slate-500">{portion.description}</p>
+                          )}
+                        </div>
+                        <span className="text-xs font-black text-yale-800 bg-yale-50 px-2.5 py-0.5 rounded border border-yale-200 font-mono">
+                          Weight: {portion.percentage}%
+                        </span>
+                      </div>
+
+                      <table className="w-full text-xs text-left">
+                        <thead>
+                          <tr className="border-b border-slate-300 text-slate-600 text-[10px] uppercase font-bold bg-slate-100/60">
+                            <th className="py-1.5 px-2">Rubric Title &amp; Guidelines</th>
+                            <th className="py-1.5 px-2 text-center">Max Score</th>
+                            <th className="py-1.5 px-2 text-right">Internal Weight</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {portionCriteria.map((c) => (
+                            <tr key={c.id}>
+                              <td className="py-2 px-2 pr-3">
+                                <strong className="text-slate-900">{c.name}</strong>
+                                {c.description && (
+                                  <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">{c.description}</p>
+                                )}
+                              </td>
+                              <td className="py-2 px-2 text-center font-mono font-bold text-slate-800">{c.max_score} pts</td>
+                              <td className="py-2 px-2 text-right font-mono font-bold text-yale-800">{c.percentage}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })
+              ) : (
+                <table className="w-full text-xs text-left border border-slate-300 rounded-xl overflow-hidden">
+                  <thead className="bg-slate-100 border-b border-slate-300 text-slate-700 text-[10px] uppercase font-bold">
+                    <tr>
+                      <th className="p-2.5">Rubric Title &amp; Guidelines</th>
+                      <th className="p-2.5 text-center">Max Points</th>
+                      <th className="p-2.5 text-right">Percentage Weight</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {criteriaList.map((c) => (
+                      <tr key={c.id}>
+                        <td className="p-2.5">
+                          <strong className="text-slate-900">{c.name}</strong>
+                          {c.description && <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">{c.description}</p>}
+                        </td>
+                        <td className="p-2.5 text-center font-mono font-bold text-slate-800">{c.max_score} pts</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-yale-800">{c.percentage}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {/* Official Signatory Footers */}
+              <div className="grid grid-cols-3 gap-6 pt-6 mt-6 border-t border-slate-300 text-center text-xs">
+                <div>
+                  <div className="border-b border-slate-400 pb-7 mb-1"></div>
+                  <span className="font-bold text-slate-900 block text-xs">Event Organizer</span>
+                  <span className="text-[10px] text-slate-500">Prepared by</span>
+                </div>
+                <div>
+                  <div className="border-b border-slate-400 pb-7 mb-1"></div>
+                  <span className="font-bold text-slate-900 block text-xs">Board of Tabulators</span>
+                  <span className="text-[10px] text-slate-500">Audited &amp; Verified</span>
+                </div>
+                <div>
+                  <div className="border-b border-slate-400 pb-7 mb-1"></div>
+                  <span className="font-bold text-slate-900 block text-xs">Chief Judge / Chairman</span>
+                  <span className="text-[10px] text-slate-500">Official Approval</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons - Hidden during printing */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 no-print">
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-yale-700 hover:bg-yale-800 rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Document</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GLOBAL & COMPONENT PRINT STYLES */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: portrait;
+            margin: 10mm 15mm 10mm 15mm;
+          }
+          html, body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .criteria-screen-content,
+          .no-print,
+          header,
+          aside,
+          nav {
+            display: none !important;
+          }
+          .print-modal-overlay {
+            position: static !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            width: 100% !important;
+            min-height: auto !important;
+            backdrop-filter: none !important;
+          }
+          .print-modal-sheet {
+            max-width: 100% !important;
+            width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          th, td {
+            border: 1px solid #94a3b8 !important;
+            color: #000000 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          th {
+            background-color: #f1f5f9 !important;
+          }
+        }
+      `}</style>
+
+      <MessageBox isOpen={!!msgBox} options={msgBox} onClose={() => setMsgBox(null)} />
     </AppLayout>
   );
 }
